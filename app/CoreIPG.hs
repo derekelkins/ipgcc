@@ -1,6 +1,6 @@
 module CoreIPG ( 
     Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..),
-    nonTerminals,
+    nonTerminals, nonArrayNonTerminals,
 ) where
 
 newtype Grammar nt t id e = Grammar [Rule nt t id e]
@@ -30,6 +30,11 @@ data Ref id nt e
     | Start nt            -- A.start
     | End nt              -- A.end
   deriving ( Show )
+
+nonArrayNonTerminals :: [Term nt t id e] -> [nt]
+nonArrayNonTerminals = concatMap processTerm
+    where processTerm (NonTerminal nt _ _) = [nt]
+          processTerm _ = []
 
 nonTerminals :: [Term nt t id e] -> [nt]
 nonTerminals = concatMap processTerm

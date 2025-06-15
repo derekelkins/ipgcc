@@ -116,7 +116,7 @@ alternativeToJS (Alternative ts)
    <>      concatMap termToJS ts
    <> "    return _ipg_self;\n"
    <> "  }\n"
-  where nts = nonTerminals ts
+  where nts = nonArrayNonTerminals ts
         declare nt = printf "    let _ipg_nt_%s;\n" nt
     
 ruleToJS :: Rule T T T Expr -> T
