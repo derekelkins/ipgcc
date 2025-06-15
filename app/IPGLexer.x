@@ -35,6 +35,9 @@ tokens :-
     "<"     { \_ -> TokenLAngle }
     ">"     { \_ -> TokenRAngle }
     "->"    { \_ -> TokenArrow }
+    "=="    { \_ -> TokenEqual }
+    "!="    { \_ -> TokenNotEqual }
+    "!"     { \_ -> TokenNot }
     "="     { \_ -> TokenEq }
     "<="    { \_ -> TokenLTE }
     ">="    { \_ -> TokenGTE }
@@ -76,6 +79,9 @@ data Token
     | TokenLAngle
     | TokenRAngle
     | TokenArrow
+    | TokenEqual
+    | TokenNotEqual
+    | TokenNot
     | TokenEq
     | TokenLTE
     | TokenGTE

@@ -21,6 +21,8 @@ data Exp t
     | GreaterThan (Exp t) (Exp t)
     | GTE (Exp t) (Exp t)
     | Equal (Exp t) (Exp t)
+    | NotEqual (Exp t) (Exp t)
+    | Not (Exp t)
     | If (Exp t) (Exp t) (Exp t)
     | Call t [Exp t]
     | At (Exp t) (Exp t)
@@ -71,6 +73,10 @@ simplifyExp (Neg l) = neg (simplifyExp l)
           neg (Float x) = Float (-x)
           neg (Neg x) = x
           neg x = Neg x
+simplifyExp (Not l) = not' (simplifyExp l)
+    where not' (Int x) = Int (if x == 0 then 1 else 0)
+          not' (Not x) = x
+          not' x = Not x
 simplifyExp (And l r) = and' (simplifyExp l) (simplifyExp r) 
     where and' (Int x) y = if x /= 0 then y else Int 0
           and' x (Int y) = if y /= 0 then x else Int 0
@@ -110,6 +116,11 @@ simplifyExp (Equal l r) = equal (simplifyExp l) (simplifyExp r)
           equal (Float x) (Float y) = Int (if x == y then 1 else 0)
           equal (String x) (String y) = Int (if x == y then 1 else 0)
           equal x y = Equal x y
+simplifyExp (NotEqual l r) = notEqual (simplifyExp l) (simplifyExp r) 
+    where notEqual (Int x) (Int y) = Int (if x /= y then 1 else 0)
+          notEqual (Float x) (Float y) = Int (if x /= y then 1 else 0)
+          notEqual (String x) (String y) = Int (if x /= y then 1 else 0)
+          notEqual x y = NotEqual x y
 simplifyExp (If b t e) = if_ (simplifyExp b) (simplifyExp t) (simplifyExp e)
     where if_ (Int x) y z = if x == 0 then z else y
           if_ x y z = If x y z

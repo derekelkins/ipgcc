@@ -1,7 +1,7 @@
-// S -> H[2] for i=0 to H.num do A[2 + 2*i, 2 + 2*(i+1)] {a_0 = A(0).val} ?[a_0 > 0 && 10 > a_0];
-// H -> Int[2] {num = Int.val};
-// A -> Int[2] {val = Int.val};
-// Int -> { bs = *[2] } {val = bs[0] + (bs[1]<<8)};
+S -> H[2] for i=0 to H.num do A[2 + 2*i, 2 + 2*(i+1)] {a_0 = A(0).val} ?[a_0 > 0 && 10 > a_0];
+H -> Int[2] {num = Int.val};
+A -> Int[2] {val = Int.val};
+Int -> { bs = *[2] } {val = bs[0] + (bs[1]<<8)};
 
 // S -> H[0, 2] for i=0 to H.num do A[2 + 2*i, 2 + 2*(i+1)] {a_0 = A(0).val} ?[a_0 > 0 && 10 > a_0];
 // H -> Int[0, 2] {num = Int.val};
@@ -16,8 +16,8 @@
 // O -> "0"[0,1] O[1,EOI]
 //    / "0"[0,1];
 
-S -> H[2] {value = *[H.index, H.index + H.length]};
-H -> {index = .} {length = .};
+// S -> H[2] {value = *[H.index, H.index + H.length]};
+// H -> {index = .} {length = .};
 
 // S -> H[0,2] {value = *[H.index, H.index + H.length]};
 // H -> {index = .[0]} {length = .[1]};

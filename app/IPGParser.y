@@ -42,6 +42,9 @@ import IPGLexer ( alexScanTokens, Token(..) )
     '>'     { TokenRAngle }
     '->'    { TokenArrow }
     '='     { TokenEq }
+    '=='    { TokenEqual }
+    '!='    { TokenNotEqual }
+    '!'     { TokenNot }
     '<='    { TokenLTE }
     '>='    { TokenGTE }
     '&&'    { TokenAnd }
@@ -51,14 +54,17 @@ import IPGLexer ( alexScanTokens, Token(..) )
     '*'     { TokenMul }
     '/'     { TokenDiv }
 
+-- TODO: Look up the actual precedence table.
+%nonassoc '='
 %nonassoc '?'
 %left '&&' '||'
-%nonassoc '='
-%nonassoc '<' '>' '<=' '>='
+%nonassoc '<' '>' '<=' '>=' '==' '!='
+%nonassoc '<<' '>>'
 %left '+' '-'
 %left '*' '/'
-%nonassoc '['
 %left NEG
+%left '!'
+%nonassoc '['
 
 %%
 
@@ -121,7 +127,9 @@ Exp :: { Exp' }
     | Exp '<=' Exp { LTE $1 $3 }
     | Exp '>' Exp { GreaterThan $1 $3 }
     | Exp '>=' Exp { GTE $1 $3 }
-    | Exp '=' Exp { Equal $1 $3 }
+    | Exp '==' Exp { Equal $1 $3 }
+    | Exp '!=' Exp { NotEqual $1 $3 }
+    | '!' Exp { Not $2 }
     | Exp '?' Exp ':' Exp { If $1 $3 $5 }
     | Exp '[' Exp ']' { At $1 $3 }
     | '(' Exp ')' { $2 }
