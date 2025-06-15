@@ -12,7 +12,6 @@ tokens :-
     "//".*  ;
     $digit+ \. $digit* { TokenDouble . read }
     $digit+ { TokenInt . read }
-    INPUT   { \_ -> TokenINPUT }
     EOI     { \_ -> TokenEOI }
     start   { \_ -> TokenStart }
     end     { \_ -> TokenEnd }
@@ -50,8 +49,7 @@ tokens :-
 
 {
 data Token
-    = TokenINPUT
-    | TokenEOI
+    = TokenEOI
     | TokenStart
     | TokenEnd
     | TokenFor

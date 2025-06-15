@@ -26,7 +26,6 @@ data Ref id nt e
     = Id id               -- id, essentially self.id
     | Attr nt id          -- A.id
     | Index nt e id       -- A(e).id
-    | INPUT               -- INPUT
     | EOI                 -- EOI
     | Start nt            -- A.start
     | End nt              -- A.end

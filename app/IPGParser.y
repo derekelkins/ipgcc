@@ -10,7 +10,6 @@ import IPGLexer ( alexScanTokens, Token(..) )
 %error { parseError }
 
 %token
-    INPUT   { TokenINPUT }
     EOI     { TokenEOI }
     start   { TokenStart }
     end     { TokenEnd }
@@ -117,7 +116,6 @@ Exp :: { Exp' }
     | Exp '?' Exp ':' Exp { If $1 $3 $5 }
     | Exp '[' Exp ']' { At $1 $3 }
     | '(' Exp ')' { $2 }
-    | INPUT { Ref INPUT }
     | EOI { Ref EOI }
     | NameExp { $1 }
 
