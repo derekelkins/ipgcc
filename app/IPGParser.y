@@ -1,6 +1,10 @@
 {
-module IPGParser ( parseIPG, parse ) where
-import CoreIPG ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..) )
+module IPGParser (
+    IdType, Exp', Grammar', Rule', Alternative', Term', Ref',
+    parseIPG, parse,
+) where
+import CoreIPG ( Ref(..) )
+import FullIPG ( Grammar(..), Rule(..), Alternative(..), Term(..) )
 import GenericExp ( Exp(..) )
 import IPGLexer ( alexScanTokens, Token(..) )
 }
@@ -81,18 +85,23 @@ Terms :: { [Term'] }
     : Term { [$1] }
     | Terms Term { $2 : $1 }
 
--- TODO: Parse Full IPG
 Term :: { Term' }
-    : name '[' Exp ',' Exp ']' { NonTerminal $1 $3 $5 }
-    | string '[' Exp ',' Exp ']' { Terminal $1 $3 $5 }
+    : name { NonTerminal0 $1 }
+    | name '[' Exp ']' { NonTerminal1 $1 $3 }
+    | name '[' Exp ',' Exp ']' { NonTerminal2 $1 $3 $5 }
+    | string { Terminal0 $1 }
+    | string '[' Exp ']' { Terminal1 $1 $3 }
+    | string '[' Exp ',' Exp ']' { Terminal2 $1 $3 $5 }
     | '{' name '=' AssignTail '}' { makeAssign $2 $4 }
-    | '{' name '=' Exp '}' { $2 := $4 }
     | '?[' Exp ']' { Guard $2 }
     | for name '=' Exp to Exp do name '[' Exp ',' Exp ']' { Array $2 $4 $6 $8 $10 $12 }
 
 AssignTail :: { AssignTail }
-    : '.' '[' Exp ']' { Any' $3 }
-    | '*' '[' Exp ',' Exp ']' { Slice' $3 $5 }
+    : '.' { Any0' }
+    | '.' '[' Exp ']' { Any1' $3 }
+    | '*' { Slice0' }
+    | '*' '[' Exp ']' { Slice1' $3 }
+    | '*' '[' Exp ',' Exp ']' { Slice2' $3 $5 }
     | Exp  { Assign' $1 }
 
 Exp :: { Exp' }
@@ -160,13 +169,19 @@ makeExp t (Call' es) = Call t es
 makeExp t Id' = Ref (Id t)
 
 data AssignTail
-    = Any' Exp'
-    | Slice' Exp' Exp'
+    = Any0'
+    | Any1' Exp'
+    | Slice0'
+    | Slice1' Exp'
+    | Slice2' Exp' Exp'
     | Assign' Exp'
 
 makeAssign :: IdType -> AssignTail -> Term'
-makeAssign n (Any' e) = Any n e
-makeAssign n (Slice' l r) = Slice n l r
+makeAssign n Any0' = Any0 n 
+makeAssign n (Any1' e) = Any1 n e
+makeAssign n Slice0' = Slice0 n
+makeAssign n (Slice1' l) = Slice1 n l
+makeAssign n (Slice2' l r) = Slice2 n l r
 makeAssign n (Assign' e) = n := e
 
 parse :: String -> Grammar'

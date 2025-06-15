@@ -1,9 +1,19 @@
-module Main where
-import JSExport
-import IPGParser ( parse )
+module Main ( main ) where
+import FullIPG ( ExpHelpers(..), toCore )
+import qualified GenericExp as E
+import IPGParser ( IdType, Exp', parse )
+import JSExport ( toJS )
+
+helper :: ExpHelpers IdType IdType IdType Exp'
+helper = ExpHelpers {
+    len = E.Int . fromIntegral . length,
+    add = E.Add,
+    num = E.Int . fromIntegral,
+    ref = E.Ref
+  }  
 
 main :: IO ()
-main = getContents >>= putStrLn . toJS . parse
+main = getContents >>= putStrLn . toJS . E.simplify . toCore helper . parse
 -- main = getContents >>= print . parse
 
 {-
