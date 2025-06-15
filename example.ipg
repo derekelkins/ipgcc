@@ -1,0 +1,8 @@
+S -> H[0, 2] for i=0 to H.num do A[2 + 2*i, 2 + 2*(i+1)] { a_0 = A(0).val } ?[a_0 > 0 && 10 > a_0];
+H -> Int[0, 2] { num = Int.val };
+A -> Int[0, 2] { val = Int.val };
+Int -> { bs = *[0, 1] } { val = bs[0] + (bs[1]<<8) };
+
+// S -> "1"[0,1] O[1,EOI] "stop"[O.end,EOI];
+// O -> "0"[0,1] O[1,EOI]
+//    / "0"[0,1];

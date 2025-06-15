@@ -1,32 +1,52 @@
-module JSExport (
-    toJS, CrudeExpr(..), Expr(..), T,
-) where
+module JSExport ( toJS, T ) where
+import Data.List ( intersperse ) -- base
 import Text.Printf ( printf ) -- base
 import CoreIPG
-
--- A CrudeExpr is essentially a templated string.
--- For example, something like:
---   CrudeExpr (\case 0 -> "foo") [Left "mul(", Right 0, Left ", ", Right 0, Left ")"]
--- would correspond to something like `mul(${foo}, ${foo})`.
-data CrudeExpr r s = CrudeExpr (Int -> r) [Either Int s]
+import GenericExp ( Exp(..) )
 
 -- TODO: Use Text rather than String.
+-- TODO: Need to do something about Terminals. If they aren't strings, e.g. Uint8Arrays, then
+--       the code below won't work.
 
 type T = String
-newtype Expr = Expr { unExpr :: CrudeExpr (Ref T T Expr) T }
+type Expr = Exp T
 
 refToJS :: Ref T T Expr -> T
 refToJS (Id f) = printf "_ipg_self.%s" f
 refToJS (Attr nt f) = printf "_ipg_nt_%s.%s" nt f
 refToJS (Index nt e f) = printf "_ipg_seq_%s[%s].%s" nt (exprToJS e) f
+refToJS INPUT = "INPUT";
 refToJS EOI = "_ipg_eoi";
 refToJS (Start nt) = printf "_ipg_nt_%s._ipg_start" nt;
 refToJS (End nt) = printf "_ipg_nt_%s._ipg_end" nt;
 
+-- TODO: Make this a pretty printer that omits parens when it can.
 exprToJS :: Expr -> T
-exprToJS (Expr (CrudeExpr subst parts)) = concatMap go parts
-    where go (Left ix) = refToJS (subst ix)
-          go (Right s) = s
+exprToJS e = exprToJS' e ""
+
+exprToJS' :: Expr -> T -> T
+exprToJS' (Int n) = shows n
+exprToJS' (Float n) = shows n
+exprToJS' (String s) = shows s
+exprToJS' (Add l r) = ('(':) . exprToJS' l . ('+':) . exprToJS' r . (')':)
+exprToJS' (Sub l r) = ('(':) . exprToJS' l . ('-':) . exprToJS' r . (')':)
+exprToJS' (Mul l r) = ('(':) . exprToJS' l . ('*':) . exprToJS' r . (')':)
+exprToJS' (Div l r) = ('(':) . exprToJS' l . ('/':) . exprToJS' r . (')':)
+exprToJS' (Neg e) = ('-':) . exprToJS' e
+exprToJS' (And l r) = ('(':) . exprToJS' l . ("&&"++) . exprToJS' r . (')':)
+exprToJS' (Or l r) = ('(':) . exprToJS' l . ("||"++) . exprToJS' r . (')':)
+exprToJS' (LSh l r) = ('(':) . exprToJS' l . ("<<"++) . exprToJS' r . (')':)
+exprToJS' (RSh l r) = ('(':) . exprToJS' l . (">>"++) . exprToJS' r . (')':)
+exprToJS' (LessThan l r) = ('(':) . exprToJS' l . ('<':) . exprToJS' r . (')':)
+exprToJS' (LTE l r) = ('(':) . exprToJS' l . ("<="++) . exprToJS' r . (')':)
+exprToJS' (GreaterThan l r) = ('(':) . exprToJS' l . ('>':) . exprToJS' r . (')':)
+exprToJS' (GTE l r) = ('(':) . exprToJS' l . (">="++) . exprToJS' r . (')':)
+exprToJS' (Equal l r) = ('(':) . exprToJS' l . ('=':) . exprToJS' r . (')':)
+exprToJS' (If b t e) = ('(':) . exprToJS' b . ('?':) . exprToJS' t . (':':) . exprToJS' e . (')':)
+exprToJS' (Call t es) =
+    shows t . ('(':) . foldr (.) id (intersperse (',':) $ map exprToJS' es) . (')':)
+exprToJS' (At l r) = exprToJS' l . ('[':) . exprToJS' r . (']':)
+exprToJS' (Ref r) = (refToJS r++)
 
 termToJS :: Term T T T Expr -> T
 termToJS (NonTerminal nt l r)
@@ -34,7 +54,7 @@ termToJS (NonTerminal nt l r)
    <> printf "    _ipg_left = (%s);\n" lExp
    <> printf "    _ipg_right = (%s);\n" rExp
    <>        "    if (_ipg_left < 0 || _ipg_right < _ipg_left || _ipg_right > _ipg_eoi) break _ipg_alt;\n"
-   <> printf "    _ipg_nt_%s = %s(_ipg_input.slice(_ipg_left, _ipg_right));\n" nt nt
+   <> printf "    _ipg_nt_%s = %s(INPUT.slice(_ipg_left, _ipg_right));\n" nt nt
    <> printf "    if (_ipg_nt_%s === null) break _ipg_alt;\n" nt
    <> printf "    if (_ipg_nt_%s._ipg_end !== 0) {\n" nt
    <> printf "      _ipg_self._ipg_start = Math.min(_ipg_self._ipg_start, _ipg_left + _ipg_nt_%s._ipg_start);\n" nt
@@ -54,7 +74,7 @@ termToJS (Terminal t l r)
    <> printf "    _ipg_left = (%s);\n" lExp
    <> printf "    _ipg_right = (%s);\n" rExp
    <>        "    if (_ipg_left < 0 || _ipg_right < _ipg_left || _ipg_right > _ipg_eoi) break _ipg_alt;\n"
-   <> printf "    if (_ipg_input.slice(_ipg_left, _ipg_right).startsWith(%s)) break _ipg_alt;\n" (show t)
+   <> printf "    if (!INPUT.slice(_ipg_left, _ipg_right).startsWith(%s)) break _ipg_alt;\n" (show t)
    <>        "    _ipg_self._ipg_start = Math.min(_ipg_self._ipg_start, _ipg_left);\n"
    <>        "    _ipg_self._ipg_end = Math.max(_ipg_self._ipg_end, _ipg_right);\n\n"
   where lExp = exprToJS l; rExp = exprToJS r
@@ -74,7 +94,7 @@ termToJS (Array i start end nt l r)
    <> printf "      const _ipg_left = (%s);\n" lExp
    <> printf "      const _ipg_right = (%s);\n" rExp
    <>        "      if (_ipg_left < 0 || _ipg_right < _ipg_left || _ipg_right > _ipg_eoi) break _ipg_alt;\n"
-   <> printf "      const _ipg_tmp = %s(_ipg_input.slice(_ipg_left, _ipg_right));\n" nt
+   <> printf "      const _ipg_tmp = %s(INPUT.slice(_ipg_left, _ipg_right));\n" nt
    <>        "      if (_ipg_tmp === null) break _ipg_alt;\n"
    <>        "      if (_ipg_tmp._ipg_end !== 0) {\n"
    <>        "        _ipg_self._ipg_start = Math.min(_ipg_self._ipg_start, _ipg_left + _ipg_tmp._ipg_start);\n"
@@ -91,7 +111,7 @@ termToJS (Any i l)
    <> printf "    _ipg_left = (%s);\n" lExp
    <>        "    _ipg_right = _ipg_left + 1;\n"
    <>        "    if (_ipg_left < 0 || _ipg_right > _ipg_eoi) break _ipg_alt;\n"
-   <> printf "    _ipg_self.%s = _ipg_input[_ipg_left];\n" i
+   <> printf "    _ipg_self.%s = INPUT[_ipg_left];\n" i
    <>        "    _ipg_self._ipg_start = Math.min(_ipg_self._ipg_start, _ipg_left);\n"
    <>        "    _ipg_self._ipg_end = Math.max(_ipg_self._ipg_end, _ipg_right);\n\n"
   where lExp = exprToJS l
@@ -100,7 +120,7 @@ termToJS (Slice i l r)
    <> printf "    _ipg_left = (%s);\n" lExp
    <> printf "    _ipg_right = (%s);\n" rExp
    <>        "    if (_ipg_left < 0 || _ipg_right < _ipg_left || _ipg_right > _ipg_eoi) break _ipg_alt;\n"
-   <> printf "    _ipg_self.%s = _ipg_input.slice(_ipg_left, _ipg_right);\n" i
+   <> printf "    _ipg_self.%s = INPUT.slice(_ipg_left, _ipg_right);\n" i
    <>        "    if (_ipg_left !== _ipg_right) {\n"
    <>        "      _ipg_self._ipg_start = Math.min(_ipg_self._ipg_start, _ipg_left);\n"
    <>        "      _ipg_self._ipg_end = Math.max(_ipg_self._ipg_end, _ipg_right);\n"
@@ -121,8 +141,8 @@ alternativeToJS (Alternative ts)
     
 ruleToJS :: Rule T T T Expr -> T
 ruleToJS (Rule nt alts)
-    = printf "function %s(_ipg_input) {\n" nt
-          <> "  const _ipg_eoi = _ipg_input.length;\n"
+    = printf "function %s(INPUT) {\n" nt
+          <> "  const _ipg_eoi = INPUT.length;\n"
           <> "  let _ipg_self = { _ipg_start: _ipg_eoi, _ipg_end: 0 };\n"
           <> concatMap alternativeToJS alts
           <> "  return null;\n}\n\n"

@@ -18,7 +18,7 @@ data Term nt t id e
     | id := e             -- {id = e}
     | Guard e             -- <e>
     | Array id e e nt e e -- for id=e_1 to e_2 do A[e_l, e_r]
-    | Any id e            -- {id = input[e]}
+    | Any id e            -- {id = input[e]} -- TODO: Replace these with call expressions?
     | Slice id e e        -- {id = input[l, r]}
   deriving ( Show )
     
@@ -26,6 +26,7 @@ data Ref id nt e
     = Id id               -- id, essentially self.id
     | Attr nt id          -- A.id
     | Index nt e id       -- A(e).id
+    | INPUT               -- INPUT
     | EOI                 -- EOI
     | Start nt            -- A.start
     | End nt              -- A.end
