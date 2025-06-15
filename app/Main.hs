@@ -1,6 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 module Main where
 import CoreIPG
+import JSExport
 
 main :: IO ()
 main = putStrLn (toJS exampleGrammar1)
@@ -37,11 +38,5 @@ exampleGrammar1 = Grammar [
   ]
 {-
 const example = new Uint8Array([2,0,1,0,3,0,4,0]);
-
-function process(input) {
-    const result = S(input, 0, input.length);
-    console.log(result);
-}
-
-process(example);
+console.log(S(example));
 -}
