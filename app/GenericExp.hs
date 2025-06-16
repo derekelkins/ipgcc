@@ -1,8 +1,7 @@
 module GenericExp ( Exp(..), simplify, simplifyExp ) where
-import Data.Bits ( shift ) -- base
+import Data.Bits ( shift, complement, xor, (.&.), (.|.) ) -- base
 import CoreIPG ( Grammar, Ref )
 
--- TODO: Add bitwise ops?
 data Exp t
     = Int Integer
     | Float Double
@@ -11,9 +10,15 @@ data Exp t
     | Sub (Exp t) (Exp t)
     | Mul (Exp t) (Exp t)
     | Div (Exp t) (Exp t)
+    | Mod (Exp t) (Exp t)
+    | Exp (Exp t) (Exp t)
     | Neg (Exp t)
+    | BitwiseNeg (Exp t)
     | And (Exp t) (Exp t)
     | Or (Exp t) (Exp t)
+    | BitwiseAnd (Exp t) (Exp t)
+    | BitwiseXor (Exp t) (Exp t)
+    | BitwiseOr (Exp t) (Exp t)
     | LSh (Exp t) (Exp t)
     | RSh (Exp t) (Exp t)
     | LessThan (Exp t) (Exp t)
@@ -68,11 +73,24 @@ simplifyExp (Div l r) = div' (simplifyExp l) (simplifyExp r)
     where div' (Float x) (Float y) = Float (x / y)
           div' x (Float 1) = x
           div' x y = Div x y
+simplifyExp (Mod l r) = mod' (simplifyExp l) (simplifyExp r) 
+    where mod' (Int x) (Int y) = Int (x `rem` y)
+          mod' x y = Mod x y
+simplifyExp (Exp l r) = exp' (simplifyExp l) (simplifyExp r) 
+    where exp' (Float x) (Float y) = Float (x ** y)
+          exp' (Int x) (Int y) = Int (x ^ y)
+          exp' _ (Int 0) = Int 1
+          exp' x (Int 1) = x
+          exp' x y = Exp x y
 simplifyExp (Neg l) = neg (simplifyExp l)
     where neg (Int x) = Int (-x)
           neg (Float x) = Float (-x)
           neg (Neg x) = x
           neg x = Neg x
+simplifyExp (BitwiseNeg l) = bneg (simplifyExp l)
+    where bneg (Int x) = Int (complement x)
+          bneg (BitwiseNeg x) = x
+          bneg x = BitwiseNeg x
 simplifyExp (Not l) = not' (simplifyExp l)
     where not' (Int x) = Int (if x == 0 then 1 else 0)
           not' (Not x) = x
@@ -85,6 +103,15 @@ simplifyExp (Or l r) = or' (simplifyExp l) (simplifyExp r)
     where or' (Int x) y = if x == 0 then y else Int 1
           or' x (Int y) = if y == 0 then x else Int 1
           or' x y = Or x y
+simplifyExp (BitwiseAnd l r) = band (simplifyExp l) (simplifyExp r) 
+    where band (Int x) (Int y) = Int (x .&. y)
+          band x y = BitwiseAnd x y
+simplifyExp (BitwiseXor l r) = bxor (simplifyExp l) (simplifyExp r) 
+    where bxor (Int x) (Int y) = Int (xor x y)
+          bxor x y = BitwiseXor x y
+simplifyExp (BitwiseOr l r) = bor (simplifyExp l) (simplifyExp r) 
+    where bor (Int x) (Int y) = Int (x .|. y)
+          bor x y = BitwiseOr x y
 simplifyExp (LSh l r) = lsh (simplifyExp l) (simplifyExp r) 
     where lsh (Int x) (Int y) = Int (shift x (fromIntegral y))
           lsh x y = LSh x y

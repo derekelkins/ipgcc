@@ -47,24 +47,59 @@ import IPGLexer ( alexScanTokens, Token(..) )
     '!'     { TokenNot }
     '<='    { TokenLTE }
     '>='    { TokenGTE }
+    '&'     { TokenAmpersand }
+    '|'     { TokenPipe }
+    '^'     { TokenCaret }
+    '%'     { TokenPercent }
+    '~'     { TokenTilde }
     '&&'    { TokenAnd }
     '||'    { TokenOr }
     '+'     { TokenAdd }
     '-'     { TokenSub }
+    '**'    { TokenExp }
     '*'     { TokenMul }
     '/'     { TokenDiv }
 
--- TODO: Look up the actual precedence table.
-%nonassoc '='
-%nonassoc '?'
-%left '&&' '||'
-%nonassoc '<' '>' '<=' '>=' '==' '!='
-%nonassoc '<<' '>>'
-%left '+' '-'
-%left '*' '/'
-%left NEG
-%left '!'
-%nonassoc '['
+-- Javascript Operator Precedence table according to:
+-- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_precedence
+
+-- 18 Grouping: N/A: [ "(x)" ]
+-- 17 Access and Call: Left [ "x.y", "x?.y" ], N/A: [ "x[y]", "new x(y)", "x(y)", "import(x)" ]
+-- 16 New: N/A: [ "new x" ]
+-- 15 Postfix: N/A: [ "x++", "x--" ]
+-- 14 Prefix: N/A: [ "++x", "--x", "!x", "~x", "+x", "-x", "typeof x", "void x", "delete x", "await x" ]
+-- 13 Exponentiation: Right: [ "x ** y" ]
+-- 12 Multiplicative: Left: [ "x * y", "x / y", "x % y" ]
+-- 11 Additive: Left: [ "x + y", "x - y" ]
+-- 10 Bitwise Shift: Left: [ "x << y", "x >> y", "x >>> y" ]
+-- 9 Relational: Left: [ "x < y", "x <= y", "x > y", "x >= y", "x in y", "x instanceof y" ]
+-- 8 Equality: Left: [ "x == y", "x != y", "x === y", "x !== y" ]
+-- 7 Bitwise And: Left: [ "x & y" ]
+-- 6 Bitwise Xor: Left: [ "x ^ y" ]
+-- 5 Bitwise Or: Left: [ "x | y" ]
+-- 4 Logical And: Left: [ "x && y" ]
+-- 3 Logical Or: Left: [ "x || y", "x ?? y" ]
+-- 2 Assignment: Right: [ "x = y", "x += y", "x -= y", "x **= y", "x *= y", "x /= y", "x %= y",
+--                        "x <<= y", "x >>= y", "x >>>= y", "x &= y", "x ^= y", "x |= y",
+--                        "x &&= y", "x ||= y", "x ??= y", "x ? y : z", "x => y"]
+--                 N/A: [ "yield x", "yield* x", "...x" ]
+-- 1 Comma: Left: [ "x, y" ]
+
+%right '=' '?' -- 2
+%left '||' -- 3
+%left '&&' -- 4
+%left '|' -- 5
+%left '^' -- 6
+%left '&' -- 7
+%left '==' '!=' -- 8
+%left '<' '>' '<=' '>=' -- 9
+%left '<<' '>>' -- 10
+%left '+' '-' -- 11
+%left '*' '/' '%' -- 12
+%right '**' -- 13
+%nonassoc NEG PLUS '~' '!' -- 14
+%nonassoc '[' -- 17
+%left '.' -- 17
 
 %%
 
@@ -117,10 +152,16 @@ Exp :: { Exp' }
     | Exp '+' Exp { Add $1 $3 }
     | Exp '-' Exp { Sub $1 $3 }
     | '-' Exp %prec NEG { Neg $2 }
+    | '+' Exp %prec PLUS { $2 }
     | Exp '*' Exp { Mul $1 $3 }
     | Exp '/' Exp { Div $1 $3 }
+    | Exp '%' Exp { Mod $1 $3 }
+    | Exp '**' Exp { Exp $1 $3 }
     | Exp '&&' Exp { And $1 $3 }
     | Exp '||' Exp { Or $1 $3 }
+    | Exp '&' Exp { BitwiseAnd $1 $3 }
+    | Exp '^' Exp { BitwiseXor $1 $3 }
+    | Exp '|' Exp { BitwiseOr $1 $3 }
     | Exp '<<' Exp { LSh $1 $3 }
     | Exp '>>' Exp { RSh $1 $3 }
     | Exp '<' Exp { LessThan $1 $3 }
@@ -130,6 +171,7 @@ Exp :: { Exp' }
     | Exp '==' Exp { Equal $1 $3 }
     | Exp '!=' Exp { NotEqual $1 $3 }
     | '!' Exp { Not $2 }
+    | '~' Exp { BitwiseNeg $2 }
     | Exp '?' Exp ':' Exp { If $1 $3 $5 }
     | Exp '[' Exp ']' { At $1 $3 }
     | '(' Exp ')' { $2 }

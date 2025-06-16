@@ -30,8 +30,11 @@ tokens :-
     "}"     { \_ -> TokenRCurly }
     "["     { \_ -> TokenLBracket }
     "]"     { \_ -> TokenRBracket }
+    "**"    { \_ -> TokenExp }
     "<<"    { \_ -> TokenLShift }
     ">>"    { \_ -> TokenRShift }
+    "<="    { \_ -> TokenLTE }
+    ">="    { \_ -> TokenGTE }
     "<"     { \_ -> TokenLAngle }
     ">"     { \_ -> TokenRAngle }
     "->"    { \_ -> TokenArrow }
@@ -39,10 +42,13 @@ tokens :-
     "!="    { \_ -> TokenNotEqual }
     "!"     { \_ -> TokenNot }
     "="     { \_ -> TokenEq }
-    "<="    { \_ -> TokenLTE }
-    ">="    { \_ -> TokenGTE }
     "&&"    { \_ -> TokenAnd }
     "||"    { \_ -> TokenOr }
+    "&"     { \_ -> TokenAmpersand }
+    "|"     { \_ -> TokenPipe }
+    "^"     { \_ -> TokenCaret }
+    "%"     { \_ -> TokenPercent }
+    "~"     { \_ -> TokenTilde }
     "+"     { \_ -> TokenAdd }
     "-"     { \_ -> TokenSub }
     "*"     { \_ -> TokenMul }
@@ -85,6 +91,12 @@ data Token
     | TokenEq
     | TokenLTE
     | TokenGTE
+    | TokenAmpersand
+    | TokenPipe
+    | TokenCaret
+    | TokenPercent
+    | TokenExp
+    | TokenTilde
     | TokenAnd
     | TokenOr
     | TokenAdd
