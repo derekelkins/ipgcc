@@ -113,7 +113,16 @@ Rules :: { [Rule'] }
     | {- empty -} { [] }
 
 Rule :: { Rule' }
-    : name '->' Alternatives { Rule $1 (reverse $3) }
+    : name ParamList '->' Alternatives { Rule $1 $2 (reverse $4) }
+
+ParamList :: { [IdType] }
+    : '{' Params '}' { reverse $2 }
+    | {- empty -} { [] }
+
+Params :: { [IdType] }
+    : {- empty -} { [] }
+    | name { [$1] }
+    | Params ',' name { $3 : $1 }
 
 Alternatives :: { [Alternative'] }
     : Alternative { [$1] }
@@ -127,15 +136,19 @@ Terms :: { [Term'] }
     | Terms Term { $2 : $1 }
 
 Term :: { Term' }
-    : name { NonTerminal0 $1 }
-    | name '[' Exp ']' { NonTerminal1 $1 $3 }
-    | name '[' Exp ',' Exp ']' { NonTerminal2 $1 $3 $5 }
+    : name ArgList { NonTerminal0 $1 $2 }
+    | name ArgList '[' Exp ']' { NonTerminal1 $1 $2 $4 }
+    | name ArgList '[' Exp ',' Exp ']' { NonTerminal2 $1 $2 $4 $6 }
     | string { Terminal0 $1 }
     | string '[' Exp ']' { Terminal1 $1 $3 }
     | string '[' Exp ',' Exp ']' { Terminal2 $1 $3 $5 }
     | '{' name '=' AssignTail '}' { makeAssign $2 $4 }
     | '?[' Exp ']' { Guard $2 }
-    | for name '=' Exp to Exp do name '[' Exp ',' Exp ']' { Array $2 $4 $6 $8 $10 $12 }
+    | for name '=' Exp to Exp do name ArgList '[' Exp ',' Exp ']' { Array $2 $4 $6 $8 $9 $11 $13 }
+
+ArgList :: { [Exp'] }
+    : '{' Args '}' { reverse $2 }
+    | {- empty -} { [] }
 
 AssignTail :: { AssignTail }
     : '.' { Any0' }
@@ -190,7 +203,8 @@ NameExpTail :: { NameExpTail }
     | '(' Args ')' { Call' (reverse $2) }
 
 Args :: { [Exp'] }
-    : Exp { [$1] }
+    : {- empty -} { [] }
+    | Exp { [$1] }
     | Args ',' Exp { $3 : $1 }
 
 {
