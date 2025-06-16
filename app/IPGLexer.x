@@ -6,6 +6,10 @@ module IPGLexer( alexScanTokens, Token(..) ) where
 
 $digit = 0-9
 $alpha = [a-zA-Z]
+$hex = [0-9a-fA-F]
+$ascii = \x00-\xFF
+$print = $printable # [^$ascii]
+$stringchar = $print # [\n\r\f\v]
 
 tokens :-
     $white+ ;
@@ -54,7 +58,7 @@ tokens :-
     "*"     { \_ -> TokenMul }
     "/"     { \_ -> TokenDiv }
     [_ $alpha] [_ $alpha $digit]* { TokenName }
-    \" [^\"]* \" { \(_:s) -> TokenString (init s) } -- TODO: Handle properly escaped strings.
+    \" ($stringchar#[\"\\]|\\[abfnrtv\\\"']|\\x$hex$hex)* \" { TokenString . read }
 
 {
 data Token

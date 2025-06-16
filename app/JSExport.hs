@@ -1,5 +1,7 @@
 module JSExport ( toJS, T ) where
+import Data.Char ( isPrint, ord ) -- base
 import qualified Data.Set as Set -- containers
+import Numeric ( showHex ) -- base
 import Data.List ( intersperse ) -- base
 import Text.Printf ( printf ) -- base
 import CoreIPG
@@ -104,6 +106,15 @@ paramList = concatMap (", a_"++)
 argList :: Env -> [Expr] -> T
 argList env = concatMap ((',':) . (' ':) . exprToJS env)
 
+hexyString :: String -> String
+hexyString s = '"':concatMap go s ++ "\""
+    where go c | isPrint c = [c]
+               | c `elem` "abfnrtv\\\"'" = show c
+               | otherwise = '\\':'x':pad (showHex (ord c) "")
+          pad h@[_] = '0':h
+          pad h = h
+
+
 termToJS :: Env -> Term T T T Expr -> T
 termToJS env (NonTerminal nt args l r)
     = printf "    // %s{%s}[%s, %s]\n" nt (drop 2 es) lExp rExp
@@ -126,14 +137,14 @@ termToJS env (Terminal "" l r)
    <>        "    if (left < 0 || right < left || right > EOI) break _ipg_alt;\n\n"
   where lExp = exprToJS env l; rExp = exprToJS env r
 termToJS env (Terminal t l r)
-    = printf "    // %s[%s, %s]\n" (show t) lExp rExp
+    = printf "    // %s[%s, %s]\n" terminal lExp rExp
    <> printf "    left = %s;\n" lExp
    <> printf "    right = %s;\n" rExp
    <>        "    if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
-   <> printf "    if (!input.slice(left, right).startsWith(%s)) break _ipg_alt;\n" (show t)
+   <> printf "    if (!_ipg_startsWith(input.slice(left, right), %s)) break _ipg_alt;\n" terminal
    <>        "    self._ipg_start = Math.min(self._ipg_start, left);\n"
    <>        "    self._ipg_end = Math.max(self._ipg_end, right);\n\n"
-  where lExp = exprToJS env l; rExp = exprToJS env r
+  where lExp = exprToJS env l; rExp = exprToJS env r; terminal = hexyString t
 termToJS env (i := e)
     = printf "    // {%s = %s}\n" i eExp
    <> printf "    self.%s = %s;\n\n" i eExp
@@ -199,11 +210,20 @@ alternativeToJS env (Alternative ts)
     
 ruleToJS :: Rule T T T Expr -> T
 ruleToJS (Rule nt args alts)
-    = printf "function %s(input%s) {\n" nt (paramList args)
-          <> "  const EOI = input.length;\n"
-          <> "  let self = { _ipg_start: EOI, _ipg_end: 0 };\n"
-          <> concatMap (alternativeToJS env) alts
-          <> "  return null;\n}\n\n"
+    = "function _ipg_startsWith(s, prefix) {\n"
+   <> "  if (typeof s === 'string') return s.startsWith(prefix);\n"
+   <> "  if (s.length < prefix.length) return false;\n"
+   <> "  for (let i = 0; i < prefix.length; ++i) {\n"
+   <> "    if (s[i] !== prefix.charCodeAt(i)) return false;\n"
+   <> "  }\n"
+   <> "  return true;\n"
+   <> "}\n\n"
+   <> printf "function %s(input%s) {\n" nt (paramList args)
+   <>        "  const EOI = input.length;\n"
+   <>        "  let self = { _ipg_start: EOI, _ipg_end: 0 };\n"
+   <>        concatMap (alternativeToJS env) alts
+   <>        "  return null;\n"
+   <>        "}\n\n"
   where env = Set.fromList args
 
 toJS :: Grammar T T T Expr -> T
