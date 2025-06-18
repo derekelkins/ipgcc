@@ -208,8 +208,12 @@ NameExpTail :: { NameExpTail }
     | '.' start { Start' }
     | '.' end { End' }
     | '.' name { Attr' $2 }
-    | '(' Exp ')' '.' name { Index' $2 $5 }
+    | '(' Exp ')' MaybeIndex { case $4 of Just i -> Index' $2 i;_ -> Call' [$2] }
     | '(' Args ')' { Call' (reverse $2) }
+
+MaybeIndex :: { Maybe IdType }
+    : '.' name { Just $2 }
+    | {- empty -} { Nothing }
 
 Args :: { [Exp'] }
     : {- empty -} { [] }

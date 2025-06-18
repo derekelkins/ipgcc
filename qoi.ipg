@@ -1,11 +1,90 @@
+// const PImage = require("pureimage");
+// const fs = require("node:fs");
+// const qoiData = QOI(fs.readFileSync("./qoi_test_images/dice.qoi"));
+// render(qoiData.width, qoiData.height, qoiData.colors, "./dice.png"); 
+
+// function render(width, height, colors, outFilePath) {
+//     const img = PImage.make(width, height);
+//     let i = 0;
+//     for (let y = 0; y < height; ++y) {
+//         for (let x = 0; x < width; ++x) {
+//             const color = colors[i++];
+//             img.setPixelRGBA_i(x, y, color.r, color.g, color.b, color.a);
+//         }
+//     }
+//     PImage.encodePNGToStream(img, fs.createWriteStream(outFilePath));
+// }
+
+// function initState() {
+//     const black = { r: 0, g: 0, b: 0, a: 255 };
+//     const history = new Array(64);
+//     history.fill(black);
+//     return { prevColor: black, history };
+// }
+
+// function concat(runs) {
+//     return runs.flat();
+// }
+
+// function hash(color) {
+//     return (color.r * 3 + color.g * 5 + color.b * 7 + color.a * 11) % 64;
+// }
+
+// function rgbCase(state, r, g, b) {
+//     return rgbaCase(state, r, g, b, state.prevColor.a);
+// }
+
+// function rgbaCase(state, r, g, b, a) {
+//     const color = { r, g, b, a };
+//     state.prevColor = color;
+//     state.history[hash(color)] = color;
+//     return [color];
+// }
+
+// function indexCase(state, index) {
+//     const color = state.history[index];
+//     state.prevColor = color;
+//     return [color];
+// }
+
+// function mod(x, n) {
+//     const result = x % n;
+//     return result < 0 ? result + n : result;
+// }
+
+// function diffCase(state, dr, dg, db) {
+//     return rgbCase(
+//         state,
+//         mod(state.prevColor.r + dr, 256),
+//         mod(state.prevColor.g + dg, 256),
+//         mod(state.prevColor.b + db, 256)
+//     );
+// }
+
+// function lumaCase(state, diffGreen, drdg, dbdg) {
+//     return rgbCase(
+//         state,
+//         mod(state.prevColor.r + drdg + diffGreen, 256),
+//         mod(state.prevColor.g + diffGreen, 256),
+//         mod(state.prevColor.b + dbdg + diffGreen, 256)
+//     );
+// }
+
+// function runCase(state, runLength) {
+//     const run = new Array(runLength);
+//     run.fill(state.prevColor);
+//     return run;
+// }
+
+// It's a bit abusive to have some mutable state like this.
 QOI
     -> QOIHeader
        { width = QOIHeader.width }
        { height = QOIHeader.height }
        { channels = QOIHeader.channels }
        { colorspace = QOIHeader.colorspace }
-       QOIChunks
-       { chunks = QOIChunks.values };
+       QOIChunks(initState())
+       { colors = concat(QOIChunks.values) };
 
 QOIHeader
     -> "qoif"
@@ -14,25 +93,33 @@ QOIHeader
         { channels = . }
         { colorspace = . };
 
-QOIChunks -> repeat QOIChunk.chunk until EndMarker;
+QOIChunks(state) -> repeat QOIChunk(state).chunk until EndMarker;
 
-QOIChunk -> { tagByte = . } Chunk { chunk = Chunk.this } where {
-    Chunk
+QOIChunk(state) -> { tagByte = . } Chunk(state) { chunk = Chunk.run } where {
+    Chunk(state)
         -> ?[ tagByte == 0xFE ] { tag = "rgb" }
             { r = . } { g = . } { b = . }
+            { run = rgbCase(state, r, g, b) }
          / ?[ tagByte == 0xFF ] { tag = "rgba" }
             { r = . } { g  = . } { b  = . } { a  = . }
+            { run = rgbaCase(state, r, g, b, a) }
          / ?[ (tagByte >> 6) == 0 ] { tag = "index" }
             { index = tagByte & 0x3F }
+            { run = indexCase(state, index) }
          / ?[ (tagByte >> 6) == 1 ] { tag = "diff" }
-            { dr = (tagByte >> 4) & 0x03 } { dg = (tagByte >> 2) & 0x03 } { db = tagByte & 0x03 }
+            { dr = ((tagByte >> 4) & 0x03) - 2 }
+            { dg = ((tagByte >> 2) & 0x03) - 2 }
+            { db = (tagByte & 0x03) - 2 }
+            { run = diffCase(state, dr, dg, db) }
          / ?[ (tagByte >> 6) == 2 ] { tag = "luma" }
-            { diffGreen = tagByte & 0x3F }
+            { diffGreen = (tagByte & 0x3F) - 32 }
             U8
-            { drdg = U8.value >> 4 }
-            { dbdg = U8.value & 0x0F }
+            { drdg = (U8.value >> 4) - 8 }
+            { dbdg = (U8.value & 0x0F) - 8}
+            { run = lumaCase(state, diffGreen, drdg, dbdg) }
          / ?[ (tagByte >> 6) == 3 ] { tag = "run" }
-            { run = tagByte & 0x3F };
+            { runLength = (tagByte & 0x3F) + 1 }
+            { run = runCase(state, runLength) };
 };
 
 EndMarker -> "\x00\x00\x00\x00\x00\x00\x00\x01";
