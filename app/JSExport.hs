@@ -232,14 +232,14 @@ alternativeToJS indent parent env (Alternative ts subrules)
     = indent <>        "_ipg_alt: {\n"
    <> indent <>        "  let left; let right;\n"
    <>                     concatMap declare nts
-   <> indent <> printf "  self = { %s_ipg_start: EOI, _ipg_end: 0 };\n\n" extend
+   <> indent <> printf "  self = { _ipg_parent: %s, _ipg_start: EOI, _ipg_end: 0 };\n\n" pName
    <>                     whereClauseToJS ("  " ++ indent) env subrules
    <>                     concatMap (termToJS ("  " ++ indent) env) ts
    <> indent <>        "  return self;\n"
    <> indent <>        "}\n"
   where nts = nonArrayNonTerminals ts
         declare nt = printf "%s  let nt_%s;\n" indent nt
-        extend = case parent of Nothing -> ""; Just p -> printf "_ipg_parent: parent_of_%s, " p
+        pName = case parent of Nothing -> "null"; Just p -> printf "parent_of_%s" p
     
 ruleToJS :: Rule T T T Expr -> T
 ruleToJS (Rule nt args alts)
@@ -277,8 +277,8 @@ toJS (Grammar rules)
    <> "function _ipg_lookup(env, i) {\n"
    <> "  let current = env;\n"
    <> "  while (!(i in current)) {\n"
-   <> "    if (!('_ipg_parent' in current)) throw `Lookup of ${i} failed`;\n"
    <> "    current = current._ipg_parent;\n"
+   <> "    if (current === null) throw `Lookup of ${i} failed`;\n"
    <> "  }\n"
    <> "  return current[i];\n"
    <> "}\n\n"

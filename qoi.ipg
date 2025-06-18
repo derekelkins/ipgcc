@@ -28,13 +28,14 @@ QOIChunk -> { tagByte = . } Chunk { chunk = Chunk.this } where {
             { dr = (tagByte >> 4) & 0x03 } { dg = (tagByte >> 2) & 0x03 } { db = tagByte & 0x03 }
          / ?[ (tagByte >> 6) == 2 ] { tag = "luma" }
             { diffGreen = tagByte & 0x3F }
-            { lumaByte = . }
-            { drdg = lumaByte >> 4 }
-            { dbdg = lumaByte & 0x0F }
+            U8
+            { drdg = U8.value >> 4 }
+            { dbdg = U8.value & 0x0F }
          / ?[ (tagByte >> 6) == 3 ] { tag = "run" }
             { run = tagByte & 0x3F };
 };
 
 EndMarker -> "\x00\x00\x00\x00\x00\x00\x00\x01";
 
+U8 -> { value = . };
 BE_U32 -> { bs = *[4] } { value = bs[3] | (bs[2] << 8) | (bs[1] << 16) | (bs[0] << 24) };
