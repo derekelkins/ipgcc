@@ -15,6 +15,9 @@ import IPGLexer ( alexScanTokens, Token(..) )
 
 %token
     EOI     { TokenEOI }
+    where   { TokenWhere }
+    repeat  { TokenRepeat }
+    until   { TokenUntil }
     start   { TokenStart }
     end     { TokenEnd }
     for     { TokenFor }
@@ -85,6 +88,7 @@ import IPGLexer ( alexScanTokens, Token(..) )
 --                 N/A: [ "yield x", "yield* x", "...x" ]
 -- 1 Comma: Left: [ "x, y" ]
 
+%right where
 %right '=' '?' -- 2
 %left '||' -- 3
 %left '&&' -- 4
@@ -116,7 +120,7 @@ Rule :: { Rule' }
     : name ParamList '->' Alternatives { Rule $1 $2 (reverse $4) }
 
 ParamList :: { [IdType] }
-    : '{' Params '}' { reverse $2 }
+    : '(' Params ')' { reverse $2 }
     | {- empty -} { [] }
 
 Params :: { [IdType] }
@@ -129,7 +133,11 @@ Alternatives :: { [Alternative'] }
     | Alternatives '/' Alternative { $3 : $1 }
 
 Alternative :: { Alternative' }
-    : Terms { Alternative (reverse $1) }
+    : Terms WhereClause { Alternative (reverse $1) $2 }
+
+WhereClause :: { Maybe Grammar' }
+    : where '{' Grammar '}' { Just $3 }
+    | {- empty -} { Nothing }
 
 Terms :: { [Term'] }
     : Term { [$1] }
@@ -145,9 +153,10 @@ Term :: { Term' }
     | '{' name '=' AssignTail '}' { makeAssign $2 $4 }
     | '?[' Exp ']' { Guard $2 }
     | for name '=' Exp to Exp do name ArgList '[' Exp ',' Exp ']' { Array $2 $4 $6 $8 $9 $11 $13 }
+    | repeat name ArgList '.' name until name ArgList { Repeat $2 $3 $5 $7 $8 }
 
 ArgList :: { [Exp'] }
-    : '{' Args '}' { reverse $2 }
+    : '(' Args ')' { reverse $2 }
     | {- empty -} { [] }
 
 AssignTail :: { AssignTail }
@@ -199,7 +208,7 @@ NameExpTail :: { NameExpTail }
     | '.' start { Start' }
     | '.' end { End' }
     | '.' name { Attr' $2 }
-    | '(' Exp ')' '.' name { Index' $2 $5 } -- TODO: Deal with this conflict.
+    | '(' Exp ')' '.' name { Index' $2 $5 }
     | '(' Args ')' { Call' (reverse $2) }
 
 Args :: { [Exp'] }

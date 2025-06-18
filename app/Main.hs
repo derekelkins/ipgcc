@@ -14,9 +14,8 @@ helper = ExpHelpers {
 
 main :: IO ()
 main = getContents >>= putStrLn . toJS . E.simplify . toCore helper . parse
--- main = getContents >>= print . parse
 
 {-
-const example = new Uint8Array([2,0,1,0,3,0,4,0]);
-console.log(S(example));
+const fs = require("node:fs");
+console.log(JSON.stringify(QOI(fs.readFileSync("./qoi_test_images/dice.qoi"))));
 -}

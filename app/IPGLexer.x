@@ -14,9 +14,13 @@ $stringchar = $print # [\n\r\f\v]
 tokens :-
     $white+ ;
     "//".*  ;
+    "0x" $hex $hex? { TokenInt . read }
     $digit+ \. $digit* { TokenDouble . read }
     $digit+ { TokenInt . read }
     EOI     { \_ -> TokenEOI }
+    where   { \_ -> TokenWhere }
+    repeat  { \_ -> TokenRepeat }
+    until   { \_ -> TokenUntil }
     start   { \_ -> TokenStart }
     end     { \_ -> TokenEnd }
     for     { \_ -> TokenFor }
@@ -63,6 +67,9 @@ tokens :-
 {
 data Token
     = TokenEOI
+    | TokenWhere
+    | TokenRepeat
+    | TokenUntil
     | TokenStart
     | TokenEnd
     | TokenFor

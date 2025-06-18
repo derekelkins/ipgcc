@@ -6,15 +6,15 @@ module FullIPG (
 ) where
 import qualified CoreIPG as Core
 
--- TODO: where clauses
 newtype Grammar nt t id e = Grammar [Rule nt t id e]
     deriving ( Functor, Show )
 
-  -- A{a_1, ..., a_m} -> alt_1 / ... / alt_n
+-- A{a_1, ..., a_m} -> alt_1 / ... / alt_n;
 data Rule nt t id e = Rule nt [id] [Alternative nt t id e]
     deriving ( Functor, Show )
 
-newtype Alternative nt t id e = Alternative [Term nt t id e] -- tm_1 ... tm_n
+ -- tm_1 ... tm_n where { grammar }
+data Alternative nt t id e = Alternative [Term nt t id e] (Maybe (Grammar nt t id e))
     deriving ( Functor, Show )
 
 data Term nt t id e 
@@ -32,6 +32,7 @@ data Term nt t id e
     | Slice0 id                 -- {id = *}
     | Slice1 id e               -- {id = *[e_l]}
     | Slice2 id e e             -- {id = *[e_l, e_r]}
+    | Repeat nt [e] id nt [e]   -- repeat A(a_1, ..., a_m).id until B(b_1, ..., b_k)
     -- TODO: Switch
   deriving ( Functor, Show )
 
@@ -49,10 +50,11 @@ toCoreRule :: ExpHelpers nt t id e -> Rule nt t id e -> Core.Rule nt t id e
 toCoreRule h (Rule nt args alts) = Core.Rule nt args (map (toCoreAlternative h) alts)
 
 toCoreAlternative :: ExpHelpers nt t id e -> Alternative nt t id e -> Core.Alternative nt t id e
-toCoreAlternative h (Alternative terms) = Core.Alternative (go terms (num h 0) [])
-    where go [] _ acc = reverse acc
-          go (t:ts) nt acc = let (t', nt') = toCoreTerm h nt t
-                             in go ts nt' (t':acc)
+toCoreAlternative h (Alternative terms subrules) =
+    Core.Alternative (go terms (num h 0) []) (fmap (toCore h) subrules)
+  where go [] _ acc = reverse acc
+        go (t:ts) nt acc = let (t', nt') = toCoreTerm h nt t
+                           in go ts nt' (t':acc)
 
 toCoreTerm :: ExpHelpers nt t id e -> e -> Term nt t id e -> (Core.Term nt t id e, e)
 toCoreTerm h p (NonTerminal0 nt args) =
@@ -73,3 +75,5 @@ toCoreTerm h _ (Any1 i l) = (Core.Any i l, add h l (num h 1))
 toCoreTerm h p (Slice0 i) = (Core.Slice i p (ref h Core.EOI), ref h Core.EOI)
 toCoreTerm h p (Slice1 i l) = (Core.Slice i p (add h p l), (add h p l))
 toCoreTerm _ _ (Slice2 i l r) = (Core.Slice i l r, r)
+toCoreTerm h _ (Repeat nt1 args1 i nt2 args2) =
+    (Core.Repeat nt1 args1 i nt2 args2, ref h (Core.End nt2))

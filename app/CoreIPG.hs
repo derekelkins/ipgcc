@@ -8,21 +8,24 @@ import Data.List ( nub ) -- base
 newtype Grammar nt t id e = Grammar [Rule nt t id e]
     deriving ( Functor, Show )
 
-  -- A{a_1, ..., a_m} -> alt_1 / ... / alt_n
+  -- A{a_1, ..., a_m} -> alt_1 / ... / alt_n;
 data Rule nt t id e = Rule nt [id] [Alternative nt t id e]
     deriving ( Functor, Show )
 
-newtype Alternative nt t id e = Alternative [Term nt t id e] -- tm_1 ... tm_n
+-- tm_1 ... tm_n where { grammar }
+data Alternative nt t id e = Alternative [Term nt t id e] (Maybe (Grammar nt t id e))
     deriving ( Functor, Show )
 
 data Term nt t id e 
-    = NonTerminal nt [e] e e    -- A{a_1, ..., a_m}[e_l, e_r]
+    = NonTerminal nt [e] e e    -- A(a_1, ..., a_m)[e_l, e_r]
     | Terminal t e e            -- s[e_l, e_r]
     | id := e                   -- {id = e}
     | Guard e                   -- ?[e]
-    | Array id e e nt [e] e e   -- for id=e_1 to e_2 do A{a_1, ..., a_m}[e_l, e_r]
+    | Array id e e nt [e] e e   -- for id=e_1 to e_2 do A(a_1, ..., a_m)[e_l, e_r]
     | Any id e                  -- {id = .[e]}
     | Slice id e e              -- {id = *[l, r]}
+    | Repeat nt [e] id nt [e]   -- repeat A(a_1, ..., a_m).id until B(b_1, ..., b_k)
+  -- TODO: Add Empty which succeeds only if the input is empty. So that we can do repeat until Empty.
   deriving ( Functor, Show )
     
 data Ref nt id e
@@ -37,11 +40,13 @@ data Ref nt id e
 nonArrayNonTerminals :: (Eq nt) => [Term nt t id e] -> [nt]
 nonArrayNonTerminals = nub . concatMap processTerm
     where processTerm (NonTerminal nt _ _ _) = [nt]
+          processTerm (Repeat nt1 _ _ nt2 _) = [nt1, nt2]
           processTerm _ = []
 
 nonTerminals :: (Eq nt) => [Term nt t id e] -> [nt]
 nonTerminals = nub . concatMap processTerm
     where processTerm (NonTerminal nt _ _ _) = [nt]
+          processTerm (Repeat nt1 _ _ nt2 _) = [nt1, nt2]
           processTerm (Array _ _ _ nt _ _ _) = [nt]
           processTerm _ = []
 
