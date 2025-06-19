@@ -47,26 +47,21 @@
 //     return [color];
 // }
 
-// function mod(x, n) {
-//     const result = x % n;
-//     return result < 0 ? result + n : result;
-// }
-
 // function diffCase(state, dr, dg, db) {
 //     return rgbCase(
 //         state,
-//         mod(state.prevColor.r + dr, 256),
-//         mod(state.prevColor.g + dg, 256),
-//         mod(state.prevColor.b + db, 256)
+//         (state.prevColor.r + dr) & 0xFF,
+//         (state.prevColor.g + dg) & 0xFF,
+//         (state.prevColor.b + db) & 0xFF
 //     );
 // }
 
 // function lumaCase(state, diffGreen, drdg, dbdg) {
 //     return rgbCase(
 //         state,
-//         mod(state.prevColor.r + drdg + diffGreen, 256),
-//         mod(state.prevColor.g + diffGreen, 256),
-//         mod(state.prevColor.b + dbdg + diffGreen, 256)
+//         (state.prevColor.r + drdg + diffGreen) & 0xFF,
+//         (state.prevColor.g + diffGreen) & 0xFF,
+//         (state.prevColor.b + dbdg + diffGreen) & 0xFF
 //     );
 // }
 
