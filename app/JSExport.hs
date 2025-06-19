@@ -9,6 +9,11 @@ import GenericExp ( Exp(..) )
 
 -- TODO: Use Text rather than String.
 
+-- It's worth noting that the way this export works already supports blackbox parsers.
+-- ANY function that takes a slice and returns an object with the _ipg_start/_ipg_end fields
+-- suitably set can just immediately be referenced. If we assume a blackbox parser will always
+-- consume its full input, we can just return _ipg_start = 0, _ipg_end = input.length.
+
 type T = String
 type Expr = Exp T
 type Env = Set.Set T
@@ -17,6 +22,7 @@ refToJS :: Env -> Ref T T Expr -> T
 refToJS env (Id f) | f `Set.member` env = printf "a_%s" f
                    | otherwise          = printf "_ipg_lookup(self, '%s')" f
 refToJS _   (Attr nt "this") = printf "(({_ipg_start,_ipg_end,_ipg_parent,...o}) => o)(nt_%s)" nt
+refToJS _   (Attr nt "these") = printf "seq_%s.map(({_ipg_start,_ipg_end,_ipg_parent,...o}) => o)" nt
 refToJS _   (Attr nt f) = printf "nt_%s.%s" nt f
 refToJS env (Index nt e f) = printf "seq_%s[%s].%s" nt (exprToJS env e) f
 refToJS _   EOI = "EOI";
@@ -197,12 +203,31 @@ termToJS indent env (Slice i l r)
    <> indent <>        "  self._ipg_end = Math.max(self._ipg_end, right);\n"
    <> indent <>        "}\n\n"
   where lExp = exprToJS env l; rExp = exprToJS env r
-termToJS indent env (Repeat nt1 args1 i nt2 args2)
+termToJS indent env (Repeat nt args i)
+    = indent <> printf "// repeat %s%s.%s\n" nt (call es) i
+   <> indent <>        "right = EOI;\n"
+   <> indent <>        "left = self._ipg_end;\n" -- TODO: Should this be a previous non-terminal's end?
+   <> indent <>        "if (right < left) break _ipg_alt;\n"
+   <> indent <>        "self.values = [];\n"
+   <> indent <>        "do {\n"
+   <> indent <> printf "  nt_%s = %s(input.slice(left, right)%s);\n" nt nt es
+   <> indent <> printf "  if (nt_%s === null) break;\n" nt
+   <> indent <> printf "  if (nt_%s._ipg_end !== 0) {\n" nt
+   <> indent <> printf "    self._ipg_start = Math.min(self._ipg_start, left + nt_%s._ipg_start);\n" nt
+   <> indent <> printf "    self._ipg_end = Math.max(self._ipg_end, left + nt_%s._ipg_end);\n" nt
+   <> indent <> printf "    nt_%s._ipg_end += left;\n" nt
+   <> indent <> printf "    nt_%s._ipg_start += left;\n" nt
+   <> indent <>        "  }\n"
+   <> indent <> printf "  self.values.push(nt_%s.%s);\n" nt i
+   <> indent <> printf "  left = nt_%s._ipg_end;\n" nt
+   <> indent <>        "} while(left <= right);\n\n"
+  where es = argList env args
+termToJS indent env (RepeatUntil nt1 args1 i nt2 args2)
     = indent <> printf "// repeat %s%s.%s until %s%s\n" nt1 (call es1) i nt2 (call es2)
    <> indent <>        "right = EOI;\n"
+   <> indent <>        "left = self._ipg_end;\n" -- TODO: Should this be a previous non-terminal's end? 
    <> indent <>        "self.values = [];\n"
    <> indent <>        "while(true) {\n"
-   <> indent <>        "  left = self._ipg_end;\n" 
    <> indent <>        "  if (right < left) break _ipg_alt;\n"
    <> indent <> printf "  nt_%s = %s(input.slice(left, right)%s);\n" nt2 nt2 es2
    <> indent <> printf "  if (nt_%s !== null) {\n" nt2
@@ -214,7 +239,6 @@ termToJS indent env (Repeat nt1 args1 i nt2 args2)
    <> indent <>        "    }\n"
    <> indent <>        "    break;\n"
    <> indent <>        "  }\n"
-   <> indent <>        "  if (right < left) break _ipg_alt;\n"
    <> indent <> printf "  nt_%s = %s(input.slice(left, right)%s);\n" nt1 nt1 es1
    <> indent <> printf "  if (nt_%s === null) break _ipg_alt;\n" nt1
    <> indent <> printf "  if (nt_%s._ipg_end !== 0) {\n" nt1
@@ -224,6 +248,7 @@ termToJS indent env (Repeat nt1 args1 i nt2 args2)
    <> indent <> printf "    nt_%s._ipg_start += left;\n" nt1
    <> indent <>        "  }\n"
    <> indent <> printf "  self.values.push(nt_%s.%s);\n" nt1 i
+   <> indent <> printf "  left = nt_%s._ipg_end;\n" nt1
    <> indent <>        "}\n\n"
   where es1 = argList env args1; es2 = argList env args2
 
@@ -232,13 +257,16 @@ alternativeToJS indent parent env (Alternative ts subrules)
     = indent <>        "_ipg_alt: {\n"
    <> indent <>        "  let left; let right;\n"
    <>                     concatMap declare nts
+   <>                     concatMap declareSeqs seqs
    <> indent <> printf "  self = { _ipg_parent: %s, _ipg_start: EOI, _ipg_end: 0 };\n\n" pName
    <>                     whereClauseToJS ("  " ++ indent) env subrules
    <>                     concatMap (termToJS ("  " ++ indent) env) ts
    <> indent <>        "  return self;\n"
    <> indent <>        "}\n"
   where nts = nonArrayNonTerminals ts
+        seqs = arrayNonTerminals ts
         declare nt = printf "%s  let nt_%s;\n" indent nt
+        declareSeqs nt = printf "%s  let seq_%s;\n" indent nt
         pName = case parent of Nothing -> "null"; Just p -> printf "parent_of_%s" p
     
 ruleToJS :: Rule T T T Expr -> T

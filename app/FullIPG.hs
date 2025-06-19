@@ -18,21 +18,22 @@ data Alternative nt t id e = Alternative [Term nt t id e] (Maybe (Grammar nt t i
     deriving ( Functor, Show )
 
 data Term nt t id e 
-    = NonTerminal0 nt [e]       -- A{e_1, ..., e_m}
-    | NonTerminal1 nt [e] e     -- A{e_1, ..., e_m}[e_l]
-    | NonTerminal2 nt [e] e e   -- A{e_1, ..., e_m}[e_l, e_r]
-    | Terminal0 t               -- s
-    | Terminal1 t e             -- s[e_l]
-    | Terminal2 t e e           -- s[e_l, e_r]
-    | id := e                   -- {id = e}
-    | Guard e                   -- ?[e]
-    | Array id e e nt [e] e e   -- for id=e_1 to e_2 do A{e_1, ..., e_m}[e_l, e_r]
-    | Any0 id                   -- {id = .}
-    | Any1 id e                 -- {id = .[e]}
-    | Slice0 id                 -- {id = *}
-    | Slice1 id e               -- {id = *[e_l]}
-    | Slice2 id e e             -- {id = *[e_l, e_r]}
-    | Repeat nt [e] id nt [e]   -- repeat A(a_1, ..., a_m).id until B(b_1, ..., b_k)
+    = NonTerminal0 nt [e]           -- A{e_1, ..., e_m}
+    | NonTerminal1 nt [e] e         -- A{e_1, ..., e_m}[e_l]
+    | NonTerminal2 nt [e] e e       -- A{e_1, ..., e_m}[e_l, e_r]
+    | Terminal0 t                   -- s
+    | Terminal1 t e                 -- s[e_l]
+    | Terminal2 t e e               -- s[e_l, e_r]
+    | id := e                       -- {id = e}
+    | Guard e                       -- ?[e]
+    | Array id e e nt [e] e e       -- for id=e_1 to e_2 do A{e_1, ..., e_m}[e_l, e_r]
+    | Any0 id                       -- {id = .}
+    | Any1 id e                     -- {id = .[e]}
+    | Slice0 id                     -- {id = *}
+    | Slice1 id e                   -- {id = *[e_l]}
+    | Slice2 id e e                 -- {id = *[e_l, e_r]}
+    | Repeat nt [e] id              -- repeat A(a_1, ..., a_m).id
+    | RepeatUntil nt [e] id nt [e]  -- repeat A(a_1, ..., a_m).id until B(b_1, ..., b_k)
     -- TODO: Switch
   deriving ( Functor, Show )
 
@@ -69,11 +70,12 @@ toCoreTerm h _ (Terminal2 t l r) = (Core.Terminal t l r, add h l (len h t))
 toCoreTerm _ p (i := e) = (i Core.:= e, p)
 toCoreTerm _ p (Guard e) = (Core.Guard e, p)
 toCoreTerm _ _ (Array i s e nt args l r) =
-    (Core.Array i s e nt args l r, error "Can't infer after Array") -- TODO
+    (Core.Array i s e nt args l r, error "Can't infer after Array") -- TODO: A(e).end
 toCoreTerm h p (Any0 i) = (Core.Any i p, add h p (num h 1))
 toCoreTerm h _ (Any1 i l) = (Core.Any i l, add h l (num h 1))
 toCoreTerm h p (Slice0 i) = (Core.Slice i p (ref h Core.EOI), ref h Core.EOI)
 toCoreTerm h p (Slice1 i l) = (Core.Slice i p (add h p l), (add h p l))
 toCoreTerm _ _ (Slice2 i l r) = (Core.Slice i l r, r)
-toCoreTerm h _ (Repeat nt1 args1 i nt2 args2) =
-    (Core.Repeat nt1 args1 i nt2 args2, ref h (Core.End nt2))
+toCoreTerm h _ (Repeat nt args i) = (Core.Repeat nt args i, ref h (Core.End nt))
+toCoreTerm h _ (RepeatUntil nt1 args1 i nt2 args2) =
+    (Core.RepeatUntil nt1 args1 i nt2 args2, ref h (Core.End nt2))

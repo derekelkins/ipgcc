@@ -153,7 +153,12 @@ Term :: { Term' }
     | '{' name '=' AssignTail '}' { makeAssign $2 $4 }
     | '?[' Exp ']' { Guard $2 }
     | for name '=' Exp to Exp do name ArgList '[' Exp ',' Exp ']' { Array $2 $4 $6 $8 $9 $11 $13 }
-    | repeat name ArgList '.' name until name ArgList { Repeat $2 $3 $5 $7 $8 }
+    | repeat name ArgList '.' name UntilTail { case $6 of Just (n,es) -> RepeatUntil $2 $3 $5 n es; _ -> Repeat $2 $3 $5 }
+    -- TODO: Liberalize repeat-until syntax.
+
+UntilTail :: { Maybe (IdType, [Exp']) }
+    : until name ArgList { Just ($2, $3) }
+    | {- empty -} { Nothing }
 
 ArgList :: { [Exp'] }
     : '(' Args ')' { reverse $2 }
