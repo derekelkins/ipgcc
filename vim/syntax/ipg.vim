@@ -5,7 +5,7 @@ endif
 syntax keyword IPGKeyword EOI where repeat until start end for to do
 highlight link IPGKeyword Keyword
 
-syntax match IPGDelimiter "?\[\|:\|?\|(\|)\|\[\|\]\|,\|;\|_\|{\|}"
+syntax match IPGDelimiter "?\[\|:\|?\|(\|)\|\[\|\]\|,\|;\|{\|}"
 highlight link IPGDelimiter Delimiter
 
 syntax match IPGOperator "\v\*\*"
