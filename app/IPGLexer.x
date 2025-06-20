@@ -21,8 +21,8 @@ tokens :-
     where   { \_ -> TokenWhere }
     repeat  { \_ -> TokenRepeat }
     until   { \_ -> TokenUntil }
-    start   { \_ -> TokenStart }
-    end     { \_ -> TokenEnd }
+    START   { \_ -> TokenStart }
+    END     { \_ -> TokenEnd }
     for     { \_ -> TokenFor }
     to      { \_ -> TokenTo }
     do      { \_ -> TokenDo }

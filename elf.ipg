@@ -121,7 +121,7 @@ NoteSecEntry -> U32 { len_name = U32.value }
                 U32 { len_descriptor = U32.value }
                 U32 { type = U32.value }
                 Name[len_name]
-                Descriptor[Name.end + ((-len_name)&3), Name.end + ((-len_name)&3) + len_descriptor]
+                Descriptor[Name.END + ((-len_name)&3), Name.END + ((-len_name)&3) + len_descriptor]
                 { entry = makeEntry(Name.value, Descriptor.value, type) };
 
 Name -> { value = *[EOI - 1] } "\x00";

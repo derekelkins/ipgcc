@@ -18,8 +18,8 @@ import IPGLexer ( alexScanTokens, Token(..) )
     where   { TokenWhere }
     repeat  { TokenRepeat }
     until   { TokenUntil }
-    start   { TokenStart }
-    end     { TokenEnd }
+    START   { TokenStart }
+    END     { TokenEnd }
     for     { TokenFor }
     to      { TokenTo }
     do      { TokenDo }
@@ -210,8 +210,8 @@ NameExp :: { Exp' }
 
 NameExpTail :: { NameExpTail }
     : {- empty -} { Id' }
-    | '.' start { Start' }
-    | '.' end { End' }
+    | '.' START { Start' }
+    | '.' END { End' }
     | '.' name { Attr' $2 }
     | '(' Exp ')' MaybeIndex { case $4 of Just i -> Index' $2 i;_ -> Call' [$2] }
     | '(' Args ')' { Call' (reverse $2) }
@@ -235,8 +235,8 @@ type Term' = Term IdType IdType IdType Exp'
 type Ref' = Ref IdType IdType Exp'
 
 data NameExpTail
-    = Start'                -- name '.' start               { Ref (Start $1) }
-    | End'                  -- name '.' end                 { Ref (End $1) }
+    = Start'                -- name '.' START               { Ref (Start $1) }
+    | End'                  -- name '.' END                 { Ref (End $1) }
     | Attr' IdType          -- name '.' name                { Ref (Attr $1 $3) } 
     | Index' Exp' IdType    -- name '(' Exp ')' '.' name    { Ref (Index $1 $3 $6) }
     | Call' [Exp']          -- name '(' Args ')'            { Call $1 (reverse $3) }
