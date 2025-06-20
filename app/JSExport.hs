@@ -117,7 +117,7 @@ call es = '(':drop 2 es ++ ")"
 
 hexyString :: String -> String
 hexyString s = '"':concatMap go s ++ "\""
-    where go c | isPrint c = [c]
+    where go c | isPrint c = [c] -- TODO: Pick something much narrower than this.
                | c `elem` "abfnrtv\\\"'" = show c
                | otherwise = '\\':'x':pad (showHex (ord c) "")
           pad h@[_] = '0':h
@@ -134,9 +134,9 @@ termToJS indent env (NonTerminal nt args l r)
    <> indent <> printf "if (nt_%s._ipg_end !== 0) {\n" nt
    <> indent <> printf "  self._ipg_start = Math.min(self._ipg_start, left + nt_%s._ipg_start);\n" nt
    <> indent <> printf "  self._ipg_end = Math.max(self._ipg_end, left + nt_%s._ipg_end);\n" nt
-   <> indent <> printf "  nt_%s._ipg_end += left;\n" nt
-   <> indent <> printf "  nt_%s._ipg_start += left;\n" nt
    <> indent <>        "}\n\n"
+   <> indent <> printf "nt_%s._ipg_end += left;\n" nt
+   <> indent <> printf "nt_%s._ipg_start += left;\n" nt
   where lExp = exprToJS env l; rExp = exprToJS env r; es = argList env args
 termToJS indent env (Terminal "" l r) 
     = indent <> printf "// ""[%s, %s]\n" lExp rExp
@@ -175,9 +175,9 @@ termToJS indent env (Array i start end nt args l r)
    <> indent <>        "  if (tmp._ipg_end !== 0) {\n"
    <> indent <>        "    self._ipg_start = Math.min(self._ipg_start, left + tmp._ipg_start);\n"
    <> indent <>        "    self._ipg_end = Math.max(self._ipg_end, left + tmp._ipg_end);\n"
-   <> indent <>        "    tmp._ipg_end += left;\n"
-   <> indent <>        "    tmp._ipg_start += left;\n"
-   <> indent <>        "   }\n"
+   <> indent <>        "  }\n"
+   <> indent <>        "  tmp._ipg_end += left;\n"
+   <> indent <>        "  tmp._ipg_start += left;\n"
    <> indent <> printf "  seq_%s.push(tmp);\n" nt
    <> indent <>        "}\n"
    <> indent <> printf "delete self.%s;\n\n" i
@@ -215,9 +215,9 @@ termToJS indent env (Repeat nt args i)
    <> indent <> printf "  if (nt_%s._ipg_end !== 0) {\n" nt
    <> indent <> printf "    self._ipg_start = Math.min(self._ipg_start, left + nt_%s._ipg_start);\n" nt
    <> indent <> printf "    self._ipg_end = Math.max(self._ipg_end, left + nt_%s._ipg_end);\n" nt
-   <> indent <> printf "    nt_%s._ipg_end += left;\n" nt
-   <> indent <> printf "    nt_%s._ipg_start += left;\n" nt
    <> indent <>        "  }\n"
+   <> indent <> printf "  nt_%s._ipg_end += left;\n" nt
+   <> indent <> printf "  nt_%s._ipg_start += left;\n" nt
    <> indent <> printf "  self.values.push(nt_%s.%s);\n" nt i
    <> indent <> printf "  left = nt_%s._ipg_end;\n" nt
    <> indent <>        "} while(left <= right);\n\n"
@@ -234,9 +234,9 @@ termToJS indent env (RepeatUntil nt1 args1 i nt2 args2)
    <> indent <> printf "    if (nt_%s._ipg_end !== 0) {\n" nt2
    <> indent <> printf "      self._ipg_start = Math.min(self._ipg_start, left + nt_%s._ipg_start);\n" nt2
    <> indent <> printf "      self._ipg_end = Math.max(self._ipg_end, left + nt_%s._ipg_end);\n" nt2
-   <> indent <> printf "      nt_%s._ipg_end += left;\n" nt2
-   <> indent <> printf "      nt_%s._ipg_start += left;\n" nt2
    <> indent <>        "    }\n"
+   <> indent <> printf "    nt_%s._ipg_end += left;\n" nt2
+   <> indent <> printf "    nt_%s._ipg_start += left;\n" nt2
    <> indent <>        "    break;\n"
    <> indent <>        "  }\n"
    <> indent <> printf "  nt_%s = %s(input.slice(left, right)%s);\n" nt1 nt1 es1
@@ -244,9 +244,9 @@ termToJS indent env (RepeatUntil nt1 args1 i nt2 args2)
    <> indent <> printf "  if (nt_%s._ipg_end !== 0) {\n" nt1
    <> indent <> printf "    self._ipg_start = Math.min(self._ipg_start, left + nt_%s._ipg_start);\n" nt1
    <> indent <> printf "    self._ipg_end = Math.max(self._ipg_end, left + nt_%s._ipg_end);\n" nt1
-   <> indent <> printf "    nt_%s._ipg_end += left;\n" nt1
-   <> indent <> printf "    nt_%s._ipg_start += left;\n" nt1
    <> indent <>        "  }\n"
+   <> indent <> printf "  nt_%s._ipg_end += left;\n" nt1
+   <> indent <> printf "  nt_%s._ipg_start += left;\n" nt1
    <> indent <> printf "  self.values.push(nt_%s.%s);\n" nt1 i
    <> indent <> printf "  left = nt_%s._ipg_end;\n" nt1
    <> indent <>        "}\n\n"
