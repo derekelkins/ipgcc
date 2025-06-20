@@ -1,0 +1,160 @@
+// const fs = require("node:fs");
+// console.log(JSON.stringify(GIF(fs.readFileSync("./gif_samples/1.gif"))));
+
+// function emptyTable() {
+//   return [];
+// }
+
+// function getNull() {
+//   return null;
+// }
+
+// function concat(chunks) {
+//   return Buffer.concat(chunks);
+// }
+
+// function decodeAscii(bytes) {
+//   return new TextDecoder("ascii").decode(new Uint8Array(bytes));
+// }
+
+// function makeGraphicBlock(extension, renderingBlock) {
+//   return { extension, ...renderingBlock };
+// }
+
+// function makeGraphicControlExtension(
+//     disposalMethod, userInputFlag, transparentColorFlag, delayTime, transparentColorIndex
+// ) {
+//   return {
+//     disposalMethod,
+//     userInputFlag,
+//     transparentColorFlag,
+//     delayTime,
+//     transparentColorIndex
+//   };
+// }
+
+// Instead of adapting the versions from the paper's resources, I'm just going to implement from
+// scratch from the spec. https://giflib.sourceforge.net/gifstandard/GIF89a.html
+GIF -> Header
+       LogicalScreen { logicalScreen = LogicalScreen.this }
+       Blocks { blocks = Blocks.values };
+
+Header -> "GIF89a";
+
+LogicalScreen
+    -> LogicalScreenDescriptor { descriptor = LogicalScreenDescriptor.this }
+       MaybeColorTable(LogicalScreenDescriptor.hasGlobalColorTable)[3*LogicalScreenDescriptor.globalColorTableSize]
+       { globalColorTable = MaybeColorTable.table };
+
+LogicalScreenDescriptor
+    -> U16 { width = U16.value }
+       U16 { height = U16.value }
+       { packedFields = . }
+       { backgroundColorIndex = . }
+       { pixelAspectRation = . }
+       { hasGlobalColorTable = packedFields >> 7 }
+       { colorResolution = ((packedFields >> 4) & 0x07) + 1 }
+       { sorted = (packedFields >> 3) & 0x01 }
+       { globalColorTableSize = 2 << (packedFields & 0x07) };
+       // Even if hasGlobalColorTable == 0, globalColorTableSize will be set like this.
+
+MaybeColorTable(hasColorTable)
+    -> ?[ hasColorTable == 0 ] { table = emptyTable() }
+     / ColorTable { table = ColorTable.table };
+
+ColorTable -> for i=0 to EOI/3 do RGB[3*i, 3*i + 3] { table = RGB.these };
+
+Blocks -> repeat Block.block until Trailer;
+
+Block
+    -> GraphicBlock { block = GraphicBlock.block }
+     / ApplicationExtension { block = ApplicationExtension.this }
+     / CommentExtension { block = CommentExtension.this };
+
+GraphicBlock
+    -> MaybeGraphicControlExtension
+       GraphicRenderingBlock
+       { block = makeGraphicBlock(MaybeGraphicControlExtension.extension,
+                                  GraphicRenderingBlock.block) };
+
+MaybeGraphicControlExtension
+    -> "!\xF9"
+       "\x04" // size
+       { packedFields = . } // { reserved:3, disposalMethod:3, userInputFlag:1, transparentColorFlag: 1 }
+       { disposalMethod = (packedFields >> 2) & 0x07 }
+       { userInputFlag = (packedFields >> 1) & 0x01 }
+       { transparentColorFlag = packedFields & 0x01 }
+       U16 { delayTime = U16.value }
+       { transparentColorIndex = . }
+       BlockTerminator
+       { extension = makeGraphicControlExtension(
+            disposalMethod, userInputFlag, transparentColorFlag, delayTime, transparentColorIndex) }
+     / { extension = getNull() };
+
+GraphicRenderingBlock
+    -> TableBasedImage { block = TableBasedImage.this }
+     / PlainTextExtension { block = PlainTextExtension.this };
+
+TableBasedImage
+    -> { type = "tableBasedImage" }
+       ImageDescriptor { descriptor = ImageDescriptor.this }
+       MaybeColorTable(ImageDescriptor.localColorTableFlag)[3*ImageDescriptor.localColorTableSize]
+       { localColorTable = MaybeColorTable.table }
+       ImageData { data = ImageData.this };
+
+ImageDescriptor
+    -> ","
+       U16 { imageLeftPosition = U16.value }
+       U16 { imageTopPosition = U16.value }
+       U16 { imageWidth = U16.value }
+       U16 { imageHeight = U16.value }
+       { packedFields = . }
+       { localColorTableFlag = packedFields >> 7 }
+       { interlaceFlag = (packedFields >> 6) & 0x01 }
+       { sorted = (packedFields >> 5) & 0x01 }
+       { localColorTableSize = 2 << (packedFields & 0x07) };
+
+ImageData
+    -> { lzwMinimumCodeSize = . }
+       Subblocks { imageData = concat(Subblocks.values) };
+
+PlainTextExtension
+    -> "!\x01"
+       "\x03" // size of this subblock which doesn't include the PlainTextData subblocks
+       { type = "plainTextExtension" }
+       U16 { textGridLeftPosition = U16.value }
+       U16 { textGridTopPosition = U16.value }
+       U16 { textGridWidth = U16.value }
+       U16 { textGridHeight = U16.value }
+       { characterCellWidth = . }
+       { characterCellHeight = . }
+       { textForegroundColorIndex = . }
+       { textBackgroundColorIndex = . }
+       Subblocks { plainTextData = concat(Subblocks.values) };
+
+B(n) -> { value = *[n] };
+
+ApplicationExtension
+    -> "!\xFF"
+       "\x0B" // size of this subblock which doesn't include the ApplicationData subblocks
+       { type = "applicationExtension" }
+       B(8) { applicationIdentifier = decodeAscii(B.value) }
+       B(3) { applicationAuthenticationCode = decodeAscii(B.value) }
+       Subblocks { applicationData = concat(Subblocks.values) };
+
+CommentExtension
+    -> "!\xFE"
+       { type = "commentExtension" }
+       Subblocks { commentData = decodeAscii(concat(Subblocks.values)) };
+
+Subblocks -> repeat Subblock.data until BlockTerminator;
+
+Subblock -> { size = . } { data = *[size] };
+
+Trailer -> ";";
+
+U16 -> { bs = *[2] } { value = bs[0] | (bs[1] << 8) }; // Little-endian
+
+BlockTerminator -> "\x00";
+
+RGB -> { r = . } { g = . } { b = . };
