@@ -1,7 +1,10 @@
-S -> "\x00\x01";
+S -> for i = 0 to 10 do A[A.END, EOI] { result = A.these };
+A -> "ab" {s = "ab"} / "c" {s = "c"};
 
-// S -> A{"a"} A{"b"};
-// A{x} -> {y = .} ?[x == y];
+// S -> "\x00\x01";
+
+// S -> A("a") A("b");
+// A(x) -> {y = .} ?[x == y];
 
 // S -> H[2] for i=0 to H.num do A[2 + 2*i, 2 + 2*(i+1)] {a_0 = A(0).val} ?[a_0 > 0 && 10 > a_0];
 // H -> Int[2] {num = Int.val};
@@ -17,7 +20,7 @@ S -> "\x00\x01";
 // O -> "0" O
 //    / "0";
 
-// S -> "1"[0,1] O[1,EOI] "stop"[O.end,EOI];
+// S -> "1"[0,1] O[1,EOI] "stop"[O.END,EOI];
 // O -> "0"[0,1] O[1,EOI]
 //    / "0"[0,1];
 

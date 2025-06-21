@@ -21,9 +21,13 @@ type Env = Set.Set T
 refToJS :: Env -> Ref T T Expr -> T
 refToJS env (Id f) | f `Set.member` env = printf "a_%s" f
                    | otherwise          = printf "_ipg_lookup(self, '%s')" f
-refToJS _   (Attr nt "this") = printf "(({_ipg_start,_ipg_end,_ipg_parent,...o}) => o)(nt_%s)" nt
-refToJS _   (Attr nt "these") = printf "seq_%s.map(({_ipg_start,_ipg_end,_ipg_parent,...o}) => o)" nt
+refToJS _   (Attr nt "this") =
+    printf "(({_ipg_start,_ipg_end,_ipg_parent,...o}) => o)(nt_%s)" nt
+refToJS _   (Attr nt "these") =
+    printf "seq_%s.map(({_ipg_start,_ipg_end,_ipg_parent,...o}) => o)" nt
 refToJS _   (Attr nt f) = printf "nt_%s.%s" nt f
+refToJS env (Index nt e "this") =
+    printf "(({_ipg_start,_ipg_end,_ipg_parent,...o}) => o)(seq_%s[%s])" nt (exprToJS env e)
 refToJS env (Index nt e f) = printf "seq_%s[%s].%s" nt (exprToJS env e) f
 refToJS _   EOI = "EOI";
 refToJS _   (Start nt) = printf "nt_%s._ipg_start" nt;
@@ -161,10 +165,11 @@ termToJS indent env (Guard e)
     = indent <> printf "// ?[%s]\n" eExp
    <> indent <> printf "if (!%s) break _ipg_alt;\n\n" eExp
   where eExp = exprToJS' env 15 e ""
-termToJS indent env (Array i start end nt args l r)
+termToJS indent env (Array i start end nt args l r p)
     = indent <> printf "// for %s = %s to %s do %s%s[%s, %s]\n"
         i startExp endExp nt (call es) lExp rExp
    <> indent <> printf "seq_%s = [];\n" nt
+   <> indent <> printf "nt_%s = { _ipg_end: %s, _ipg_start: 0 };\n" nt pExp -- Special case
    <> indent <> printf "for (self.%s = %s; self.%s < %s; self.%s++) {\n"
             i startExp i endExp i
    <> indent <> printf "  const left = %s;\n" lExp
@@ -178,11 +183,13 @@ termToJS indent env (Array i start end nt args l r)
    <> indent <>        "  }\n"
    <> indent <>        "  tmp._ipg_end += left;\n"
    <> indent <>        "  tmp._ipg_start += left;\n"
+   <> indent <> printf "  nt_%s._ipg_end = tmp._ipg_end;\n" nt -- Special case
+   <> indent <> printf "  nt_%s._ipg_start = tmp._ipg_start;\n" nt -- Special case
    <> indent <> printf "  seq_%s.push(tmp);\n" nt
    <> indent <>        "}\n"
    <> indent <> printf "delete self.%s;\n\n" i
   where startExp = exprToJS env start; endExp = exprToJS' env 10 end "";
-        lExp = exprToJS env l; rExp = exprToJS env r; es = argList env args
+        pExp = exprToJS env p; lExp = exprToJS env l; rExp = exprToJS env r; es = argList env args
 termToJS indent env (Any i l)
     = indent <> printf "// {%s = .[%s]}\n" i lExp
    <> indent <> printf "left = %s;\n" lExp
@@ -263,7 +270,7 @@ alternativeToJS indent parent env (Alternative ts subrules)
    <>                     concatMap (termToJS ("  " ++ indent) env) ts
    <> indent <>        "  return self;\n"
    <> indent <>        "}\n"
-  where nts = nonArrayNonTerminals ts
+  where nts = nonTerminals ts
         seqs = arrayNonTerminals ts
         declare nt = printf "%s  let nt_%s;\n" indent nt
         declareSeqs nt = printf "%s  let seq_%s;\n" indent nt

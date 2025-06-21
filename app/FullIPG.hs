@@ -69,8 +69,8 @@ toCoreTerm h p (Terminal1 t l) = (Core.Terminal t p (add h p l), add h p (len h 
 toCoreTerm h _ (Terminal2 t l r) = (Core.Terminal t l r, add h l (len h t))
 toCoreTerm _ p (i := e) = (i Core.:= e, p)
 toCoreTerm _ p (Guard e) = (Core.Guard e, p)
-toCoreTerm _ _ (Array i s e nt args l r) =
-    (Core.Array i s e nt args l r, error "Can't infer after Array") -- TODO: A(e).end
+toCoreTerm h p (Array i s e nt args l r) =
+    (Core.Array i s e nt args l r p, ref h (Core.End nt))
 toCoreTerm h p (Any0 i) = (Core.Any i p, add h p (num h 1))
 toCoreTerm h _ (Any1 i l) = (Core.Any i l, add h l (num h 1))
 toCoreTerm h p (Slice0 i) = (Core.Slice i p (ref h Core.EOI), ref h Core.EOI)
