@@ -18,7 +18,6 @@ tokens :-
     $digit+ \. $digit* { TokenDouble . read }
     $digit+ { TokenInt . read }
     EOI     { \_ -> TokenEOI }
-    where   { \_ -> TokenWhere }
     repeat  { \_ -> TokenRepeat }
     until   { \_ -> TokenUntil }
     START   { \_ -> TokenStart }
@@ -67,7 +66,6 @@ tokens :-
 {
 data Token
     = TokenEOI
-    | TokenWhere
     | TokenRepeat
     | TokenUntil
     | TokenStart

@@ -13,8 +13,8 @@ newtype Grammar nt t id e = Grammar [Rule nt t id e]
 data Rule nt t id e = Rule nt [id] [Alternative nt t id e]
     deriving ( Functor, Show )
 
- -- tm_1 ... tm_n where { grammar }
-data Alternative nt t id e = Alternative [Term nt t id e] (Maybe (Grammar nt t id e))
+ -- tm_1 ... tm_n
+data Alternative nt t id e = Alternative [Term nt t id e]
     deriving ( Functor, Show )
 
 data Term nt t id e 
@@ -51,8 +51,8 @@ toCoreRule :: ExpHelpers nt t id e -> Rule nt t id e -> Core.Rule nt t id e
 toCoreRule h (Rule nt args alts) = Core.Rule nt args (map (toCoreAlternative h) alts)
 
 toCoreAlternative :: ExpHelpers nt t id e -> Alternative nt t id e -> Core.Alternative nt t id e
-toCoreAlternative h (Alternative terms subrules) =
-    Core.Alternative (go terms (num h 0) []) (fmap (toCore h) subrules)
+toCoreAlternative h (Alternative terms) =
+    Core.Alternative (go terms (num h 0) [])
   where go [] _ acc = reverse acc
         go (t:ts) nt acc = let (t', nt') = toCoreTerm h nt t
                            in go ts nt' (t':acc)

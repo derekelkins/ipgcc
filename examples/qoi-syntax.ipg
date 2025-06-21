@@ -1,3 +1,6 @@
+// const fs = require("node:fs");
+// console.log(JSON.stringify(QOI(fs.readFileSync("./qoi_test_images/dice.qoi"))));
+
 QOI
     -> QOIHeader
        { width = QOIHeader.width }
@@ -16,26 +19,26 @@ QOIHeader
 
 QOIChunks -> repeat QOIChunk.chunk until EndMarker;
 
-QOIChunk -> { tagByte = . } Chunk { chunk = Chunk.this } where {
-    Chunk
-        -> ?[ tagByte == 0xFE ] { tag = "rgb" }
-            { r = . } { g = . } { b = . }
-         / ?[ tagByte == 0xFF ] { tag = "rgba" }
-            { r = . } { g  = . } { b  = . } { a  = . }
-         / ?[ (tagByte >> 6) == 0 ] { tag = "index" }
-            { index = tagByte & 0x3F }
-         / ?[ (tagByte >> 6) == 1 ] { tag = "diff" }
-            { dr = ((tagByte >> 4) & 0x03) - 2 }
-            { dg = ((tagByte >> 2) & 0x03) - 2 }
-            { db = (tagByte & 0x03) - 2 }
-         / ?[ (tagByte >> 6) == 2 ] { tag = "luma" }
-            { diffGreen = (tagByte & 0x3F) - 32 }
-            U8
-            { drdg = (U8.value >> 4) - 8 }
-            { dbdg = (U8.value & 0x0F) - 8}
-         / ?[ (tagByte >> 6) == 3 ] { tag = "run" }
-            { run = (tagByte & 0x3F) + 1 };
-};
+QOIChunk -> { tagByte = . } Chunk(tagByte) { chunk = Chunk.this };
+
+Chunk(tagByte)
+    -> ?[ tagByte == 0xFE ] { tag = "rgb" }
+        { r = . } { g = . } { b = . }
+     / ?[ tagByte == 0xFF ] { tag = "rgba" }
+        { r = . } { g  = . } { b  = . } { a  = . }
+     / ?[ (tagByte >> 6) == 0 ] { tag = "index" }
+        { index = tagByte & 0x3F }
+     / ?[ (tagByte >> 6) == 1 ] { tag = "diff" }
+        { dr = ((tagByte >> 4) & 0x03) - 2 }
+        { dg = ((tagByte >> 2) & 0x03) - 2 }
+        { db = (tagByte & 0x03) - 2 }
+     / ?[ (tagByte >> 6) == 2 ] { tag = "luma" }
+        { diffGreen = (tagByte & 0x3F) - 32 }
+        U8
+        { drdg = (U8.value >> 4) - 8 }
+        { dbdg = (U8.value & 0x0F) - 8}
+     / ?[ (tagByte >> 6) == 3 ] { tag = "run" }
+        { run = (tagByte & 0x3F) + 1 };
 
 EndMarker -> "\x00\x00\x00\x00\x00\x00\x00\x01";
 

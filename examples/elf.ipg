@@ -24,28 +24,27 @@
 // `man elf(5)` seems to be the reference to use.
 ELF -> H[0, 128]
        for i = 0 to H.e_shnum do SH[H.e_shoff + i*H.e_shentsize, H.e_shoff + (i + 1)*H.e_shentsize]
-       for i = 1 to H.e_shnum do Sec(i)[SH(i).sh_offset, SH(i).sh_offset + SH(i).sh_size]
+       for i = 1 to H.e_shnum do Sec(SH(i).sh_type)[SH(i).sh_offset, SH(i).sh_offset + SH(i).sh_size]
        { header = H.this }
        { section_headers = SH.these }
-       { sections = projectSections(Sec.these) }
-    where {
-        Sec(i) ->
-               ?[ SH(i).sh_type == 6 ]
-               DynSec { section = DynSec.section }
-             / ?[ SH(i).sh_type == 3 ]
-               StrSec { section = StrSec.section }
-             / ?[ SH(i).sh_type == 11 || SH(i).sh_type == 2 ] 
-               DynSymSec { section = DynSymSec.section }
-             / ?[ SH(i).sh_type == 7 ]
-               NoteSec { section = NoteSec.section }
-             / ?[ SH(i).sh_type == 9 ]
-               RelSec { section = RelSec.section }
-             / ?[ SH(i).sh_type == 4 ]
-               RelAddEndSec { section = RelAddEndSec.section }
-             / ?[ SH(i).sh_type == 8 ] // NoBits section
-               { section = empty() }
-             / { section = *[0, EOI] };
-        };
+       { sections = projectSections(Sec.these) };
+
+Sec(sh_type)
+    -> ?[ sh_type == 6 ]
+       DynSec { section = DynSec.section }
+     / ?[ sh_type == 3 ]
+       StrSec { section = StrSec.section }
+     / ?[ sh_type == 11 || sh_type == 2 ] 
+       DynSymSec { section = DynSymSec.section }
+     / ?[ sh_type == 7 ]
+       NoteSec { section = NoteSec.section }
+     / ?[ sh_type == 9 ]
+       RelSec { section = RelSec.section }
+     / ?[ sh_type == 4 ]
+       RelAddEndSec { section = RelAddEndSec.section }
+     / ?[ sh_type == 8 ] // NoBits section
+       { section = empty() }
+     / { section = *[0, EOI] };
 
 NUL_BYTE -> "\x00";
 

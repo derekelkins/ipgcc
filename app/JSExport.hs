@@ -20,14 +20,14 @@ type Env = Set.Set T
 
 refToJS :: Env -> Ref T T Expr -> T
 refToJS env (Id f) | f `Set.member` env = printf "a_%s" f
-                   | otherwise          = printf "_ipg_lookup(self, '%s')" f
+                   | otherwise          = printf "self.%s" f
 refToJS _   (Attr nt "this") =
-    printf "(({_ipg_start,_ipg_end,_ipg_parent,...o}) => o)(nt_%s)" nt
+    printf "(({_ipg_start,_ipg_end,...o}) => o)(nt_%s)" nt
 refToJS _   (Attr nt "these") =
-    printf "seq_%s.map(({_ipg_start,_ipg_end,_ipg_parent,...o}) => o)" nt
+    printf "seq_%s.map(({_ipg_start,_ipg_end,...o}) => o)" nt
 refToJS _   (Attr nt f) = printf "nt_%s.%s" nt f
 refToJS env (Index nt e "this") =
-    printf "(({_ipg_start,_ipg_end,_ipg_parent,...o}) => o)(seq_%s[%s])" nt (exprToJS env e)
+    printf "(({_ipg_start,_ipg_end,...o}) => o)(seq_%s[%s])" nt (exprToJS env e)
 refToJS env (Index nt e f) = printf "seq_%s[%s].%s" nt (exprToJS env e) f
 refToJS _   EOI = "EOI";
 refToJS _   (Start nt) = printf "nt_%s._ipg_start" nt;
@@ -259,14 +259,13 @@ termToJS indent env (RepeatUntil nt1 args1 i nt2 args2)
    <> indent <>        "}\n\n"
   where es1 = argList env args1; es2 = argList env args2
 
-alternativeToJS :: T -> Maybe T -> Env -> Alternative T T T Expr -> T
-alternativeToJS indent parent env (Alternative ts subrules)
+alternativeToJS :: T -> Env -> Alternative T T T Expr -> T
+alternativeToJS indent env (Alternative ts)
     = indent <>        "_ipg_alt: {\n"
    <> indent <>        "  let left; let right;\n"
    <>                     concatMap declare nts
    <>                     concatMap declareSeqs seqs
-   <> indent <> printf "  self = { _ipg_parent: %s, _ipg_start: EOI, _ipg_end: 0 };\n\n" pName
-   <>                     whereClauseToJS ("  " ++ indent) env subrules
+   <> indent <>        "  self = { _ipg_start: EOI, _ipg_end: 0 };\n\n"
    <>                     concatMap (termToJS ("  " ++ indent) env) ts
    <> indent <>        "  return self;\n"
    <> indent <>        "}\n"
@@ -274,30 +273,15 @@ alternativeToJS indent parent env (Alternative ts subrules)
         seqs = arrayNonTerminals ts
         declare nt = printf "%s  let nt_%s;\n" indent nt
         declareSeqs nt = printf "%s  let seq_%s;\n" indent nt
-        pName = case parent of Nothing -> "null"; Just p -> printf "parent_of_%s" p
     
 ruleToJS :: Rule T T T Expr -> T
 ruleToJS (Rule nt args alts)
     = printf "function %s(input%s) {\n" nt (paramList args)
    <>        "  const EOI = input.length; let self;\n"
-   <>           concatMap (alternativeToJS "  " Nothing env) alts
+   <>           concatMap (alternativeToJS "  " env) alts
    <>        "  return null;\n"
    <>        "}\n\n"
   where env = Set.fromList args
-
-whereClauseToJS :: T -> Env -> Maybe (Grammar T T T Expr) -> T
-whereClauseToJS indent env (Just (Grammar rules)) = concatMap (subruleToJS indent env) rules
-whereClauseToJS _ _   Nothing = ""
-
-subruleToJS :: T -> Env -> Rule T T T Expr -> T
-subruleToJS indent env' (Rule nt args alts)
-    = indent <> printf "const parent_of_%s = self;\n" nt
-   <> indent <> printf "const %s = (input%s) => {\n" nt (paramList args)
-   <> indent <>        "  const EOI = input.length; let self;\n"
-   <>                     concatMap (alternativeToJS ("  " ++ indent) (Just nt) env) alts
-   <> indent <>        "  return null;\n"
-   <> indent <>        "};\n\n"
-  where env = Set.union env' (Set.fromList args)
 
 toJS :: Grammar T T T Expr -> T
 toJS (Grammar rules)
@@ -308,13 +292,5 @@ toJS (Grammar rules)
    <> "    if (s[i] !== prefix.charCodeAt(i)) return false;\n"
    <> "  }\n"
    <> "  return true;\n"
-   <> "}\n\n"
-   <> "function _ipg_lookup(env, i) {\n"
-   <> "  let current = env;\n"
-   <> "  while (!(i in current)) {\n"
-   <> "    current = current._ipg_parent;\n"
-   <> "    if (current === null) throw `Lookup of ${i} failed`;\n"
-   <> "  }\n"
-   <> "  return current[i];\n"
    <> "}\n\n"
    <> concatMap ruleToJS rules

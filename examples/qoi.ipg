@@ -90,32 +90,32 @@ QOIHeader
 
 QOIChunks(state) -> repeat QOIChunk(state).chunk until EndMarker;
 
-QOIChunk(state) -> { tagByte = . } Chunk(state) { chunk = Chunk.run } where {
-    Chunk(state)
-        -> ?[ tagByte == 0xFE ] { tag = "rgb" }
-            { r = . } { g = . } { b = . }
-            { run = rgbCase(state, r, g, b) }
-         / ?[ tagByte == 0xFF ] { tag = "rgba" }
-            { r = . } { g  = . } { b  = . } { a  = . }
-            { run = rgbaCase(state, r, g, b, a) }
-         / ?[ (tagByte >> 6) == 0 ] { tag = "index" }
-            { index = tagByte & 0x3F }
-            { run = indexCase(state, index) }
-         / ?[ (tagByte >> 6) == 1 ] { tag = "diff" }
-            { dr = ((tagByte >> 4) & 0x03) - 2 }
-            { dg = ((tagByte >> 2) & 0x03) - 2 }
-            { db = (tagByte & 0x03) - 2 }
-            { run = diffCase(state, dr, dg, db) }
-         / ?[ (tagByte >> 6) == 2 ] { tag = "luma" }
-            { diffGreen = (tagByte & 0x3F) - 32 }
-            U8
-            { drdg = (U8.value >> 4) - 8 }
-            { dbdg = (U8.value & 0x0F) - 8}
-            { run = lumaCase(state, diffGreen, drdg, dbdg) }
-         / ?[ (tagByte >> 6) == 3 ] { tag = "run" }
-            { runLength = (tagByte & 0x3F) + 1 }
-            { run = runCase(state, runLength) };
-};
+QOIChunk(state) -> { tagByte = . } Chunk(state, tagByte) { chunk = Chunk.run };
+
+Chunk(state, tagByte)
+    -> ?[ tagByte == 0xFE ] { tag = "rgb" }
+        { r = . } { g = . } { b = . }
+        { run = rgbCase(state, r, g, b) }
+     / ?[ tagByte == 0xFF ] { tag = "rgba" }
+        { r = . } { g  = . } { b  = . } { a  = . }
+        { run = rgbaCase(state, r, g, b, a) }
+     / ?[ (tagByte >> 6) == 0 ] { tag = "index" }
+        { index = tagByte & 0x3F }
+        { run = indexCase(state, index) }
+     / ?[ (tagByte >> 6) == 1 ] { tag = "diff" }
+        { dr = ((tagByte >> 4) & 0x03) - 2 }
+        { dg = ((tagByte >> 2) & 0x03) - 2 }
+        { db = (tagByte & 0x03) - 2 }
+        { run = diffCase(state, dr, dg, db) }
+     / ?[ (tagByte >> 6) == 2 ] { tag = "luma" }
+        { diffGreen = (tagByte & 0x3F) - 32 }
+        U8
+        { drdg = (U8.value >> 4) - 8 }
+        { dbdg = (U8.value & 0x0F) - 8}
+        { run = lumaCase(state, diffGreen, drdg, dbdg) }
+     / ?[ (tagByte >> 6) == 3 ] { tag = "run" }
+        { runLength = (tagByte & 0x3F) + 1 }
+        { run = runCase(state, runLength) };
 
 EndMarker -> "\x00\x00\x00\x00\x00\x00\x00\x01";
 

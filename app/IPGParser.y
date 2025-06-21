@@ -15,7 +15,6 @@ import IPGLexer ( alexScanTokens, Token(..) )
 
 %token
     EOI     { TokenEOI }
-    where   { TokenWhere }
     repeat  { TokenRepeat }
     until   { TokenUntil }
     START   { TokenStart }
@@ -88,7 +87,6 @@ import IPGLexer ( alexScanTokens, Token(..) )
 --                 N/A: [ "yield x", "yield* x", "...x" ]
 -- 1 Comma: Left: [ "x, y" ]
 
-%right where
 %right '=' '?'              -- 2
 %left '||'                  -- 3
 %left '&&'                  -- 4
@@ -133,11 +131,7 @@ Alternatives :: { [Alternative'] }
     | Alternatives '/' Alternative { $3 : $1 }
 
 Alternative :: { Alternative' }
-    : Terms WhereClause { Alternative (reverse $1) $2 }
-
-WhereClause :: { Maybe Grammar' }
-    : where '{' Grammar '}' { Just $3 }
-    | {- empty -} { Nothing }
+    : Terms { Alternative (reverse $1) }
 
 Terms :: { [Term'] }
     : Term { [$1] }

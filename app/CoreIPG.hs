@@ -12,8 +12,8 @@ newtype Grammar nt t id e = Grammar [Rule nt t id e]
 data Rule nt t id e = Rule nt [id] [Alternative nt t id e]
     deriving ( Functor, Show )
 
--- tm_1 ... tm_n where { grammar }
-data Alternative nt t id e = Alternative [Term nt t id e] (Maybe (Grammar nt t id e))
+-- tm_1 ... tm_n
+data Alternative nt t id e = Alternative [Term nt t id e]
     deriving ( Functor, Show )
 
 data Term nt t id e 
