@@ -1,3 +1,505 @@
-A stab at a parser generator for Interval Parsing Grammars.
+An implementation of a parser generator for Interval Parsing Grammars (IPGs)
+roughly as described in [Interval Parsing Grammars for File Format Parsing](https://doi.org/10.1145/3591264)
+by Zhang, Morrisett, and Tan.
 
-See "Interval Parsing Grammars for File Format Parsing" by Zhang, Morrisett, and Tan.
+These grammars are geared to binary formats where random access is often
+used. Combined with some other features, this provides a powerful, but
+still declarative and analyzable, language for handling parsing. It can
+handle common patterns that most other (truly) declarative parsers cannot.
+It's also more principled than "semi-declarative" parsers, such as
+[Kaitai struct](https://kaitai.io/) or [binary-parser](https://github.com/keichi/binary-parser/),
+which have imperative "seek" operations which complicate analysis.
+
+This does not completely follow the syntax that is described in the paper
+or in the accompanying [code artifact](https://zenodo.org/records/7811236).
+I also have some important additions. Namely, parameterized rules and
+repetition syntax. The parameterized rules are not restricted to statically
+determined values which adds significant power. I tend to avoid such uses as
+the nice thing about a defined grammar language is a defined level of power,
+but you do you. Parameterized rules, even restricted to statically determined
+values, are handy for factoring out repeated patterns.
+
+Repetition, as alluded to in the paper, is a necessary addition as otherwise
+a (straightforward) translation to a recursive descent parser will produce code
+that uses stack linearly.
+
+>  For the largest test file (over 25MB), the IPG parser performs much worse
+>  because parsing symbol names requires deep recursion in the IPG parser, which
+>  could be eliminated by introducing the Kleene-star operator into IPGs. 
+
+I don't (currently) support the `switch` syntax or existentials. I may add the
+former in the future, but it doesn't really add that much convenience. The latter
+can handled by the `A.these` notation and an external function. I also
+don't have the `btoi` expression they reference. Instead, you can use
+`{ bs = *[l, r] }` to bind `bs` to the slice of the input from `l` to `r`.
+You can then compute a numeric value with an expression.
+
+I did support local rules, i.e. `where` clauses, but I removed that support.
+Local rules aren't that well-behaved as the attributes of the containing
+alternative that they reference need to be bound before the local rule
+is invoked. This leads to wonky scoping. The actual implementation in the
+code artifact had some limitations and seemed to be implemented by inlining.
+My implementation didn't have those limitations and was a bit more cleanly
+implemented, but, ultimately, had the same wonky scoping that is inherent
+to the feature. Other than scoping the rule name itself, parameterized
+rules allow the same functionality in a much clearer and cleaner fashion.
+
+I do support interval inference which wasn't actually implemented in the
+code artifact.
+
+I currently do not do any analysis, e.g. termination analysis on the grammar.
+(In fact, I currently don't even do basic checks like ensuring a used rule is
+defined, etc., but this will probably change.)
+
+TODO: Reconsider the parameterized rule syntax and/or the syntax for
+referencing an "array" element.
+
+## Syntax Overview
+
+WARNING: The concrete syntax is subject to change. I'm not 100% happy with
+some of the choices made so far.
+
+The following uses a BNF-like description of syntax rules, and regexes for terminals.
+`--` indicates a line comment.
+`P?` indicates an optional `P`.
+`P*` indicates zero or more repetitions of `P`.
+`P+` indicates one or more repetitions of `P`.
+`|` indicates alternation.
+Terminals are wrapped in quotes.
+Parentheses can be used for grouping.
+
+```
+-- Regexes describing more complicated terminals.
+NAME = /[_a-zA-Z_][_a-zA-Z0-9]*/
+INT = /[1-9][0-9]*/
+FLOAT = /INT "." [0-9]*/
+STRING = /"[^"]*"/ -- TODO: Describe escaping.
+
+Grammar ::= Rule*
+
+-- Schematic Example: A(a_1, ..., a_m) -> alt_1 / ... / alt_n;
+Rule ::= NAME ParameterList? "->" Alt ("/" Alt)* ";"
+
+ParameterList
+  ::= "(" ")"
+    | "(" NAME ("," NAME)* ")"
+
+Alt ::= Term+
+
+Term
+  ::= NAME ArgumentList? Interval?  -- A(a_1, ..., a_m)[l, r]
+    | STRING Interval?              -- "foo"[l, r]
+    | "{" NAME "=" RHS "}"          -- { id = e }
+    | "?[" Exp "]"                  -- ?[ e ]
+    | "for" NAME "=" Exp "to" Exp "do" NAME ArgumentList? Interval?
+      -- for id=e_1 to e_2 do A(a_1, ..., a_m)[e_l, e_r]
+    | "repeat" NAME ArgumentList? "." NAME
+      -- repeat A(a_1, ..., a_m).id
+    | "repeat" NAME ArgumentList? "." NAME "until" NAME ArgumentList?
+      -- repeat A(a_1, ..., a_m).id until B(b_1, ..., b_k)
+
+RHS
+  ::= Exp                 -- e, as in { id = e }
+    | "." ("[" Exp "]")?  -- .[e], as in { id = .[e] }
+    | "*" Interval?       -- *[e], as in { id = *[l, r] }
+
+ArgumentList
+  ::= "(" ")"
+    | "(" Exp ("," Exp)* ")"
+
+Interval
+  ::= "[" Exp "]"
+    | "[" Exp "," Exp "]"
+
+-- See below for the precedences, but they are intended to follow JavaScript.
+Exp ::= INT                       -- 123
+      | FLOAT                     -- 123.5
+      | STRING                    -- "foo"
+      | Exp BinOp Exp             -- x + y
+      | UnOp Exp                  -- -x
+      | Exp "?" Exp ":" Exp       -- b ? t : e
+      | NAME ArgumentList         -- f(x, y)
+      | Exp "[" Exp "]"           -- a[i]
+      | NAME                      -- id
+      | NAME "." NAME             -- A.id
+      | NAME "(" Exp ")" "." NAME -- A(e).id
+      | "(" Exp ")"               -- (x)
+
+BinOp ::= "||" | "&&" | "|" | "^" | "&" | "==" | "!=" | "<" | ">" | "<=" | ">="
+        | "<<" | ">>" | "+" | "-" | "*" | "/" | "%" | "**"
+
+UnOp ::= "-" | "+" | "~" | "!"
+```
+
+The precedences for the expressions from lowest to highest follow JavaScript and,
+in Happy notation,  are:
+
+```
+%right '=' '?'              -- 2
+%left '||'                  -- 3
+%left '&&'                  -- 4
+%left '|'                   -- 5
+%left '^'                   -- 6
+%left '&'                   -- 7
+%left '==' '!='             -- 8
+%left '<' '>' '<=' '>='     -- 9
+%left '<<' '>>'             -- 10
+%left '+' '-'               -- 11
+%left '*' '/' '%'           -- 12
+%right '**'                 -- 13
+%nonassoc NEG PLUS '~' '!'  -- 14
+%nonassoc '['               -- 17
+%left '.'                   -- 17
+```
+
+C-style line comments are supported. Multi-line comments currently are not.
+
+`EOI` as a stand-alone expression is treated specially. It should not be used as a
+parameter name. You could use it as an attribute or rule name if you like.
+Incidentally, "EOI" stands for "end of input" and refers to the end of the slice
+given to the currently executing rule.
+
+TODO: In the future, I'll check rule definitions against this.
+
+Special fields:
+- `A.START` - the beginning of the interval actually parsed by `A` most recently
+- `A.END` - the end of the interval actually parsed by `A` most recently
+- `A.this` - the collection of attributes associated to `A` returned as an object
+- `A(e).this` - the collection of attributes associated to `A(e)` returned as an object
+- `A.these` - if `A` was most recently used in an array expression, this will be an
+              array of objects representing the collection of attributes for each entry
+
+These identifiers should not be used as names of attributes. You could use them as
+parameter or rule names, though using `this` in such a way would cause issues for
+the JavaScript back-end.
+
+TODO: In the future, I'll check assignments against this.
+
+The expression syntax is geared to cover common use-cases in parsing binary files
+while still being generic enough to be straightforwardly translated to a variety
+of target languages. In particular, there is no array or object literal syntax
+nor (general) object field selection. Field selection is restricted to attributes
+of non-terminals or components of array notation. The intent is that any more
+involved or back-end language-specific processing would be handled by external
+functions. It is a bit tedious at times though...
+
+### External Interface
+
+For the purposes of error checking, you can declare some rule names as external
+so they will not be treated as missing. You do this with a `%declare` declaration
+which is terminated with `%end`. The `%declare` must be at the start of a line and
+before the grammar. Between the `%declare` and `%end` is a whitespace separated list
+of names. (TODO: The code doesn't actually use this currently...)
+
+Example:
+```
+%declare Foo Bar Baz %end
+```
+
+More substantively, you can use the `%preamble_end` and `%postamble_begin` declarations
+to add some text to be included in the output. Each of these declarations must occur at
+the start of a line. They split the file into (up to) three parts: the preamble,
+the part before `%preamble_end`; the postamble, the part occurring after `%postamble_begin`;
+and the grammar, which occurs between them. Either the preamble and the postamble
+can be omitted along with the corresponding declaration. Note, a `%declare` goes
+in the grammar part, not the preamble.
+
+Other than removing leading white space from the postamble, the preamble and postamble
+are included in the generated file AS-IS with the preamble occurring before
+the generated code and the postamble following it.
+
+## Semantics
+
+Each rule is invoked against an interval specifying a slice of the input.
+Any attempt to access outside of that interval causes the parser to fail.
+An **invalid interval** is one where the start is *strictly* after the end,
+i.e. for `[l, r]` we have `l > r`. Empty intervals, i.e. where `l == r` are
+allowed and useful. Nothing stops having different terms parse overlapping
+slices of the input. In fact, this is a powerful technique that allows
+multi-pass parsing.
+
+In a way similar to [Parsing Expression Grammars](https://en.wikipedia.org/wiki/Parsing_expression_grammar)
+(PEGs), we have a *biased* alternation operator, `/`. Here, the first alternative
+to succeed is taken and other alternatives will not be considered. In other
+words, the resulting parser is deterministic in that it will produce at most one
+successful parse. Terms within an alternative are executed in sequence and must
+all succeed for the alternative to succeed.
+
+The expressions, `Exp` above, behave as you expect. The syntax and semantics are
+taken from JavaScript, though likely generators will use the semantics details of the
+target language. (That does make a grammar potentially back-end dependent. For
+example, many languages have different meanings for the modulus operation, `%`.
+I don't mean that `%` isn't modulus in some languages. Back-ends should always
+translate `%` into a modulus operation. I mean that languages differ in what the
+modulus operation should do, particularly in regards to handling negative inputs.)
+The main notable expressions are `A.id`, `A(e).id`, and `id`. These largely
+behave as you expect. The first accesses the attribute associated to the *most
+recently preceding* invocation of the non-terminal `A`. `A(e).id` is similar
+but it applies to the most recent array term involving `A` and access the `id`
+attribute of the `e`-th element of that sequence. While it's currently unchecked,
+attempting to access an out of bounds element of the sequence will lead to failure.
+(TODO: I'm not sure if it should just be parse failure or a panic.)
+Finally, `id` references either a parameter or an attribute on the current rule.
+Currently, it will always prefer a parameter, but I may change it to allow attributes
+to shadow parameters in following terms.
+
+TODO: Check out-of-bounds sequence accesses.
+
+Most of the actual *novel* semantics is due to the terms.
+
+### Terms
+
+Many terms take an interval, `[l, r]`, which then specifies which slice of the input
+they process. Part or all of the interval can be omitted and interval inference,
+described in the next section, will fill in the details, so I will assume we have
+full intervals in the following.
+
+Attempting to invoke a term with an invalid interval, i.e. where `l > r`, immediately
+fails. Note, *empty* intervals, where `l == r`, are not invalid. Similarly,
+attempting to invoke a term with a (partially) out-of-bounds interval leads to
+the current rule failing. This is a totally normal occurrence. For example,
+if you wanted to parse 5-byte blocks until the end of input
+
+Non-terminal invocations, e.g. `A(x, y)[l, r]`, simply invoke the corresponding
+rule on the slice of the input indicated by the interval. Arguments, if any,
+will be evaluated in the context of the current rule and passed exactly as you
+would expect. After this invocation, `A` is bound and its attributes can be
+accessed in following terms. If `A` was already bound, it is shadowed.
+
+Terminals, e.g. `"foo"[l, r]`, succeed if the given string is a *prefix* of the
+corresponding slice of the input. It fails if the terminal doesn't match or is
+longer than the slice.
+
+Guard terms, e.g. `?[ e ]`, evaluate the argument and succeed or fail based on
+whether the argument is true. (The JavaScript back-end will use JavaScript's
+"truthiness" semantics, but grammars [and JavaScript programmers for that matter...]
+should avoid relying on such behavior for portability.) This term consumes
+no input.
+
+Array terms, e.g. `for id=e_1 to e_2 do A(a_1, ..., a_m)[e_l, e_r]`,
+iterates from `e_1` to `e_2` invoking the non-terminal term in the body
+with `id` bound to the current iteration value. Notably, `id` is bound
+in `e_l` and `e_r`, i.e. the interval can depend on the iteration variable.
+All iterations must succeed for this term to succeed.
+After an array term, `A` is bound and attributes of its elements can be
+accessed via the `A(e).id` expression. Also, `A.START` and `A.END` are
+meaningful and will refer to their values in the last iteration. `A.id`
+is otherwise invalid. (TODO: Maybe allow this and have it refer to the
+last iteration? It would slightly simplify the JavaScript translator
+and may be useful upon occasion.)
+
+Importantly, I allow `e_l` and `e_r` to themselves refer to `A.START`
+and `A.END`. In this case, they will be bound to the values for the
+previous iteration. For the first iteration, they will be bound to
+the equivalent of `Prev.START` and `Prev.END` where `Prev` is the previous
+non-terminal, or similar (see the interval inference) for terminals.
+They will be `EOI` and `0` respectively if there is no previous term.
+
+Assignment terms come in three versions: `{ id = *[l, r] }`, `{ id = .[l] }`,
+and `{ id = e }` for an arbitrary expression `e`. The first two consume
+input while the last does not.
+
+`{ id = *[l, r] }` binds the attribute `id` to the slice of the input indicated
+by the interval. It will fail, like any term, if the interval is invalid or
+(partially) out-of-bounds.
+
+`{ id = .[l] }` binds the attribute `id` to the value of the input at `l`.
+It is essentially equivalent to `{ tmp = *[l, l + 1] } { id = tmp[0] }`.
+
+`{ id = e }` simply evaluates the expression `e` and binds it to the attribute
+`id`. It consumes no input and can never fail. Note that `*[l, r]` and `.[l]`
+are not expressions. 
+
+Currently, the repeat and repeat-until terms are quite restricted.
+(TODO: Figure out something that is elegant and lifts these restrictions.
+A notable restriction is that they don't support going backwards.
+Maybe allow `A` to specify attributes that will be used as the interval
+for the next iteration? Of course, I could just add a backwards variant
+as that's like the only other interesting case.)
+Their semantics are straightforward as they exist to optimize a common
+pattern.
+
+Namely, `repeat A(a_1, ..., a_m).id` is logically shorthand for invoking the
+following rule in the current scope:
+
+```
+R -> A(a_1, ..., a_m)[0, EOI] R[A.END, EOI] { values = cons(A.id, R.values) }
+   / { values = nil() };
+```
+
+and similarly for `repeat A(a_1, ..., a_m).id until B(b_1, ..., b_k)`:
+
+```
+R -> B(b_1, ..., b_k) { values = nil() };
+   / A(a_1, ..., a_m)[0, EOI] R[A.END, EOI] { values = cons(A.id, R.values) }
+```
+
+Here `cons` and `nil` are functions that append an element to the beginning of
+an array and create an empty array respectively.
+
+After the repeat/repeat-until term, `A.values` holds an array of the indicated
+values.
+
+These terms should always be preferred over a recursion as the recursive versions
+consume call stack (not just because JavaScript doesn't have tail-call elimination).
+If more flexibility is needed, you could fall back to a recursive version as
+long as you don't expect too many iterations.
+
+### Interval Inference
+
+Interval inference is done as described in the paper (but not actually implemented in
+the code artifact). The paper doesn't actually describe the array case, i.e. `for`.
+Since I allow `A.START`/`A.END` rules following an array term can use the same rules
+as if they followed a plain non-terminal case.
+
+In a nutshell, for a non-terminal `A`, the term `A` becomes `A[Prev.END, EOI]` where `Prev`
+is the non-terminal immediately preceding `A`. If a terminal immediately precedes `A`,
+then instead of `Prev.END` we'll get the start of the terminal's interval plus the length
+of the terminal as the start of `A`'s interval. Note that this is not the same as the
+*end* of the terminal's interval. If `A` is the first term, `Prev.END` will be 0.
+
+`A[e]` becomes `A[Prev.END, Prev.END + e]`, i.e. when only one component of the interval is
+given, it indicates a length.
+
+For terminals, we know the length so `"s"[l]` becomes `"s"[l, l + "s".length]`.
+Just `"s"` can then become `"s"[Prev.END]` and then be transformed again where
+`Prev.END` is as above.
+
+Interval inference proceeds left-to-right.
+
+## Tricks
+
+I like to avoid returning attributes that are just there as helpers and don't
+reflect the logical output. Since the only attributes that are "returned" are
+those explicitly assigned in the rule, you can use a subrule to compute the
+attributes and then the main rule can just return the relevant attributes. For example:
+
+```
+MainRule -> SubRule { value = SubRule.value };
+SubRule -> A { x = A.y } { b = . } { value = compute(x, b) };
+```
+
+In particular, `{ id = . }` and `{ id = *[l, r] }` lead to this situation often.
+I often use: `U8 -> { value = . };` to parse a byte with an unnamed value. For
+slices, `B(n) -> { value = *[n] };` could be used.
+
+```
+Empty -> ?[ EOI == 0 ];
+```
+
+is a rule that succeeds if and only if it is evaluated on the empty interval.
+It can be used as `repeat A.id until Empty` to keep applying `A` until there
+is no input remaining. That said, this is not the same as applying `A` until
+it fails which is what `repeat A.id` does. `repeat A.id until Empty` only
+succeeds if repeated invocations of `A` will consume *exactly* all the input.
+
+## JavaScript Output
+
+A rule in the grammar gives rise to a JavaScript function of the same name.
+This function takes in either a string or an array of numbers &ndash; typically a
+`Uint8Array` &ndash; and outputs an object or `null` in the case of parse failure.
+In addition to any attributes defined in the rule, which will occur as fields of
+the same name on the returned object, there are the fields `_ipg_start` and `_ipg_end`.
+`_ipg_start` and `_ipg_end` give the start and end points of the interval actually
+parsed. If no data was consumed, `_ipg_end` will be `0` and `_ipg_start` will be the
+length of the input.
+
+Any function that has an interface similar to what was just described can be used as
+a parser. You can just reference that function as a non-terminal in your parser.
+
+The output is a straightforward recursive descent parser *without* packrat-style
+memoization.
+
+The JavaScript isn't optimized. While it should be pretty efficient, there are many
+ways it could be improved.
+
+- Array expressions don't pre-allocate the output array though they could. 
+- Objects holding the collections of attributes could be reused more. Currently,
+  I discard them as a quick way of removing obsolete attributes. Reusing these,
+  would likely use more memory as garbage would survive longer.
+- The prefix check for non-terminals uses the function `_ipg_startsWith` which is
+  naively implemented. The generator knowing the type of the input could allow a
+  good implementation to be chosen.
+- Instead of passing around slices of the input, I could just pass around the
+  start and end of the relevant input. This would avoid creating a bunch of short-lived
+  slice objects. The reason I use slices is that it leads to simpler code and
+  can help catch out-of-bounds accesses.
+- For simplicity, I add the iteration variable of an array term as an attribute
+  (and then `delete` it afterwards), but it can and should be just a local variable.
+
+I'm not worried about things like constant expressions. I assume the JavaScript
+implementation (or any back-end for a well optimized language) will handle this
+easily. I do apply some simplification to the expressions, but mostly to make the
+output more readable for my own sanity.
+
+There are also potentially grammar-level optimizations that could be done, e.g.
+recognizing a pattern of recursion as a repetition, though I don't see implementing
+any of these unless some very compelling case comes up.
+
+### Reserved Identifiers
+
+The following names should not be used in your grammar to avoid conflicting with the
+implementation.
+
+TODO: In the future, I'll probably add a check for these names.
+
+Field names used by the generator: `_ipg_start`, `_ipg_end`
+
+Function names used by the generator: `_ipg_startsWith`
+
+### Input Requirements
+
+Here are the requirements on the input when it is not a string.
+
+- It must have a `length` field that behaves as usual.
+- Array index notation should work on it, e.g. `input[i]`. This should return
+  a number. It will compared against `s.charCodeAt(i)` for terminals.
+- It should have a `slice` function that behaves as usual. This slice function
+  will only ever be called with two arguments. The output of this slice function
+  must obey the same requirements as here (or be a string).
+
+## Examples
+
+See the `examples/` directory for some non-trivial example grammars. They contain
+JavaScript code in comments that can be added to the output to produce a full
+application.
+
+### ELF
+
+`examples/elf.ipg` is a translation of the ELF parser from the paper's
+code artifacts. It does not handle the fullness of [ELF](https://www.man7.org/linux/man-pages/man5/elf.5.html),
+but it is a good illustration of a file format that significantly leveraged
+random access.
+
+My adaptations are fairly straightforward and mostly involve replacing uses
+of `btoi` and using the repetition terms I added as the recursive version
+leads to stack overflows even on the example ELF files they used.
+
+### GIF
+
+`examples/gif.ipg` is a full [GIF89a](https://giflib.sourceforge.net/gifstandard/GIF89a.html)
+parser. Originally, I started translating the example from the code artifact,
+but some ambiguities and incompleteness led me to look at the GIF spec. At that
+point I decided just implementing it from scratch and more closely following the
+spec would be easier and more compelling. The result is, indeed, compellingly
+straightforward.
+
+As an example of using IPG, GIF is an example of a chunk-based format.
+
+### QOI
+
+I made a [QOI](https://qoiformat.org/) parser as an early simple but "real" example.
+Unfortunately, it doesn't really leverage anything special about IPG.
+
+Nevertheless, `examples/qoi-syntax.ipg` provides a parser that will output the
+structure of a QOI file. To make it more interesting and better validate the code,
+`examples/qoi.ipg` actually produces a full QOI to PNG converter. The parser itself
+passes through a `state` object via parameterized rules which maintains the
+decoders state. This is updated by functions called in assignment terms in the
+grammar. In theory, using impure functions like this as expressions is ill-defined.
+In practice, for a PEG-like grammar language and a recursive descent based implementation,
+when and how often an expression will be evaluated is fairly predictable and
+understandable.
+
+The parser produces a sequence of color objects. [pureimage](https://www.npmjs.com/package/pureimage)
+is used to convert that to a PNG file.
