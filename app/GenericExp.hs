@@ -93,10 +93,7 @@ simplifyExp (BitwiseNeg l) = bneg (simplifyExp l)
     where bneg (Int x) = Int (complement x)
           bneg (BitwiseNeg x) = x
           bneg x = BitwiseNeg x
-simplifyExp (Not l) = not' (simplifyExp l)
-    where not' (Int x) = Int (if x == 0 then 1 else 0)
-          not' (Not x) = x
-          not' x = Not x
+simplifyExp (Not l) = Not (simplifyExp l)
 simplifyExp (And l r) = and' (simplifyExp l) (simplifyExp r) 
     where and' (Int x) y = if x /= 0 then y else Int 0
           and' x (Int y) = if y /= 0 then x else Int 0

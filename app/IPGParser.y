@@ -3,7 +3,7 @@ module IPGParser (
     IdType, Exp', Grammar', Rule', Alternative', Term', Ref',
     parseIPG, parse,
 ) where
-import CoreIPG ( Ref(..) )
+import CoreIPG ( Ref(..), MetaTag(..) )
 import FullIPG ( Grammar(..), Rule(..), Alternative(..), Term(..) )
 import GenericExp ( Exp(..) )
 import IPGLexer ( alexScanTokens, Token(..) )
@@ -15,6 +15,7 @@ import IPGLexer ( alexScanTokens, Token(..) )
 
 %token
     '%declare' { TokenDeclare }
+    '%instrument' { TokenInstrument }
     '%end'  { TokenEndDeclare }
     EOI     { TokenEOI }
     repeat  { TokenRepeat }
@@ -128,7 +129,11 @@ Rules :: { [Rule'] }
     | {- empty -} { [] }
 
 Rule :: { Rule' }
-    : name ParamList '->' Alternatives { Rule $1 $2 (reverse $4) }
+    : MaybeInstrument name ParamList '->' Alternatives { Rule $1 $2 $3 (reverse $5) }
+
+MaybeInstrument :: { [MetaTag] }
+    : '%instrument' { [INSTRUMENT] }
+    | {- empty -} { [] }
 
 ParamList :: { [IdType] }
     : '(' Params ')' { reverse $2 }

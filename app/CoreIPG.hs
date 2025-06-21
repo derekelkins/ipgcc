@@ -1,15 +1,18 @@
 {-# LANGUAGE DeriveFunctor #-}
 module CoreIPG ( 
-    Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..),
-    nonTerminals, nonArrayNonTerminals, arrayNonTerminals,
+    Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..),
+    nonTerminals, nonArrayNonTerminals, arrayNonTerminals, validate,
 ) where
 import Data.List ( nub ) -- base
+
+data MetaTag = INSTRUMENT
+    deriving ( Eq, Ord, Show )
 
 newtype Grammar nt t id e = Grammar [Rule nt t id e]
     deriving ( Functor, Show )
 
 -- A(a_1, ..., a_m) -> alt_1 / ... / alt_n;
-data Rule nt t id e = Rule nt [id] [Alternative nt t id e]
+data Rule nt t id e = Rule [MetaTag] nt [id] [Alternative nt t id e]
     deriving ( Functor, Show )
 
 -- tm_1 ... tm_n
@@ -58,6 +61,14 @@ arrayNonTerminals = nub . concatMap processTerm
           processTerm _ = []
 
 -- TODO: Add pretty-printer.
--- TODO: Add validate to check basic syntactic properties, e.g. the non-terminals referenced in
--- terms are non-terminals that occur earlier in the alternative, etc.
 -- Also, perhaps add termination checker.
+
+-- Things to check:
+--   - Referenced rules are defined (would want to be able to declare external rules)
+--   - Attributes are defined before use
+--   - EOI is not used as a parameter name
+--   - _ipg_start and _ipg_end are not used as attribute names (maybe check this in JSExport)
+--   - _ipg_startsWith is not used as a rule name (maybe check this in JSExport)
+--   - START, END, this, these should not occur in the LHS of assignments
+validate :: Grammar nt t id e -> Maybe String
+validate _ = Nothing -- TODO

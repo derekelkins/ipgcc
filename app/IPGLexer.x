@@ -18,6 +18,7 @@ tokens :-
     $digit+ \. $digit* { TokenDouble . read }
     $digit+ { TokenInt . read }
     ^"%declare" { \_ -> TokenDeclare }
+    "%instrument" { \_ -> TokenInstrument }
     "%end" { \_ -> TokenEndDeclare }
     EOI     { \_ -> TokenEOI }
     repeat  { \_ -> TokenRepeat }
@@ -69,6 +70,7 @@ tokens :-
 data Token
     = TokenEOI
     | TokenDeclare
+    | TokenInstrument
     | TokenEndDeclare
     | TokenRepeat
     | TokenUntil

@@ -10,7 +10,7 @@ newtype Grammar nt t id e = Grammar [Rule nt t id e]
     deriving ( Functor, Show )
 
 -- A(a_1, ..., a_m) -> alt_1 / ... / alt_n;
-data Rule nt t id e = Rule nt [id] [Alternative nt t id e]
+data Rule nt t id e = Rule [Core.MetaTag] nt [id] [Alternative nt t id e]
     deriving ( Functor, Show )
 
  -- tm_1 ... tm_n
@@ -48,7 +48,7 @@ toCore :: ExpHelpers nt t id e -> Grammar nt t id e -> Core.Grammar nt t id e
 toCore h (Grammar rules) = Core.Grammar (map (toCoreRule h) rules)
 
 toCoreRule :: ExpHelpers nt t id e -> Rule nt t id e -> Core.Rule nt t id e
-toCoreRule h (Rule nt args alts) = Core.Rule nt args (map (toCoreAlternative h) alts)
+toCoreRule h (Rule mt nt args alts) = Core.Rule mt nt args (map (toCoreAlternative h) alts)
 
 toCoreAlternative :: ExpHelpers nt t id e -> Alternative nt t id e -> Core.Alternative nt t id e
 toCoreAlternative h (Alternative terms) =

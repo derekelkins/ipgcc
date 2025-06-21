@@ -125,11 +125,11 @@ termToJS indent env (NonTerminal nt args l r)
    <> indent <> printf "if (nt_%s._ipg_end !== 0) {\n" nt
    <> indent <> printf "  self._ipg_start = Math.min(self._ipg_start, left + nt_%s._ipg_start);\n" nt
    <> indent <> printf "  self._ipg_end = Math.max(self._ipg_end, left + nt_%s._ipg_end);\n" nt
-   <> indent <>        "}\n\n"
+   <> indent <>        "}\n"
    <> indent <> printf "nt_%s._ipg_end += left;\n" nt
    <> indent <> printf "nt_%s._ipg_start += left;\n" nt
    <> indent <> printf "left = nt_%s._ipg_start;\n" nt
-   <> indent <> printf "right = nt_%s._ipg_end;\n" nt
+   <> indent <> printf "right = nt_%s._ipg_end;\n\n" nt
   where lExp = exprToJS env l; rExp = exprToJS env r; es = argList env args
 termToJS indent env (Terminal "" l r) 
     = indent <> printf "// ""[%s, %s]\n" lExp rExp
@@ -144,8 +144,8 @@ termToJS indent env (Terminal t l r)
    <> indent <>        "if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
    <> indent <> printf "if (!_ipg_startsWith(input.slice(left, right), %s)) break _ipg_alt;\n" terminal
    <> indent <>        "self._ipg_start = Math.min(self._ipg_start, left);\n"
-   <> indent <>        "self._ipg_end = Math.max(self._ipg_end, right);\n\n"
-   <> indent <> printf "right = left + %s.length;\n" terminal
+   <> indent <>        "self._ipg_end = Math.max(self._ipg_end, right);\n"
+   <> indent <> printf "right = left + %s.length;\n\n" terminal
   where lExp = exprToJS env l; rExp = exprToJS env r; terminal = hexyString t
 termToJS indent env (i := e)
     = indent <> printf "// {%s = %s}\n" i eExp
@@ -177,9 +177,9 @@ termToJS indent env (Array i start end nt args l r)
    <> indent <> printf "  nt_%s._ipg_start = tmp._ipg_start;\n" nt -- Special case
    <> indent <> printf "  seq_%s.push(tmp);\n" nt
    <> indent <>        "}\n"
-   <> indent <> printf "delete self.%s;\n\n" i
+   <> indent <> printf "delete self.%s;\n" i
    <> indent <> printf "left = nt_%s._ipg_start;\n" nt
-   <> indent <> printf "right = nt_%s._ipg_end;\n" nt
+   <> indent <> printf "right = nt_%s._ipg_end;\n\n" nt
   where startExp = exprToJS env start; endExp = exprToJS' env 10 end "";
         lExp = exprToJS env l; rExp = exprToJS env r; es = argList env args
 termToJS indent env (Any i l)
@@ -219,16 +219,15 @@ termToJS indent env (Repeat nt args i)
    <> indent <>        "  while(right <= EOI) {\n"
    <> indent <> printf "    nt_%s = %s(input.slice(right, EOI)%s);\n" nt nt es
    <> indent <> printf "    if (nt_%s === null) break;\n" nt
-   <> indent <> printf "    if (nt_%s._ipg_end !== 0) {\n" nt
-   <> indent <> printf "      self._ipg_start = Math.min(self._ipg_start, right + nt_%s._ipg_start);\n" nt
-   <> indent <> printf "      self._ipg_end = Math.max(self._ipg_end, right + nt_%s._ipg_end);\n" nt
-   <> indent <>        "    }\n"
+   <> indent <> printf "    if (nt_%s._ipg_end === 0) throw 'repeat of non-consuming rule: %s';\n" nt nt
+   <> indent <> printf "    self._ipg_start = Math.min(self._ipg_start, right + nt_%s._ipg_start);\n" nt
+   <> indent <> printf "    self._ipg_end = Math.max(self._ipg_end, right + nt_%s._ipg_end);\n" nt
    <> indent <> printf "    nt_%s._ipg_end += right;\n" nt
    <> indent <> printf "    nt_%s._ipg_start += right;\n" nt
    <> indent <> printf "    self.values.push(nt_%s.%s);\n" nt i
    <> indent <> printf "    right = nt_%s._ipg_end;\n" nt
    <> indent <>        "  }\n"
-   <> indent <>        "}\n"
+   <> indent <>        "}\n\n"
   where es = argList env args
 termToJS indent env (RepeatUntil nt1 args1 i nt2 args2)
     = indent <> printf "// repeat %s%s.%s until %s%s\n" nt1 (call es1) i nt2 (call es2)
@@ -259,29 +258,36 @@ termToJS indent env (RepeatUntil nt1 args1 i nt2 args2)
    <> indent <>        "}\n\n"
   where es1 = argList env args1; es2 = argList env args2
 
-alternativeToJS :: T -> Env -> Alternative T T T Expr -> T
-alternativeToJS indent env (Alternative ts)
+alternativeToJS :: Maybe (T, [T]) -> T -> Env -> Alternative T T T Expr -> T
+alternativeToJS instrument indent env (Alternative ts)
     = indent <>        "_ipg_alt: {\n"
    <> indent <>        "  let left = EOI; let right = 0;\n"
    <>                     concatMap declare nts
    <>                     concatMap declareSeqs seqs
    <> indent <>        "  self = { _ipg_start: EOI, _ipg_end: 0 };\n\n"
    <>                     concatMap (termToJS ("  " ++ indent) env) ts
+   <>                     instrumentation
    <> indent <>        "  return self;\n"
    <> indent <>        "}\n"
   where nts = nonTerminals ts
         seqs = arrayNonTerminals ts
         declare nt = printf "%s  let nt_%s;\n" indent nt
         declareSeqs nt = printf "%s  let seq_%s;\n" indent nt
+        instrumentation = case instrument of
+                            Nothing -> ""
+                            -- Purposely over-indented.
+                            Just (nt, args) -> indent <>
+                                printf "    console.error({%s: self%s});\n" nt (paramList args)
     
 ruleToJS :: Rule T T T Expr -> T
-ruleToJS (Rule nt args alts)
+ruleToJS (Rule mt nt args alts)
     = printf "function %s(input%s) {\n" nt (paramList args)
    <>        "  const EOI = input.length; let self;\n"
-   <>           concatMap (alternativeToJS "  " env) alts
+   <>           concatMap (alternativeToJS instrument "  " env) alts
    <>        "  return null;\n"
    <>        "}\n\n"
   where env = Set.fromList args
+        instrument = if INSTRUMENT `elem` mt then Just (nt, args) else Nothing
 
 toJS :: Grammar T T T Expr -> T
 toJS (Grammar rules)
