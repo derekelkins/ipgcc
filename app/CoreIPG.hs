@@ -21,8 +21,7 @@ data Term nt t id e
     | Terminal t e e                -- s[e_l, e_r]
     | id := e                       -- {id = e}
     | Guard e                       -- ?[e]
-    -- The extra field in Array isn't rendered. It holds the inferred left.
-    | Array id e e nt [e] e e e     -- for id=e_1 to e_2 do A(a_1, ..., a_m)[e_l, e_r]
+    | Array id e e nt [e] e e       -- for id=e_1 to e_2 do A(a_1, ..., a_m)[e_l, e_r]
     | Any id e                      -- {id = .[e]}
     | Slice id e e                  -- {id = *[l, r]}
     | Repeat nt [e] id              -- repeat A(a_1, ..., a_m).id
@@ -50,12 +49,12 @@ nonTerminals = nub . concatMap processTerm
     where processTerm (NonTerminal nt _ _ _) = [nt]
           processTerm (Repeat nt _ _) = [nt]
           processTerm (RepeatUntil nt1 _ _ nt2 _) = [nt1, nt2]
-          processTerm (Array _ _ _ nt _ _ _ _) = [nt]
+          processTerm (Array _ _ _ nt _ _ _) = [nt]
           processTerm _ = []
 
 arrayNonTerminals :: (Eq nt) => [Term nt t id e] -> [nt]
 arrayNonTerminals = nub . concatMap processTerm
-    where processTerm (Array _ _ _ nt _ _ _ _) = [nt]
+    where processTerm (Array _ _ _ nt _ _ _) = [nt]
           processTerm _ = []
 
 -- TODO: Add pretty-printer.
