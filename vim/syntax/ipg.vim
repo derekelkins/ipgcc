@@ -39,7 +39,8 @@ highlight link IPGString String
 
 syntax match IPGDeclare /\v\%end/
 syntax match IPGDeclare /\v^\%declare/
-syntax match IPGDeclare /\v^\%postamble/
+syntax match IPGDeclare /\v^\%preamble_end/
+syntax match IPGDeclare /\v^\%postamble_begin/
 highlight link IPGDeclare PreProc
 
 syntax keyword IPGTodo TODO FIXME XXX TBD contained

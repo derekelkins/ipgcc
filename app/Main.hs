@@ -24,11 +24,15 @@ breakOn needle s@(c:cs)
 main :: IO ()
 main = do
     input' <- getContents 
-    let (input, postamble) = case breakOn "\n%postamble" input' of
-            Nothing -> (input', "")
-            Just (x, p) -> (x, dropWhile isSpace (drop 12 p))
+    let (preamble, rest) = case breakOn "\n%preamble_end" input' of
+            Nothing -> ("", input')
+            Just (x, p) -> (x, dropWhile isSpace (drop 14 p))
+    let (input, postamble) = case breakOn "\n%postamble_begin" rest of
+            Nothing -> (rest, "")
+            Just (x, p) -> (x, dropWhile isSpace (drop 17 p))
     let (g, _decls) = parse input
     let core = E.simplify (toCore helper g)
     -- TODO: validate decls core
-    putStrLn postamble
+    putStrLn preamble
     putStrLn (toJS core)
+    putStr postamble

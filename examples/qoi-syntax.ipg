@@ -1,3 +1,7 @@
+const fs = require("node:fs");
+
+%preamble_end
+
 QOI
     -> QOIHeader
        { width = QOIHeader.width }
@@ -42,7 +46,6 @@ EndMarker -> "\x00\x00\x00\x00\x00\x00\x00\x01";
 U8 -> { value = . };
 BE_U32 -> { bs = *[4] } { value = bs[3] | (bs[2] << 8) | (bs[1] << 16) | (bs[0] << 24) };
 
-%postamble
+%postamble_begin
 
-const fs = require("node:fs");
 console.log(JSON.stringify(QOI(fs.readFileSync("./qoi_test_images/dice.qoi"))));
