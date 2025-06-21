@@ -9,7 +9,7 @@ import qualified CoreIPG as Core
 newtype Grammar nt t id e = Grammar [Rule nt t id e]
     deriving ( Functor, Show )
 
--- A{a_1, ..., a_m} -> alt_1 / ... / alt_n;
+-- A(a_1, ..., a_m) -> alt_1 / ... / alt_n;
 data Rule nt t id e = Rule nt [id] [Alternative nt t id e]
     deriving ( Functor, Show )
 
@@ -26,7 +26,7 @@ data Term nt t id e
     | Terminal2 t e e               -- s[e_l, e_r]
     | id := e                       -- {id = e}
     | Guard e                       -- ?[e]
-    | Array id e e nt [e] e e       -- for id=e_1 to e_2 do A{e_1, ..., e_m}[e_l, e_r]
+    | Array id e e nt [e] e e       -- for id=e_1 to e_2 do A(e_1, ..., e_m)[e_l, e_r]
     | Any0 id                       -- {id = .}
     | Any1 id e                     -- {id = .[e]}
     | Slice0 id                     -- {id = *}

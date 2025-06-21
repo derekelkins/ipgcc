@@ -8,7 +8,7 @@ import Data.List ( nub ) -- base
 newtype Grammar nt t id e = Grammar [Rule nt t id e]
     deriving ( Functor, Show )
 
-  -- A{a_1, ..., a_m} -> alt_1 / ... / alt_n;
+-- A(a_1, ..., a_m) -> alt_1 / ... / alt_n;
 data Rule nt t id e = Rule nt [id] [Alternative nt t id e]
     deriving ( Functor, Show )
 

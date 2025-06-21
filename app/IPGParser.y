@@ -89,21 +89,21 @@ import IPGLexer ( alexScanTokens, Token(..) )
 -- 1 Comma: Left: [ "x, y" ]
 
 %right where
-%right '=' '?' -- 2
-%left '||' -- 3
-%left '&&' -- 4
-%left '|' -- 5
-%left '^' -- 6
-%left '&' -- 7
-%left '==' '!=' -- 8
-%left '<' '>' '<=' '>=' -- 9
-%left '<<' '>>' -- 10
-%left '+' '-' -- 11
-%left '*' '/' '%' -- 12
-%right '**' -- 13
-%nonassoc NEG PLUS '~' '!' -- 14
-%nonassoc '[' -- 17
-%left '.' -- 17
+%right '=' '?'              -- 2
+%left '||'                  -- 3
+%left '&&'                  -- 4
+%left '|'                   -- 5
+%left '^'                   -- 6
+%left '&'                   -- 7
+%left '==' '!='             -- 8
+%left '<' '>' '<=' '>='     -- 9
+%left '<<' '>>'             -- 10
+%left '+' '-'               -- 11
+%left '*' '/' '%'           -- 12
+%right '**'                 -- 13
+%nonassoc NEG PLUS '~' '!'  -- 14
+%nonassoc '['               -- 17
+%left '.'                   -- 17
 
 %%
 
