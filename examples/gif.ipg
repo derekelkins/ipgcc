@@ -1,38 +1,3 @@
-// const fs = require("node:fs");
-// console.log(JSON.stringify(GIF(fs.readFileSync("./gif_samples/1.gif"))));
-
-// function emptyTable() {
-//   return [];
-// }
-
-// function getNull() {
-//   return null;
-// }
-
-// function concat(chunks) {
-//   return Buffer.concat(chunks);
-// }
-
-// function decodeAscii(bytes) {
-//   return new TextDecoder("ascii").decode(new Uint8Array(bytes));
-// }
-
-// function makeGraphicBlock(extension, renderingBlock) {
-//   return { extension, ...renderingBlock };
-// }
-
-// function makeGraphicControlExtension(
-//     disposalMethod, userInputFlag, transparentColorFlag, delayTime, transparentColorIndex
-// ) {
-//   return {
-//     disposalMethod,
-//     userInputFlag,
-//     transparentColorFlag,
-//     delayTime,
-//     transparentColorIndex
-//   };
-// }
-
 // Instead of adapting the versions from the paper's resources, I'm just going to implement from
 // scratch from the spec. https://giflib.sourceforge.net/gifstandard/GIF89a.html
 GIF -> Header
@@ -158,3 +123,40 @@ U16 -> { bs = *[2] } { value = bs[0] | (bs[1] << 8) }; // Little-endian
 BlockTerminator -> "\x00";
 
 RGB -> { r = . } { g = . } { b = . };
+
+%postamble
+
+const fs = require("node:fs");
+console.log(JSON.stringify(GIF(fs.readFileSync("./gif_samples/1.gif"))));
+
+function emptyTable() {
+  return [];
+}
+
+function getNull() {
+  return null;
+}
+
+function concat(chunks) {
+  return Buffer.concat(chunks);
+}
+
+function decodeAscii(bytes) {
+  return new TextDecoder("ascii").decode(new Uint8Array(bytes));
+}
+
+function makeGraphicBlock(extension, renderingBlock) {
+  return { extension, ...renderingBlock };
+}
+
+function makeGraphicControlExtension(
+    disposalMethod, userInputFlag, transparentColorFlag, delayTime, transparentColorIndex
+) {
+  return {
+    disposalMethod,
+    userInputFlag,
+    transparentColorFlag,
+    delayTime,
+    transparentColorIndex
+  };
+}

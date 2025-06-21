@@ -14,6 +14,8 @@ import IPGLexer ( alexScanTokens, Token(..) )
 %error { parseError }
 
 %token
+    '%declare' { TokenDeclare }
+    '%end'  { TokenEndDeclare }
     EOI     { TokenEOI }
     repeat  { TokenRepeat }
     until   { TokenUntil }
@@ -104,6 +106,17 @@ import IPGLexer ( alexScanTokens, Token(..) )
 %left '.'                   -- 17
 
 %%
+
+Top :: { (Grammar', [IdType]) }
+    : MaybeDeclarations Grammar { ($2, $1) }
+
+MaybeDeclarations :: { [IdType] }
+    : '%declare' Declarations '%end' { reverse $2 }
+    | {- empty -} { [] }
+
+Declarations :: { [IdType] }
+    : Declarations name { $2 : $1 }
+    | name { [$1] }
 
 Grammar :: { Grammar' }
     : Rules { Grammar (reverse $1) }
@@ -260,7 +273,7 @@ makeAssign n (Slice1' l) = Slice1 n l
 makeAssign n (Slice2' l r) = Slice2 n l r
 makeAssign n (Assign' e) = n := e
 
-parse :: String -> Grammar'
+parse :: String -> (Grammar', [IdType])
 parse = parseIPG . alexScanTokens
 
 parseError :: [Token] -> a

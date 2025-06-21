@@ -1,26 +1,3 @@
-// const fs = require("node:fs");
-// console.log(JSON.stringify(ELF(fs.readFileSync("./elf_samples/1.elf"))));
-
-// function decodeAscii(bytes) {
-//   return new TextDecoder("ascii").decode(new Uint8Array(bytes));
-// }
-
-// function makeEntry(name, descriptor, type) {
-//   return {
-//     name: decodeAscii(name),
-//     descriptor: new Uint8Array(descriptor).values().toArray(),
-//     type,
-//   };
-// }
-
-// function empty() {
-//   return {};
-// }
-
-// function projectSections(sections) {
-//   return sections.map(o => o.section);
-// }
-
 // `man elf(5)` seems to be the reference to use.
 ELF -> H[0, 128]
        for i = 0 to H.e_shnum do SH[H.e_shoff + i*H.e_shentsize, H.e_shoff + (i + 1)*H.e_shentsize]
@@ -138,3 +115,28 @@ RelSec -> for i = 0 to EOI/16 do RelSecEntry[16*i, 16*(i + 1)]
           { section = RelSecEntry.these };
 
 RelSecEntry -> U64 { offset = U64.value } U64 { info = U64.value };
+
+%postamble
+
+const fs = require("node:fs");
+console.log(JSON.stringify(ELF(fs.readFileSync("./elf_samples/1.elf"))));
+
+function decodeAscii(bytes) {
+  return new TextDecoder("ascii").decode(new Uint8Array(bytes));
+}
+
+function makeEntry(name, descriptor, type) {
+  return {
+    name: decodeAscii(name),
+    descriptor: new Uint8Array(descriptor).values().toArray(),
+    type,
+  };
+}
+
+function empty() {
+  return {};
+}
+
+function projectSections(sections) {
+  return sections.map(o => o.section);
+}

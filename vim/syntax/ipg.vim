@@ -37,6 +37,11 @@ highlight link IPGOperator Operator
 syntax region IPGString start=/\v"/ skip=/\v\\./ end=/\v"/
 highlight link IPGString String
 
+syntax match IPGDeclare /\v\%end/
+syntax match IPGDeclare /\v^\%declare/
+syntax match IPGDeclare /\v^\%postamble/
+highlight link IPGDeclare PreProc
+
 syntax keyword IPGTodo TODO FIXME XXX TBD contained
 highlight link IPGTodo Todo
 

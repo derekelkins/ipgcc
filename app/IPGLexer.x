@@ -2,7 +2,7 @@
 module IPGLexer( alexScanTokens, Token(..) ) where
 }
 
-%wrapper "basic" -- TODO: Replace with "text" or "strict-text".
+%wrapper "basic" -- TODO: Replace with "strict-text".
 
 $digit = 0-9
 $alpha = [a-zA-Z]
@@ -17,6 +17,8 @@ tokens :-
     "0x" $hex $hex? { TokenInt . read }
     $digit+ \. $digit* { TokenDouble . read }
     $digit+ { TokenInt . read }
+    ^"%declare" { \_ -> TokenDeclare }
+    "%end" { \_ -> TokenEndDeclare }
     EOI     { \_ -> TokenEOI }
     repeat  { \_ -> TokenRepeat }
     until   { \_ -> TokenUntil }
@@ -66,6 +68,8 @@ tokens :-
 {
 data Token
     = TokenEOI
+    | TokenDeclare
+    | TokenEndDeclare
     | TokenRepeat
     | TokenUntil
     | TokenStart

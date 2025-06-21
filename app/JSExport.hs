@@ -36,22 +36,6 @@ refToJS _   (End nt) = printf "nt_%s._ipg_end" nt;
 exprToJS :: Env -> Expr -> T
 exprToJS env e = exprToJS' env 0 e ""
 
--- %right '=' '?' -- 2
--- %left '||' -- 3
--- %left '&&' -- 4
--- %left '|' -- 5
--- %left '^' -- 6
--- %left '&' -- 7
--- %left '==' '!=' -- 8
--- %left '<' '>' '<=' '>=' -- 9
--- %left '<<' '>>' -- 10
--- %left '+' '-' -- 11
--- %left '*' '/' '%' -- 12
--- %right '**' -- 13
--- %nonassoc NEG PLUS '~' '!' -- 14
--- %nonassoc '[' -- 17
--- %left '.' -- 17
-
 exprToJS' :: Env -> Int -> Expr -> T -> T
 exprToJS' _ _ (Int n) = shows n
 exprToJS' _ _ (Float n) = shows n
@@ -220,54 +204,58 @@ termToJS indent env (Slice i l r)
   where lExp = exprToJS env l; rExp = exprToJS env r
 termToJS indent env (Repeat nt args i)
     = indent <> printf "// repeat %s%s.%s\n" nt (call es) i
-   <> indent <>        "left = right;\n"
-   <> indent <>        "right = EOI;\n"
-   <> indent <>        "if (right < left) break _ipg_alt;\n"
    <> indent <>        "self.values = [];\n"
-   <> indent <> printf "nt_%s = { _ipg_end: right _ipg_start: left };\n" nt -- Special case
-   <> indent <>        "do {\n"
-   <> indent <> printf "  nt_%s = %s(input.slice(left, right)%s);\n" nt nt es
-   <> indent <> printf "  if (nt_%s === null) break;\n" nt
-   <> indent <> printf "  if (nt_%s._ipg_end !== 0) {\n" nt
-   <> indent <> printf "    self._ipg_start = Math.min(self._ipg_start, left + nt_%s._ipg_start);\n" nt
-   <> indent <> printf "    self._ipg_end = Math.max(self._ipg_end, left + nt_%s._ipg_end);\n" nt
+   <> indent <> printf "nt_%s = %s(input.slice(right, EOI)%s);\n" nt nt es
+   <> indent <> printf "if (nt_%s !== null) {\n" nt
+   <> indent <> printf "  if (nt_%s._ipg_end === 0) throw 'repeat of non-consuming rule: %s';\n" nt nt
+   <> indent <> printf "  self._ipg_start = Math.min(self._ipg_start, right + nt_%s._ipg_start);\n" nt
+   <> indent <> printf "  self._ipg_end = Math.max(self._ipg_end, right + nt_%s._ipg_end);\n" nt
+   <> indent <> printf "  nt_%s._ipg_end += right;\n" nt
+   <> indent <> printf "  nt_%s._ipg_start += right;\n" nt
+   <> indent <> printf "  left = nt_%s._ipg_start;\n" nt
+   <> indent <> printf "  right = nt_%s._ipg_end;\n" nt
+   <> indent <> printf "  self.values.push(nt_%s.%s);\n\n" nt i
+
+   <> indent <>        "  while(right <= EOI) {\n"
+   <> indent <> printf "    nt_%s = %s(input.slice(right, EOI)%s);\n" nt nt es
+   <> indent <> printf "    if (nt_%s === null) break;\n" nt
+   <> indent <> printf "    if (nt_%s._ipg_end !== 0) {\n" nt
+   <> indent <> printf "      self._ipg_start = Math.min(self._ipg_start, right + nt_%s._ipg_start);\n" nt
+   <> indent <> printf "      self._ipg_end = Math.max(self._ipg_end, right + nt_%s._ipg_end);\n" nt
+   <> indent <>        "    }\n"
+   <> indent <> printf "    nt_%s._ipg_end += right;\n" nt
+   <> indent <> printf "    nt_%s._ipg_start += right;\n" nt
+   <> indent <> printf "    self.values.push(nt_%s.%s);\n" nt i
+   <> indent <> printf "    right = nt_%s._ipg_end;\n" nt
    <> indent <>        "  }\n"
-   <> indent <> printf "  nt_%s._ipg_end += left;\n" nt
-   <> indent <> printf "  nt_%s._ipg_start += left;\n" nt
-   <> indent <> printf "  self.values.push(nt_%s.%s);\n" nt i
-   <> indent <> printf "  left = nt_%s._ipg_end;\n" nt
-   <> indent <>        "} while(left <= right);\n\n"
-   <> indent <> printf "right = nt_%s._ipg_end;\n" nt
+   <> indent <>        "}\n"
   where es = argList env args
 termToJS indent env (RepeatUntil nt1 args1 i nt2 args2)
     = indent <> printf "// repeat %s%s.%s until %s%s\n" nt1 (call es1) i nt2 (call es2)
    <> indent <>        "left = right;\n"
-   <> indent <>        "right = EOI;\n"
    <> indent <>        "self.values = [];\n"
    <> indent <>        "while(true) {\n"
-   <> indent <>        "  if (right < left) break _ipg_alt;\n"
-   <> indent <> printf "  nt_%s = %s(input.slice(left, right)%s);\n" nt2 nt2 es2
+   <> indent <>        "  if (EOI < right) break _ipg_alt;\n"
+   <> indent <> printf "  nt_%s = %s(input.slice(right, EOI)%s);\n" nt2 nt2 es2
    <> indent <> printf "  if (nt_%s !== null) {\n" nt2
    <> indent <> printf "    if (nt_%s._ipg_end !== 0) {\n" nt2
-   <> indent <> printf "      self._ipg_start = Math.min(self._ipg_start, left + nt_%s._ipg_start);\n" nt2
-   <> indent <> printf "      self._ipg_end = Math.max(self._ipg_end, left + nt_%s._ipg_end);\n" nt2
+   <> indent <> printf "      self._ipg_start = Math.min(self._ipg_start, right + nt_%s._ipg_start);\n" nt2
+   <> indent <> printf "      self._ipg_end = Math.max(self._ipg_end, right + nt_%s._ipg_end);\n" nt2
    <> indent <>        "    }\n"
-   <> indent <> printf "    nt_%s._ipg_end += left;\n" nt2
-   <> indent <> printf "    nt_%s._ipg_start += left;\n" nt2
-   <> indent <> printf "    left = nt_%s._ipg_start;\n" nt2
+   <> indent <> printf "    nt_%s._ipg_end += right;\n" nt2
+   <> indent <> printf "    nt_%s._ipg_start += right;\n" nt2
    <> indent <> printf "    right = nt_%s._ipg_end;\n" nt2
    <> indent <>        "    break;\n"
    <> indent <>        "  }\n"
-   <> indent <> printf "  nt_%s = %s(input.slice(left, right)%s);\n" nt1 nt1 es1
+   <> indent <> printf "  nt_%s = %s(input.slice(right, EOI)%s);\n" nt1 nt1 es1
    <> indent <> printf "  if (nt_%s === null) break _ipg_alt;\n" nt1
-   <> indent <> printf "  if (nt_%s._ipg_end !== 0) {\n" nt1
-   <> indent <> printf "    self._ipg_start = Math.min(self._ipg_start, left + nt_%s._ipg_start);\n" nt1
-   <> indent <> printf "    self._ipg_end = Math.max(self._ipg_end, left + nt_%s._ipg_end);\n" nt1
-   <> indent <>        "  }\n"
-   <> indent <> printf "  nt_%s._ipg_end += left;\n" nt1
-   <> indent <> printf "  nt_%s._ipg_start += left;\n" nt1
+   <> indent <> printf "  if (nt_%s._ipg_end === 0) throw 'repeat of non-consuming rule: %s';\n" nt1 nt1
+   <> indent <> printf "  self._ipg_start = Math.min(self._ipg_start, right + nt_%s._ipg_start);\n" nt1
+   <> indent <> printf "  self._ipg_end = Math.max(self._ipg_end, right + nt_%s._ipg_end);\n" nt1
+   <> indent <> printf "  nt_%s._ipg_end += right;\n" nt1
+   <> indent <> printf "  nt_%s._ipg_start += right;\n" nt1
    <> indent <> printf "  self.values.push(nt_%s.%s);\n" nt1 i
-   <> indent <> printf "  left = nt_%s._ipg_end;\n" nt1
+   <> indent <> printf "  right = nt_%s._ipg_end;\n" nt1
    <> indent <>        "}\n\n"
   where es1 = argList env args1; es2 = argList env args2
 
