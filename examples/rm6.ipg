@@ -78,6 +78,10 @@ function makeStringWithFormat(s, fmt) {
   // return new StringWithFormat(s, fmt); 
 }
 
+function makeCrdtSequenceItem(info, value) {
+  return { ...info, value };
+}
+
 function blockTypeToName(blockType) {
     switch(blockType) {
         case 0x00: return "MigrationInfoBlock";
@@ -242,12 +246,15 @@ SceneItemInfo
        TaggedU32(5) { deletedLength = TaggedU32.value };
 
 // TODO: Need an example with this.
-SceneTombstoneItemBlock -> SceneItemInfo { info = SceneItemInfo.this }; // itemType unused
+SceneTombstoneItemBlock
+    -> SceneItemInfo
+       { item = makeCrdtSequenceItem(SceneItemInfo.this) };
 
 // TODO: Need an example with this.
 SceneGlyphItemBlock // ItemType == 0x01
-    -> SceneItemInfo { info = SceneItemInfo.this }
-       SceneGlyphItemBlockValue { value = SceneGlyphItemBlockValue.value };
+    -> SceneItemInfo
+       SceneGlyphItemBlockValue
+       { item = makeCrdtSequenceItem(SceneItemInfo.this, SceneGlyphItemBlockValue.value) };
 
 SceneGlyphItemBlockValue
     -> SubBlock(6) { outerEnd = SubBlock.END + SubBlock.length }
@@ -259,7 +266,7 @@ SceneGlyphItemBlockValue
          { start = optStart == getNull() ? 0 : optStart } // Presumably
          { length = optLength == getNull() ? text.length : optLength }
          SubBlock(6)
-           VarUInt[SubBlock.END + 1, SubBlock.END + 1 + SubBlock.length] // numRects
+           VarUInt[SubBlock.END + 1, SubBlock.END + SubBlock.length] // numRects
            for i = 0 to VarUInt.value do Rectangle[VarUInt.END + 32*i, SubBlock.END + SubBlock.length]
            { rectangles = Rectangle.these }
            ExpectEmpty[Rectangle.END, SubBlock.END + SubBlock.length]
@@ -274,21 +281,22 @@ Rectangle
        Float64 { height = Float64.value };
 
 SceneGroupItemBlock
-    -> SceneItemInfo { info = SceneItemInfo.this }
-       SceneGroupItemBlockValue { value = SceneGroupItemBlockValue.value };
+    -> SceneItemInfo
+       SceneGroupItemBlockValue
+       { item = makeCrdtSequenceItem(SceneItemInfo.this, SceneGroupItemBlockValue.value) };
 
 SceneGroupItemBlockValue
     -> SubBlock(6)
          "\x02" // ItemType
-         TaggedId(2)[SubBlock.END + 1, SubBlock.END + 1 + SubBlock.length]
+         TaggedId(2)[SubBlock.END + 1, SubBlock.END + SubBlock.length]
          { value = TaggedId.value }
          ExpectEmpty[TaggedId.END, SubBlock.END + SubBlock.length]
      / { value = getNull() };
 
 SceneLineItemBlock(version) // ItemType == 0x03
-    -> SceneItemInfo { info = SceneItemInfo.this }
+    -> SceneItemInfo
        SceneLineItemBlockValue(version)
-       { value = SceneLineItemBlockValue.value };
+       { item = makeCrdtSequenceItem(SceneItemInfo.this, SceneLineItemBlockValue.value) };
 
 SceneLineItemBlockValue(version)
     -> SubBlock(6) { outerEnd = SubBlock.END + SubBlock.length }
@@ -340,7 +348,8 @@ PointVersions(version)
 // TODO: Should I still attempt to parse a SubBlock(6) even though we don't parse any value from it?
 // TODO: Need an example with this.
 SceneTextItemBlock // ItemType == 0x05
-    -> SceneItemInfo { info = SceneItemInfo.this };
+    -> SceneItemInfo
+       { item = makeCrdtSequenceItem(SceneItemInfo.this) };
 
 // TODO: Need an example with this.
 RootTextBlock
