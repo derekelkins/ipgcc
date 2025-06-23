@@ -145,7 +145,7 @@ termToJS indent env (Terminal t l r)
    <> indent <> printf "if (!_ipg_startsWith(input.slice(left, right), %s)) break _ipg_alt;\n" terminal
    <> indent <>        "self._ipg_start = Math.min(self._ipg_start, left);\n"
    <> indent <>        "self._ipg_end = Math.max(self._ipg_end, right);\n"
-   <> indent <> printf "right = left + %s.length;\n\n" terminal
+   <> indent <> printf "right = left + %d;\n\n" (length t)
   where lExp = exprToJS env l; rExp = exprToJS env r; terminal = hexyString t
 termToJS indent env (i := e)
     = indent <> printf "// {%s = %s}\n" i eExp
