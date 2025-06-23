@@ -90,7 +90,7 @@ exprToJS' env p (If b t e) =
 exprToJS' env _ (Call t es) =
     (t++) . ('(':) . foldr (.) id (intersperse (", "++) $ map (exprToJS' env 0) es) . (')':)
 exprToJS' env p (At l r) =
-    showParen (p > 17) (exprToJS' env 17 l . ('[':) . exprToJS' env 0 r . (']':))
+    showParen (p > 17) (exprToJS' env 17 l . (".at("++) . exprToJS' env 0 r . (')':))
 exprToJS' env _ (Ref r) = (refToJS env r++)
 
 paramList :: [T] -> T
@@ -142,7 +142,7 @@ termToJS indent env (Terminal t l r)
    <> indent <> printf "left = %s;\n" lExp
    <> indent <> printf "right = %s;\n" rExp
    <> indent <>        "if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
-   <> indent <> printf "if (!_ipg_startsWith(input.slice(left, right), %s)) break _ipg_alt;\n" terminal
+   <> indent <> printf "if (!input.slice(left, right).startsWith(%s)) break _ipg_alt;\n" terminal
    <> indent <>        "self._ipg_start = Math.min(self._ipg_start, left);\n"
    <> indent <>        "self._ipg_end = Math.max(self._ipg_end, right);\n"
    <> indent <> printf "right = left + %d;\n\n" (length t)
@@ -187,7 +187,7 @@ termToJS indent env (Any i l)
    <> indent <> printf "left = %s;\n" lExp
    <> indent <>        "right = left + 1;\n"
    <> indent <>        "if (left < 0 || right > EOI) break _ipg_alt;\n"
-   <> indent <> printf "self.%s = input[left];\n" i
+   <> indent <> printf "self.%s = input.at(left);\n" i
    <> indent <>        "self._ipg_start = Math.min(self._ipg_start, left);\n"
    <> indent <>        "self._ipg_end = Math.max(self._ipg_end, right);\n\n"
   where lExp = exprToJS env l
@@ -291,12 +291,19 @@ ruleToJS (Rule mt nt args alts)
 
 toJS :: Grammar T T T Expr -> T
 toJS (Grammar rules)
-    = "function _ipg_startsWith(s, prefix) {\n"
-   <> "  if (typeof s === 'string') return s.startsWith(prefix);\n"
-   <> "  if (s.length < prefix.length) return false;\n"
-   <> "  for (let i = 0; i < prefix.length; ++i) {\n"
-   <> "    if (s[i] !== prefix.charCodeAt(i)) return false;\n"
+    = "class ByteSlice {\n"
+   <> "  constructor(bytes, start = 0, end = bytes.length) {\n"
+   <> "    this.data = bytes; this.start = start; this.length = end - start;\n"
    <> "  }\n"
-   <> "  return true;\n"
+   <> "  at(ix) { return this.data[this.start + ix]; }\n" -- TODO: Do bounds checking.
+   <> "  slice(l, r) { return new ByteSlice(this.data, this.start + l, this.start + r); }\n"
+   <> "  startsWith(prefix) {\n"
+   <> "    if (this.length < prefix.length) return false;\n"
+   <> "    for (let i = 0; i < prefix.length; ++i) {\n"
+   <> "      if (this.at(i) !== prefix.charCodeAt(i)) return false;\n"
+   <> "    }\n"
+   <> "    return true;\n"
+   <> "  }\n"
+   <> "  copy() { return this.data.slice(this.start, this.start + this.length); }\n"
    <> "}\n\n"
    <> concatMap ruleToJS rules

@@ -26,6 +26,8 @@ function check(b, message) {
   return true;
 }
 
+function copy(bytes) { return bytes.copy(); }
+
 function decodeAscii(bytes) {
   return new TextDecoder("ascii").decode(bytes);
 }
@@ -109,11 +111,11 @@ function makeSceneGlyItemBlockValue(start, length, colorId, text, rectangles) {
 }
 
 function toFloat32(bs) {
-  return new DataView(new Uint8Array(bs).buffer).getFloat32(0, true);
+  return new DataView(new Uint8Array(bs.copy()).buffer).getFloat32(0, true);
 }
 
 function toFloat64(bs) {
-  return new DataView(new Uint8Array(bs).buffer).getFloat64(0, true);
+  return new DataView(new Uint8Array(bs.copy()).buffer).getFloat64(0, true);
 }
 
 function pointSerializedSize(version) {
@@ -416,8 +418,7 @@ TextFormat
          ExpectEmpty[SubBlock.END + 1, SubBlock.END + SubBlock.length]
        { value = lwwU8(timestamp, formatCode < 0 || formatCode > 7 ? 1 : formatCode) };
 
-%instrument
-UnknownBlock -> { data = * };
+UnknownBlock -> { slice = * } { data = copy(slice) };
 
 OptionalLWWBool(expectedIndex)
     -> LWWBool(expectedIndex) { value = LWWBool.value }
@@ -543,7 +544,7 @@ ExpectEmpty
     -> ?[ warnIf(EOI != 0, "Underfull block") ] // warnIf always returns true
        { _ = * }; // Consume all the remaining input
 
-Bytes -> { value = * };
+Bytes -> { slice = * } { value = copy(slice) };
 
 Bool -> "\x00" { value = !!0 } / "\x01" { value = !0 };
 
@@ -562,4 +563,4 @@ VarUInt -> { value = . } ?[ (value >> 7) == 0 ]
 
 %postamble_begin
 
-console.log(JSON.stringify(RM6(fs.readFileSync("./example.rm"))));
+console.log(JSON.stringify(RM6(new ByteSlice(fs.readFileSync("./example.rm")))));
