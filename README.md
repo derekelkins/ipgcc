@@ -78,7 +78,7 @@ STRING = /"[^"]*"/ -- TODO: Describe escaping.
 Grammar ::= Rule*
 
 -- Schematic Example: A(a_1, ..., a_m) -> alt_1 / ... / alt_n;
-Rule ::= NAME ParameterList? "->" Alt ("/" Alt)* ";"
+Rule ::= "%instrument"? NAME ParameterList? "->" Alt ("/" Alt)* ";"
 
 ParameterList
   ::= "(" ")"
@@ -182,6 +182,8 @@ nor (general) object field selection. Field selection is restricted to attribute
 of non-terminals or components of array notation. The intent is that any more
 involved or back-end language-specific processing would be handled by external
 functions. It is a bit tedious at times though...
+
+`%instrument` marks a rule for debugging instrumentation.
 
 ### External Interface
 
