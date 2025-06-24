@@ -90,7 +90,7 @@ exprToJS' env p (If b t e) =
 exprToJS' env _ (Call t es) =
     (t++) . ('(':) . foldr (.) id (intersperse (", "++) $ map (exprToJS' env 0) es) . (')':)
 exprToJS' env p (At l r) =
-    showParen (p > 17) (exprToJS' env 17 l . (".at("++) . exprToJS' env 0 r . (')':))
+    showParen (p > 17) (exprToJS' env 17 l . ('[':) . exprToJS' env 0 r . (']':))
 exprToJS' env _ (Ref r) = (refToJS env r++)
 
 paramList :: [T] -> T
@@ -120,7 +120,7 @@ termToJS indent env (NonTerminal nt args l r)
    <> indent <> printf "left = %s;\n" lExp
    <> indent <> printf "right = %s;\n" rExp
    <> indent <>        "if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
-   <> indent <> printf "nt_%s = %s(input.slice(left, right)%s);\n" nt nt es
+   <> indent <> printf "nt_%s = %s(input, begin + left, begin + right%s);\n" nt nt es
    <> indent <> printf "if (nt_%s === null) break _ipg_alt;\n" nt
    <> indent <> printf "if (nt_%s._ipg_end !== 0) {\n" nt
    <> indent <> printf "  self._ipg_start = Math.min(self._ipg_start, left + nt_%s._ipg_start);\n" nt
@@ -142,7 +142,7 @@ termToJS indent env (Terminal t l r)
    <> indent <> printf "left = %s;\n" lExp
    <> indent <> printf "right = %s;\n" rExp
    <> indent <>        "if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
-   <> indent <> printf "if (!input.slice(left, right).startsWith(%s)) break _ipg_alt;\n" terminal
+   <> indent <> printf "if (!_ipg_startsWith(input, begin + left, begin + right, %s)) break _ipg_alt;\n" terminal
    <> indent <>        "self._ipg_start = Math.min(self._ipg_start, left);\n"
    <> indent <>        "self._ipg_end = Math.max(self._ipg_end, right);\n"
    <> indent <> printf "right = left + %d;\n\n" (length t)
@@ -165,7 +165,7 @@ termToJS indent env (Array i start end nt args l r)
    <> indent <> printf "  const left = %s;\n" lExp
    <> indent <> printf "  const right = %s;\n" rExp
    <> indent <>        "  if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
-   <> indent <> printf "  const tmp = %s(input.slice(left, right)%s);\n" nt es
+   <> indent <> printf "  const tmp = %s(input, begin + left, begin + right%s);\n" nt es
    <> indent <>        "  if (tmp === null) break _ipg_alt;\n"
    <> indent <>        "  if (tmp._ipg_end !== 0) {\n"
    <> indent <>        "    self._ipg_start = Math.min(self._ipg_start, left + tmp._ipg_start);\n"
@@ -187,7 +187,7 @@ termToJS indent env (Any i l)
    <> indent <> printf "left = %s;\n" lExp
    <> indent <>        "right = left + 1;\n"
    <> indent <>        "if (left < 0 || right > EOI) break _ipg_alt;\n"
-   <> indent <> printf "self.%s = input.at(left);\n" i
+   <> indent <> printf "self.%s = input[begin + left];\n" i
    <> indent <>        "self._ipg_start = Math.min(self._ipg_start, left);\n"
    <> indent <>        "self._ipg_end = Math.max(self._ipg_end, right);\n\n"
   where lExp = exprToJS env l
@@ -196,7 +196,7 @@ termToJS indent env (Slice i l r)
    <> indent <> printf "left = %s;\n" lExp
    <> indent <> printf "right = %s;\n" rExp
    <> indent <>        "if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
-   <> indent <> printf "self.%s = input.slice(left, right);\n" i
+   <> indent <> printf "self.%s = input.slice(begin + left, begin + right);\n" i
    <> indent <>        "if (left !== right) {\n"
    <> indent <>        "  self._ipg_start = Math.min(self._ipg_start, left);\n"
    <> indent <>        "  self._ipg_end = Math.max(self._ipg_end, right);\n"
@@ -205,7 +205,7 @@ termToJS indent env (Slice i l r)
 termToJS indent env (Repeat nt args i)
     = indent <> printf "// repeat %s%s.%s\n" nt (call es) i
    <> indent <>        "self.values = [];\n"
-   <> indent <> printf "nt_%s = %s(input.slice(right, EOI)%s);\n" nt nt es
+   <> indent <> printf "nt_%s = %s(input, begin + right, begin + EOI%s);\n" nt nt es
    <> indent <> printf "if (nt_%s !== null) {\n" nt
    <> indent <> printf "  if (nt_%s._ipg_end === 0) throw 'repeat of non-consuming rule: %s';\n" nt nt
    <> indent <> printf "  self._ipg_start = Math.min(self._ipg_start, right + nt_%s._ipg_start);\n" nt
@@ -217,7 +217,7 @@ termToJS indent env (Repeat nt args i)
    <> indent <> printf "  self.values.push(nt_%s.%s);\n\n" nt i
 
    <> indent <>        "  while(right <= EOI) {\n"
-   <> indent <> printf "    nt_%s = %s(input.slice(right, EOI)%s);\n" nt nt es
+   <> indent <> printf "    nt_%s = %s(input, begin + right, begin + EOI%s);\n" nt nt es
    <> indent <> printf "    if (nt_%s === null) break;\n" nt
    <> indent <> printf "    if (nt_%s._ipg_end === 0) throw 'repeat of non-consuming rule: %s';\n" nt nt
    <> indent <> printf "    self._ipg_start = Math.min(self._ipg_start, right + nt_%s._ipg_start);\n" nt
@@ -235,7 +235,7 @@ termToJS indent env (RepeatUntil nt1 args1 i nt2 args2)
    <> indent <>        "self.values = [];\n"
    <> indent <>        "while(true) {\n"
    <> indent <>        "  if (EOI < right) break _ipg_alt;\n"
-   <> indent <> printf "  nt_%s = %s(input.slice(right, EOI)%s);\n" nt2 nt2 es2
+   <> indent <> printf "  nt_%s = %s(input, begin + right, begin + EOI%s);\n" nt2 nt2 es2
    <> indent <> printf "  if (nt_%s !== null) {\n" nt2
    <> indent <> printf "    if (nt_%s._ipg_end !== 0) {\n" nt2
    <> indent <> printf "      self._ipg_start = Math.min(self._ipg_start, right + nt_%s._ipg_start);\n" nt2
@@ -246,7 +246,7 @@ termToJS indent env (RepeatUntil nt1 args1 i nt2 args2)
    <> indent <> printf "    right = nt_%s._ipg_end;\n" nt2
    <> indent <>        "    break;\n"
    <> indent <>        "  }\n"
-   <> indent <> printf "  nt_%s = %s(input.slice(right, EOI)%s);\n" nt1 nt1 es1
+   <> indent <> printf "  nt_%s = %s(input, begin + right, begin + EOI%s);\n" nt1 nt1 es1
    <> indent <> printf "  if (nt_%s === null) break _ipg_alt;\n" nt1
    <> indent <> printf "  if (nt_%s._ipg_end === 0) throw 'repeat of non-consuming rule: %s';\n" nt1 nt1
    <> indent <> printf "  self._ipg_start = Math.min(self._ipg_start, right + nt_%s._ipg_start);\n" nt1
@@ -281,8 +281,8 @@ alternativeToJS instrument indent env (Alternative ts)
     
 ruleToJS :: Rule T T T Expr -> T
 ruleToJS (Rule mt nt args alts)
-    = printf "function %s(input%s) {\n" nt (paramList args)
-   <>        "  const EOI = input.length; let self;\n"
+    = printf "function %s(input, begin = 0, end = input.length%s) {\n" nt (paramList args)
+   <>        "  const EOI = end - begin; let self;\n"
    <>           concatMap (alternativeToJS instrument "  " env) alts
    <>        "  return null;\n"
    <>        "}\n\n"
@@ -291,19 +291,12 @@ ruleToJS (Rule mt nt args alts)
 
 toJS :: Grammar T T T Expr -> T
 toJS (Grammar rules)
-    = "class ByteSlice {\n"
-   <> "  constructor(bytes, start = 0, end = bytes.length) {\n"
-   <> "    this.data = bytes; this.start = start; this.length = end - start;\n"
+    = "function _ipg_startsWith(s, l, r, prefix) {\n"
+   <> "  if (r - l < prefix.length) return false;\n"
+   <> "  if (typeof s === 'string') return s.startsWith(prefix, l);\n"
+   <> "  for (let i = 0; i < prefix.length; ++i) {\n"
+   <> "    if (s[l + i] !== prefix.charCodeAt(i)) return false;\n"
    <> "  }\n"
-   <> "  at(ix) { return this.data[this.start + ix]; }\n" -- TODO: Do bounds checking.
-   <> "  slice(l, r) { return new ByteSlice(this.data, this.start + l, this.start + r); }\n"
-   <> "  startsWith(prefix) {\n"
-   <> "    if (this.length < prefix.length) return false;\n"
-   <> "    for (let i = 0; i < prefix.length; ++i) {\n"
-   <> "      if (this.at(i) !== prefix.charCodeAt(i)) return false;\n"
-   <> "    }\n"
-   <> "    return true;\n"
-   <> "  }\n"
-   <> "  copy() { return this.data.slice(this.start, this.start + this.length); }\n"
-   <> "}\n\n"
+   <> "  return true;\n"
+   <> "}\n"
    <> concatMap ruleToJS rules
