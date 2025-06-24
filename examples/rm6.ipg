@@ -78,6 +78,13 @@ function makeStringWithFormat(s, fmt) {
   // return new StringWithFormat(s, fmt); 
 }
 
+function processTextItemValue(value) {
+  if (value.fmt !== null) {
+    return value.fmt;
+  }
+  return value.s;
+}
+
 function makeCrdtSequenceItem(info, value) {
   return { ...info, value };
 }
@@ -338,7 +345,6 @@ SceneTextItemBlock // ItemType == 0x05
     -> SceneItemInfo
        { item = makeCrdtSequenceItem(SceneItemInfo.this) };
 
-%instrument
 RootTextBlock
     -> TaggedId(1) { blockId = TaggedId.value }
        ?[ checkRootTextBlockId(blockId) ]
@@ -381,8 +387,8 @@ TextItem
        ExpectEmpty[TextItemValue.END, SubBlock.END + SubBlock.length];
 
 TextItemValue
-    -> StringWithFormat(6) { value = StringWithFormat.value }
-     / { value = getNull() };
+    -> StringWithFormat(6) { value = processTextItemValue(StringWithFormat.value) }
+     / { value = "" };
 
 StringWithFormat(expectedIndex)
     -> SubBlock(expectedIndex)
@@ -395,7 +401,6 @@ StringWithFormat(expectedIndex)
        { value = makeStringWithFormat(decodeAscii(Bytes.value), OptionalU32.value) }
        ExpectEmpty[OptionalU32.END, SubBlock.END + SubBlock.length];
 
-%instrument
 TextFormat
     -> CrdtId { charId = CrdtId.this }
        TaggedId(1) { timestamp = TaggedId.value }
