@@ -239,7 +239,7 @@ Args :: { [Exp'] }
 
 {
 type IdType = String
-type Exp' = Exp IdType
+type Exp' = Exp IdType IdType IdType
 type Grammar' = Grammar IdType IdType IdType Exp'
 type Rule' = Rule IdType IdType IdType Exp'
 type Alternative' = Alternative IdType IdType IdType Exp'

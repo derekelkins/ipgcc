@@ -1,6 +1,10 @@
 module Main ( main ) where
 import Data.Char ( isSpace ) -- base
 import Data.List ( isPrefixOf ) -- base
+import qualified Data.Set as Set -- containers
+import System.IO ( hPutStrLn, stderr ) -- base
+
+import CheckIPG ( validate )
 import FullIPG ( ExpHelpers(..), toCore )
 import qualified GenericExp as E
 import IPGParser ( IdType, Exp', parse )
@@ -30,9 +34,11 @@ main = do
     let (input, postamble) = case breakOn "\n%postamble_begin" rest of
             Nothing -> (rest, "")
             Just (x, p) -> (x, dropWhile isSpace (drop 17 p))
-    let (g, _decls) = parse input
+    let (g, decls) = parse input
     let core = E.simplify (toCore helper g)
-    -- TODO: validate decls core
-    putStrLn preamble
-    putStrLn (toJS core)
-    putStr postamble
+    case validate (Set.fromList decls) core of
+        Just errs -> mapM_ (hPutStrLn stderr) errs
+        Nothing -> do
+            putStrLn preamble
+            putStrLn (toJS core)
+            putStr postamble

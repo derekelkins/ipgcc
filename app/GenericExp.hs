@@ -1,43 +1,44 @@
 module GenericExp ( Exp(..), simplify, simplifyExp ) where
 import Data.Bits ( shift, complement, xor, (.&.), (.|.) ) -- base
+
 import CoreIPG ( Grammar, Ref )
 
-data Exp t
+data Exp nt t id
     = Int Integer
     | Float Double
     | String t
-    | Add (Exp t) (Exp t)
-    | Sub (Exp t) (Exp t)
-    | Mul (Exp t) (Exp t)
-    | Div (Exp t) (Exp t)
-    | Mod (Exp t) (Exp t)
-    | Exp (Exp t) (Exp t)
-    | Neg (Exp t)
-    | BitwiseNeg (Exp t)
-    | And (Exp t) (Exp t)
-    | Or (Exp t) (Exp t)
-    | BitwiseAnd (Exp t) (Exp t)
-    | BitwiseXor (Exp t) (Exp t)
-    | BitwiseOr (Exp t) (Exp t)
-    | LSh (Exp t) (Exp t)
-    | RSh (Exp t) (Exp t)
-    | LessThan (Exp t) (Exp t)
-    | LTE (Exp t) (Exp t)
-    | GreaterThan (Exp t) (Exp t)
-    | GTE (Exp t) (Exp t)
-    | Equal (Exp t) (Exp t)
-    | NotEqual (Exp t) (Exp t)
-    | Not (Exp t)
-    | If (Exp t) (Exp t) (Exp t)
-    | Call t [Exp t]
-    | At (Exp t) (Exp t)
-    | Ref (Ref t t (Exp t))
+    | Add (Exp nt t id) (Exp nt t id)
+    | Sub (Exp nt t id) (Exp nt t id)
+    | Mul (Exp nt t id) (Exp nt t id)
+    | Div (Exp nt t id) (Exp nt t id)
+    | Mod (Exp nt t id) (Exp nt t id)
+    | Exp (Exp nt t id) (Exp nt t id)
+    | Neg (Exp nt t id)
+    | BitwiseNeg (Exp nt t id)
+    | And (Exp nt t id) (Exp nt t id)
+    | Or (Exp nt t id) (Exp nt t id)
+    | BitwiseAnd (Exp nt t id) (Exp nt t id)
+    | BitwiseXor (Exp nt t id) (Exp nt t id)
+    | BitwiseOr (Exp nt t id) (Exp nt t id)
+    | LSh (Exp nt t id) (Exp nt t id)
+    | RSh (Exp nt t id) (Exp nt t id)
+    | LessThan (Exp nt t id) (Exp nt t id)
+    | LTE (Exp nt t id) (Exp nt t id)
+    | GreaterThan (Exp nt t id) (Exp nt t id)
+    | GTE (Exp nt t id) (Exp nt t id)
+    | Equal (Exp nt t id) (Exp nt t id)
+    | NotEqual (Exp nt t id) (Exp nt t id)
+    | Not (Exp nt t id)
+    | If (Exp nt t id) (Exp nt t id) (Exp nt t id)
+    | Call t [Exp nt t id]
+    | At (Exp nt t id) (Exp nt t id)
+    | Ref (Ref nt id (Exp nt t id))
   deriving ( Show )
 
-simplify :: (Ord a) => Grammar nt t i (Exp a) -> Grammar nt t i (Exp a)
+simplify :: (Ord t) => Grammar nt t id (Exp nt t id) -> Grammar nt t id (Exp nt t id)
 simplify = fmap simplifyExp
 
-simplifyExp :: (Ord t) => Exp t -> Exp t
+simplifyExp :: (Ord t) => Exp nt t id -> Exp nt t id
 simplifyExp (Int n) = Int n
 simplifyExp (Float n) = Float n
 simplifyExp (String s) = String s

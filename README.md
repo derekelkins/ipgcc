@@ -60,15 +60,16 @@ WARNING: The concrete syntax is subject to change. I'm not 100% happy with
 some of the choices made so far.
 
 The following uses a BNF-like description of syntax rules, and regexes for terminals.
-`--` indicates a line comment.
-`P?` indicates an optional `P`.
-`P*` indicates zero or more repetitions of `P`.
-`P+` indicates one or more repetitions of `P`.
-`|` indicates alternation.
-Terminals are wrapped in quotes.
-Parentheses can be used for grouping.
 
-```
+- `--` indicates a line comment.
+- `P?` indicates an optional `P`.
+- `P*` indicates zero or more repetitions of `P`.
+- `P+` indicates one or more repetitions of `P`.
+- `|` indicates alternation.
+- Terminals are wrapped in quotes.
+- Parentheses can be used for grouping.
+
+```bnf
 -- Regexes describing more complicated terminals.
 NAME = /[_a-zA-Z_][_a-zA-Z0-9]*/
 INT = /[1-9][0-9]*/
@@ -159,8 +160,6 @@ parameter name. You could use it as an attribute or rule name if you like.
 Incidentally, "EOI" stands for "end of input" and refers to the end of the slice
 given to the currently executing rule.
 
-TODO: In the future, I'll check rule definitions against this.
-
 Special fields:
 - `A.START` - the beginning of the interval actually parsed by `A` most recently
 - `A.END` - the end of the interval actually parsed by `A` most recently
@@ -172,8 +171,6 @@ Special fields:
 These identifiers should not be used as names of attributes. You could use them as
 parameter or rule names, though using `this` in such a way would cause issues for
 the JavaScript back-end.
-
-TODO: In the future, I'll check assignments against this.
 
 The expression syntax is geared to cover common use-cases in parsing binary files
 while still being generic enough to be straightforwardly translated to a variety
@@ -191,7 +188,7 @@ For the purposes of error checking, you can declare some rule names as external
 so they will not be treated as missing. You do this with a `%declare` declaration
 which is terminated with `%end`. The `%declare` must be at the start of a line and
 before the grammar. Between the `%declare` and `%end` is a whitespace separated list
-of names. (TODO: The code doesn't actually use this currently...)
+of names.
 
 Example:
 ```
@@ -332,8 +329,8 @@ R -> A(a_1, ..., a_m)[0, EOI] R[A.END, EOI] { values = cons(A.id, R.values) }
 and similarly for `repeat A(a_1, ..., a_m).id until B(b_1, ..., b_k)`:
 
 ```
-R -> B(b_1, ..., b_k) { values = nil() };
-   / A(a_1, ..., a_m)[0, EOI] R[A.END, EOI] { values = cons(A.id, R.values) }
+R -> B(b_1, ..., b_k) { values = nil() }
+   / A(a_1, ..., a_m)[0, EOI] R[A.END, EOI] { values = cons(A.id, R.values) };
 ```
 
 Here `cons` and `nil` are functions that append an element to the beginning of
@@ -371,6 +368,28 @@ Interval inference proceeds left-to-right.
 
 ## Tricks
 
+### Skipping input
+
+This is more of a warning that a trick. DON'T use `{ _ = *[l] }` or similar to
+skip past input. You can just give the next term an interval like `[Prev.END + l, EOI]`
+instead. This will avoid "reading" that input unnecessarily, and this kind of thing
+is one of the strengths of IPG.
+
+### Avoiding END calculations
+
+`{ x = .[e] }` and `{ y = *[l, r] }` consume input but don't give you a name to
+refer to with `.END`. This isn't usually a problem since you can typically rely
+on interval inference. When you can't, you have a couple of options:
+
+1. compute the value yourself,
+2. wrap the term in a non-terminal, or
+3. use a non-terminal that doesn't consume input.
+
+For the last, we could write something like `Marker -> ?[1];` and then
+`{ x = *[e] } A[???, EOI]` could become `{ x = *[e] } Marker A[Marker.END, EOI]`.
+
+### Keeping the attribute sets clean
+
 I like to avoid returning attributes that are just there as helpers and don't
 reflect the logical output. Since the only attributes that are "returned" are
 those explicitly assigned in the rule, you can use a subrule to compute the
@@ -384,6 +403,8 @@ SubRule -> A { x = A.y } { b = . } { value = compute(x, b) };
 In particular, `{ id = . }` and `{ id = *[l, r] }` lead to this situation often.
 I often use: `U8 -> { value = . };` to parse a byte with an unnamed value. For
 slices, `B(n) -> { value = *[n] };` could be used.
+
+### Rule that only accepts empty input
 
 ```
 Empty -> ?[ EOI == 0 ];
@@ -399,33 +420,46 @@ succeeds if repeated invocations of `A` will consume *exactly* all the input.
 
 A rule in the grammar gives rise to a JavaScript function of the same name.
 This function takes in either a string or an array of numbers &ndash; typically a
-`Uint8Array` &ndash; and outputs an object or `null` in the case of parse failure.
+`Uint8Array` &ndash;, then two integers indicating the start and end of the slice
+to use, and it outputs an object or `null` in the case of parse failure.
 In addition to any attributes defined in the rule, which will occur as fields of
 the same name on the returned object, there are the fields `_ipg_start` and `_ipg_end`.
 `_ipg_start` and `_ipg_end` give the start and end points of the interval actually
 parsed. If no data was consumed, `_ipg_end` will be `0` and `_ipg_start` will be the
 length of the input.
 
-Any function that has an interface similar to what was just described can be used as
+As a TypeScript declaration: 
+
+```typescript
+interface ParserOutput {
+  _ipg_start: number,
+  _ipg_end: number,
+  [id: string]: unknown, // All the attributes
+}
+
+function MyRule(
+  input: string | Uint8Array,
+  start: number = 0,
+  end: number = 0
+): ParserOutput | null;
+```
+
+Any function that has an interface similar to this can be used as
 a parser. You can just reference that function as a non-terminal in your parser.
 
 The output is a straightforward recursive descent parser *without* packrat-style
 memoization.
 
-The JavaScript isn't optimized. While it should be pretty efficient, there are many
+The JavaScript isn't optimized. While it should be reasonably efficient, there are many
 ways it could be improved.
 
-- Array expressions don't pre-allocate the output array though they could. 
 - Objects holding the collections of attributes could be reused more. Currently,
   I discard them as a quick way of removing obsolete attributes. Reusing these,
   would likely use more memory as garbage would survive longer.
 - The prefix check for non-terminals uses the function `_ipg_startsWith` which is
   naively implemented. The generator knowing the type of the input could allow a
-  good implementation to be chosen.
-- Instead of passing around slices of the input, I could just pass around the
-  start and end of the relevant input. This would avoid creating a bunch of short-lived
-  slice objects. The reason I use slices is that it leads to simpler code and
-  can help catch out-of-bounds accesses.
+  good implementation to be chosen. (Feel free to replace it in the output with
+  something better or more specialized.)
 - For simplicity, I add the iteration variable of an array term as an attribute
   (and then `delete` it afterwards), but it can and should be just a local variable.
 
@@ -443,8 +477,6 @@ any of these unless some very compelling case comes up.
 The following names should not be used in your grammar to avoid conflicting with the
 implementation.
 
-TODO: In the future, I'll probably add a check for these names.
-
 Field names used by the generator: `_ipg_start`, `_ipg_end`
 
 Function names used by the generator: `_ipg_startsWith`
@@ -453,12 +485,14 @@ Function names used by the generator: `_ipg_startsWith`
 
 Here are the requirements on the input when it is not a string.
 
-- It must have a `length` field that behaves as usual.
+- It must have a `length` field that behaves as usual. (This can be omitted if
+  you don't rely on the default values when you call a rule function.)
 - Array index notation should work on it, e.g. `input[i]`. This should return
-  a number. It will compared against `s.charCodeAt(i)` for terminals.
+  a number. It will be compared against `s.charCodeAt(i)` for terminals.
 - It should have a `slice` function that behaves as usual. This slice function
   will only ever be called with two arguments. The output of this slice function
-  must obey the same requirements as here (or be a string).
+  must obey the same requirements as here (or be a string). (The `slice` function
+  is only used for `{ id = *[l, r] }`, so it can be omitted if you don't use that.)
 
 ## Examples
 
@@ -505,3 +539,23 @@ understandable.
 
 The parser produces a sequence of color objects. [pureimage](https://www.npmjs.com/package/pureimage)
 is used to convert that to a PNG file.
+
+### RM6
+
+This is a parser for the reMarkable tablet's V6 lines file. This was the motivation
+for me creating this tool. I wanted to be able to convert these files to SVG in the
+browser. There's code that does this... in Python. So I started looking at writing a
+parser of my own. Looking at the latest tools and literature on declarative parsing
+led me to Interval Parsing Grammars. In this case using some kind of "declarative"
+parsing approach wasn't just a (strong) preference of mine, but I also wanted to have
+an artifact that would describe the format at a reasonably high level. This format is
+not documented by the producer and so has been reversed engineered. However, the
+known public information on the format seems to be largely represented by two codebases
+that not only have few comments but also don't seem to have any kind of summary README
+that gives a high-level overview of the format.
+
+My hope is that even without comments of its own, the grammar here can give a relatively
+high-level overview of at least the syntactic aspects of this format.
+
+As an example, there isn't too much novel about it other than its size and some checking
+code incorporated into it.

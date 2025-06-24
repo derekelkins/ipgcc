@@ -1,9 +1,10 @@
 module JSExport ( toJS, T ) where
 import Data.Char ( isPrint, ord ) -- base
+import Data.List ( intersperse ) -- base
 import qualified Data.Set as Set -- containers
 import Numeric ( showHex ) -- base
-import Data.List ( intersperse ) -- base
 import Text.Printf ( printf ) -- base
+
 import CoreIPG
 import GenericExp ( Exp(..) )
 
@@ -15,7 +16,7 @@ import GenericExp ( Exp(..) )
 -- consume its full input, we can just return _ipg_start = 0, _ipg_end = input.length.
 
 type T = String
-type Expr = Exp T
+type Expr = Exp T T T
 type Env = Set.Set T
 
 refToJS :: Env -> Ref T T Expr -> T
@@ -158,10 +159,10 @@ termToJS indent env (Guard e)
 termToJS indent env (Array i start end nt args l r)
     = indent <> printf "// for %s = %s to %s do %s%s[%s, %s]\n"
         i startExp endExp nt (call es) lExp rExp
-   <> indent <> printf "seq_%s = [];\n" nt
    <> indent <> printf "nt_%s = { _ipg_end: right, _ipg_start: left };\n" nt -- Special case
-   <> indent <> printf "for (self.%s = %s; self.%s < %s; self.%s++) {\n"
-            i startExp i endExp i
+   <> indent <> printf "loopEnd = %s;\n" endExp
+   <> indent <> printf "seq_%s = new Array(loopEnd);\n" nt
+   <> indent <> printf "for (self.%s = %s; self.%s < loopEnd; self.%s++) {\n" i startExp i i
    <> indent <> printf "  const left = %s;\n" lExp
    <> indent <> printf "  const right = %s;\n" rExp
    <> indent <>        "  if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
@@ -175,7 +176,7 @@ termToJS indent env (Array i start end nt args l r)
    <> indent <>        "  tmp._ipg_start += left;\n"
    <> indent <> printf "  nt_%s._ipg_end = tmp._ipg_end;\n" nt -- Special case
    <> indent <> printf "  nt_%s._ipg_start = tmp._ipg_start;\n" nt -- Special case
-   <> indent <> printf "  seq_%s.push(tmp);\n" nt
+   <> indent <> printf "  seq_%s[self.%s] = tmp;\n" nt i
    <> indent <>        "}\n"
    <> indent <> printf "delete self.%s;\n" i
    <> indent <> printf "left = nt_%s._ipg_start;\n" nt
@@ -261,7 +262,7 @@ termToJS indent env (RepeatUntil nt1 args1 i nt2 args2)
 alternativeToJS :: Maybe (T, [T]) -> T -> Env -> Alternative T T T Expr -> T
 alternativeToJS instrument indent env (Alternative ts)
     = indent <>        "_ipg_alt: {\n"
-   <> indent <>        "  let left = EOI; let right = 0;\n"
+   <> indent <>        "  let left = EOI; let right = 0; let loopEnd = 0;\n"
    <>                     concatMap declare nts
    <>                     concatMap declareSeqs seqs
    <> indent <>        "  self = { _ipg_start: EOI, _ipg_end: 0 };\n\n"

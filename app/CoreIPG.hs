@@ -1,11 +1,11 @@
 {-# LANGUAGE DeriveFunctor #-}
 module CoreIPG ( 
     Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..),
-    nonTerminals, nonArrayNonTerminals, arrayNonTerminals, validate,
+    nonTerminals, nonArrayNonTerminals, arrayNonTerminals,
 ) where
 import Data.List ( nub ) -- base
 
-data MetaTag = INSTRUMENT
+data MetaTag = INSTRUMENT -- %instrument
     deriving ( Eq, Ord, Show )
 
 newtype Grammar nt t id e = Grammar [Rule nt t id e]
@@ -62,13 +62,3 @@ arrayNonTerminals = nub . concatMap processTerm
 
 -- TODO: Add pretty-printer.
 -- Also, perhaps add termination checker.
-
--- Things to check:
---   - Referenced rules are defined (would want to be able to declare external rules)
---   - Attributes are defined before use
---   - EOI is not used as a parameter name
---   - _ipg_start and _ipg_end are not used as attribute names (maybe check this in JSExport)
---   - _ipg_startsWith is not used as a rule name (maybe check this in JSExport)
---   - START, END, this, these should not occur in the LHS of assignments
-validate :: Grammar nt t id e -> Maybe String
-validate _ = Nothing -- TODO

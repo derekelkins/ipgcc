@@ -34,48 +34,44 @@ function getNull() {
   return null;
 }
 
+function getLength(s) {
+  return s.length;
+}
+
 function getTwoPi() {
   return 2*Math.pi;
 }
 
 function lwwBool(id, value) {
   return { id, value };
-  // return new LwwValue<bool>(id, value);
 }
 
 function lwwU8(id, value) {
   return { id, value };
-  // return new LwwValue<U8>(id, value);
 }
 
 function lwwFloat32(id, value) {
   return { id, value };
-  // return new LwwValue<Float32>(id, value);
 }
 
 function lwwCrdtId(id, value) {
   return { id, value };
-  // return new LwwValue<CrdtId>(id, value);
 }
 
 function lwwString(id, value) {
   return { id, value };
-  // return new LwwValue<string>(id, value);
 }
 
 function makeCrdtId(part1, part2) {
   return { part1, part2 };
-  // return new CrdtId(part1, part2);
 }
 
 function makePair(fst, snd) {
   return { fst, snd };
-  // return new Pair<U32>(fst, snd);
 }
 
 function makeStringWithFormat(s, fmt) {
   return { s, fmt };
-  // return new StringWithFormat(s, fmt); 
 }
 
 function processTextItemValue(value) {
@@ -258,7 +254,7 @@ SceneGlyphItemBlockValue
          TaggedU32(4) { colorId = TaggedU32.value }
          String(5) { text = String.value }
          { start = optStart == getNull() ? 0 : optStart } // Presumably
-         { length = optLength == getNull() ? text.length : optLength }
+         { length = optLength == getNull() ? getLength(text) : optLength }
          SubBlock(6)
            VarUInt[SubBlock.END + 1, SubBlock.END + SubBlock.length] // numRects
            for i = 0 to VarUInt.value do Rectangle[VarUInt.END + 32*i, SubBlock.END + SubBlock.length]
@@ -406,7 +402,7 @@ TextFormat
        TaggedId(1) { timestamp = TaggedId.value }
        SubBlock(2)
          "\x11" // Source is unsure about this.
-         { formatCode = . } // See paragraphStyle
+         { formatCode = . }
        ExpectEmpty[SubBlock.END + 2, SubBlock.END + SubBlock.length]
        { value = lwwU8(timestamp, formatCode < 0 || formatCode > 7 ? 1 : formatCode) };
 
