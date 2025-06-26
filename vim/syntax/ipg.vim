@@ -50,4 +50,7 @@ highlight link IPGTodo Todo
 syntax match IPGComment "//.*$" contains=IPGTodo
 highlight link IPGComment Comment
 
+syntax region IPGMultilineComment start="\v/\*" end="\v\*/" contains=IPGMultilineComment,IPGTodo
+highlight link IPGMultilineComment Comment
+
 let b:current_syntax = "ipg"

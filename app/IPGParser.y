@@ -5,19 +5,25 @@ module IPGParser (
 ) where
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Lazy as LBS -- bytestring
+import Data.List ( intersperse ) -- base
 
 import CoreIPG ( Ref(..), MetaTag(..) )
 import FullIPG ( Grammar(..), Rule(..), Alternative(..), Term(..) )
 import GenericExp ( Exp(..) )
-import IPGLexer ( alexError, alexGetInput, alexMonadScan, runAlex,
-                  Alex, AlexInput(..), AlexPosn(..), Token(..) )
+import IPGLexer ( alexError, alexGetInput, alexMonadScan, getCurrentLine, runAlex,
+                  Alex, AlexInput, AlexPosn(..), Token(..) )
+
+-- Decent intro: https://serokell.io/blog/parsing-with-happy
 }
 
 %name parseIPG Top
 %tokentype { Token }
 %error { parseError }
+%error.expected
 %monad { Alex }
 %lexer { lexer } { TokenEOF }
+
+%expect 1
 
 %token
     '%declare' { TokenDeclare }
@@ -96,6 +102,7 @@ import IPGLexer ( alexError, alexGetInput, alexMonadScan, runAlex,
 --                 N/A: [ "yield x", "yield* x", "...x" ]
 -- 1 Comma: Left: [ "x, y" ]
 
+%right ':'
 %right '=' '?'              -- 2
 %left '||'                  -- 3
 %left '&&'                  -- 4
@@ -290,9 +297,13 @@ parse input = runAlex input parseIPG
 lexer :: (Token -> Alex a) -> Alex a
 lexer action = alexMonadScan >>= action
 
--- TODO: Do something even better.
-parseError :: Token -> Alex a
-parseError _ = do
+parseError :: Token -> [String] -> Alex a
+parseError _ followers = do
     (AlexPn _ line col, _, _, _) <- alexGetInput
-    alexError ("Parse error at line " <> show line <> ", column " <> show col)
+    errLine <- getCurrentLine
+    alexError (
+        errLine <> "\n"
+     <> replicate (col - 2) ' ' <> "^\n"
+     <> "Parse error at line " <> show line <> ", column " <> show col <> ".\n"
+     <> "Possible following tokens are: " <> unwords (intersperse "," followers))
 }

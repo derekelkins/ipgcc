@@ -1,12 +1,16 @@
 {
 module IPGLexer(
-    alexError, alexGetInput, alexMonadScan, runAlex,
-    Alex, AlexInput(..), AlexPosn(..), Token(..)
+    alexError, alexGetInput, alexMonadScan, getCurrentLine, runAlex,
+    Alex, AlexInput, AlexPosn(..), Token(..)
 ) where
 import qualified Data.ByteString as BS -- bytestring
+import qualified Data.ByteString.Char8 as CBS -- bytestring
 import qualified Data.ByteString.Lazy as LBS -- bytestring
+import qualified Data.ByteString.Lazy.Char8 as CLBS -- bytestring
 import qualified Data.ByteString.Lex.Integral as I -- bytestring-lexing
 import qualified Data.ByteString.Lex.Fractional as F -- bytestring-lexing
+
+-- Decent intro: https://serokell.io/blog/lexing-with-alex
 }
 
 %wrapper "monadUserState-bytestring"
@@ -15,71 +19,73 @@ $digit = 0-9
 $alpha = [a-zA-Z]
 $hex = [0-9a-fA-F]
 $ascii = \x00-\xFF
-$print = \x20-\x7E
+$print = [\t \x20-\x7E]
 $stringchar = $print # [\n\r\f\v]
+$nnl = $white # [\n]
 
 tokens :-
-<0>    $white+ ;
+<0>    \n      { saveLine }
+<0>    $nnl+   ;
 <0>    "//".*  ;
 <0>    "/*"    { nestComment `andBegin` cmt }
-<0>    "*/"    { \inp len -> alexError "Unexpected closing comment" }
+<0>    "*/"    { unexpectedCloseComment  }
 <cmt>  "/*"    { nestComment }
 <cmt>  "*/"    { unnestComment }
-<cmt>  "."     ;
-<cmt>  "\n"    ;
+<cmt>  .       ;
+<cmt>  \n      ;
 <0>    "0x" $hex $hex?
                { token $ \inp len -> TokenInt (readHex (current inp len)) }
 <0>    $digit+ \. $digit*
                { token $ \inp len -> TokenDouble (readDouble (current inp len)) }
 <0>    $digit+ { token $ \inp len -> TokenInt (readInteger (current inp len)) }
 <0>    ^"%declare"
-               { token $ \inp len -> TokenDeclare }
+               { token $ \_ _ -> TokenDeclare }
 <0>    "%instrument"
-               { token $ \inp len -> TokenInstrument }
-<0>    "%end"  { token $ \inp len -> TokenEndDeclare }
-<0>    EOI     { token $ \inp len -> TokenEOI }
-<0>    repeat  { token $ \inp len -> TokenRepeat }
-<0>    until   { token $ \inp len -> TokenUntil }
-<0>    START   { token $ \inp len -> TokenStart }
-<0>    END     { token $ \inp len -> TokenEnd }
-<0>    for     { token $ \inp len -> TokenFor }
-<0>    to      { token $ \inp len -> TokenTo }
-<0>    do      { token $ \inp len -> TokenDo }
-<0>    "?["    { token $ \inp len -> TokenGuard }
-<0>    "?"     { token $ \inp len -> TokenQuestion }
-<0>    ":"     { token $ \inp len -> TokenColon }
-<0>    ";"     { token $ \inp len -> TokenSemicolon }
-<0>    "."     { token $ \inp len -> TokenDot }
-<0>    ","     { token $ \inp len -> TokenComma }
-<0>    "("     { token $ \inp len -> TokenLParen }
-<0>    ")"     { token $ \inp len -> TokenRParen }
-<0>    "{"     { token $ \inp len -> TokenLCurly }
-<0>    "}"     { token $ \inp len -> TokenRCurly }
-<0>    "["     { token $ \inp len -> TokenLBracket }
-<0>    "]"     { token $ \inp len -> TokenRBracket }
-<0>    "**"    { token $ \inp len -> TokenExp }
-<0>    "<<"    { token $ \inp len -> TokenLShift }
-<0>    ">>"    { token $ \inp len -> TokenRShift }
-<0>    "<="    { token $ \inp len -> TokenLTE }
-<0>    ">="    { token $ \inp len -> TokenGTE }
-<0>    "<"     { token $ \inp len -> TokenLAngle }
-<0>    ">"     { token $ \inp len -> TokenRAngle }
-<0>    "->"    { token $ \inp len -> TokenArrow }
-<0>    "=="    { token $ \inp len -> TokenEqual }
-<0>    "!="    { token $ \inp len -> TokenNotEqual }
-<0>    "!"     { token $ \inp len -> TokenNot }
-<0>    "="     { token $ \inp len -> TokenEq }
-<0>    "&&"    { token $ \inp len -> TokenAnd }
-<0>    "||"    { token $ \inp len -> TokenOr }
-<0>    "&"     { token $ \inp len -> TokenAmpersand }
-<0>    "|"     { token $ \inp len -> TokenPipe }
-<0>    "^"     { token $ \inp len -> TokenCaret }
-<0>    "%"     { token $ \inp len -> TokenPercent }
-<0>    "~"     { token $ \inp len -> TokenTilde }
-<0>    "+"     { token $ \inp len -> TokenAdd }
-<0>    "-"     { token $ \inp len -> TokenSub }
-<0>    "*"     { token $ \inp len -> TokenMul }
-<0>    "/"     { token $ \inp len -> TokenDiv }
+               { token $ \_ _ -> TokenInstrument }
+<0>    "%end"  { token $ \_ _ -> TokenEndDeclare }
+<0>    EOI     { token $ \_ _ -> TokenEOI }
+<0>    repeat  { token $ \_ _ -> TokenRepeat }
+<0>    until   { token $ \_ _ -> TokenUntil }
+<0>    START   { token $ \_ _ -> TokenStart }
+<0>    END     { token $ \_ _ -> TokenEnd }
+<0>    for     { token $ \_ _ -> TokenFor }
+<0>    to      { token $ \_ _ -> TokenTo }
+<0>    do      { token $ \_ _ -> TokenDo }
+<0>    "?["    { token $ \_ _ -> TokenGuard }
+<0>    "?"     { token $ \_ _ -> TokenQuestion }
+<0>    ":"     { token $ \_ _ -> TokenColon }
+<0>    ";"     { token $ \_ _ -> TokenSemicolon }
+<0>    "."     { token $ \_ _ -> TokenDot }
+<0>    ","     { token $ \_ _ -> TokenComma }
+<0>    "("     { token $ \_ _ -> TokenLParen }
+<0>    ")"     { token $ \_ _ -> TokenRParen }
+<0>    "{"     { token $ \_ _ -> TokenLCurly }
+<0>    "}"     { token $ \_ _ -> TokenRCurly }
+<0>    "["     { token $ \_ _ -> TokenLBracket }
+<0>    "]"     { token $ \_ _ -> TokenRBracket }
+<0>    "**"    { token $ \_ _ -> TokenExp }
+<0>    "<<"    { token $ \_ _ -> TokenLShift }
+<0>    ">>"    { token $ \_ _ -> TokenRShift }
+<0>    "<="    { token $ \_ _ -> TokenLTE }
+<0>    ">="    { token $ \_ _ -> TokenGTE }
+<0>    "<"     { token $ \_ _ -> TokenLAngle }
+<0>    ">"     { token $ \_ _ -> TokenRAngle }
+<0>    "->"    { token $ \_ _ -> TokenArrow }
+<0>    "=="    { token $ \_ _ -> TokenEqual }
+<0>    "!="    { token $ \_ _ -> TokenNotEqual }
+<0>    "!"     { token $ \_ _ -> TokenNot }
+<0>    "="     { token $ \_ _ -> TokenEq }
+<0>    "&&"    { token $ \_ _ -> TokenAnd }
+<0>    "||"    { token $ \_ _ -> TokenOr }
+<0>    "&"     { token $ \_ _ -> TokenAmpersand }
+<0>    "|"     { token $ \_ _ -> TokenPipe }
+<0>    "^"     { token $ \_ _ -> TokenCaret }
+<0>    "%"     { token $ \_ _ -> TokenPercent }
+<0>    "~"     { token $ \_ _ -> TokenTilde }
+<0>    "+"     { token $ \_ _ -> TokenAdd }
+<0>    "-"     { token $ \_ _ -> TokenSub }
+<0>    "*"     { token $ \_ _ -> TokenMul }
+<0>    "/"     { token $ \_ _ -> TokenDiv }
 <0>    [_ $alpha] [_ $alpha $digit]*
                { token $ \inp len -> TokenName (LBS.toStrict (current inp len)) }
 <0>    \" ($stringchar#[\"\\]|\\[0abfnrtv\\\"']|\\x$hex$hex)* \"
@@ -171,34 +177,72 @@ readString = BS.concat . go . BS.tail . BS.init . LBS.toStrict
             where (hexString, rest') = BS.splitAt 2 rest
                   hex = case I.readHexadecimal hexString of Just (n, _) -> n
 
-type AlexUserState = Int
+data AlexUserState = AlexUserState {
+    nestingLevel :: !Int,
+    commentStart :: Maybe AlexPosn,
+    currentLine :: !BS.ByteString
+  }
 
-alexInitUserState = 0 :: Int
+alexInitUserState = AlexUserState {
+    nestingLevel = 0,
+    commentStart = Nothing,
+    currentLine = BS.empty
+  }
 
 current :: AlexInput -> Int64 -> LBS.ByteString 
 current (_, _, s, _) len = LBS.take len s
 
+saveLine :: AlexAction Token
+saveLine input@(_, _, s, _) len = do
+    let line = LBS.toStrict (CLBS.takeWhile ('\n' /=) (LBS.tail s))
+    state <- alexGetUserState
+    alexSetUserState (state { currentLine = line })
+    skip input len
+
+getCurrentLine :: Alex String
+getCurrentLine = do
+    state <- alexGetUserState
+    return (CBS.unpack (currentLine state))
+
 alexEOF :: Alex Token
 alexEOF = do
     c <- alexGetStartCode
-    if c == cmt then
-        alexError "Error: unclosed comment"
+    if c == cmt then do
+        state <- alexGetUserState
+        case commentStart state of
+            Just (AlexPn _ line col) -> 
+                alexError $
+                 "Unclosed comment starting at line " <> show line <> ", column " <> show col <> "."
+            Nothing -> error "Unset commentStart. This should never happen."
       else
         return TokenEOF
 
 nestComment :: AlexAction Token
-nestComment input len = do
-    l <- alexGetUserState
-    alexSetUserState (l + 1)
+nestComment input@(pos, _, _, _) len = do
+    state <- alexGetUserState
+    let level = nestingLevel state
+    if level == 0 then
+        alexSetUserState (state { nestingLevel = 1, commentStart = Just pos })
+      else
+        alexSetUserState (state { nestingLevel = level + 1 })
     skip input len
 
 unnestComment :: AlexAction Token
 unnestComment input len = do
-    l <- alexGetUserState
-    alexSetUserState (l - 1)
-    if l == 1 then
+    state <- alexGetUserState
+    let level = nestingLevel state
+    if level == 1 then do
         alexSetStartCode 0
+        alexSetUserState (state { nestingLevel = level - 1, commentStart = Nothing })
       else
-        return ()
+        alexSetUserState (state { nestingLevel = level - 1 })
     skip input len
+
+unexpectedCloseComment :: AlexAction Token
+unexpectedCloseComment (AlexPn _ line col, _, _, _) _ = do
+    errLine <- getCurrentLine
+    alexError (
+        errLine <> "\n"
+     <> replicate (col - 1) ' ' <> "^\n"
+     <> "Unexpected closing comment at line " <> show line <> ", column " <> show col <> ".")
 }
