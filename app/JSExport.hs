@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings, QuasiQuotes #-}
-module JSExport ( toJS, T ) where
+module JSExport ( hexyString, toJS, T ) where
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Lazy as LBS -- bytestring
 import qualified Data.ByteString.Builder as Builder -- bytestring
@@ -31,8 +31,8 @@ refToJS _   (Attr nt "this") = [i|(({_ipg_start,_ipg_end,...o}) => o)(nt_#{nt})|
 refToJS _   (Attr nt "these") = [i|seq_#{nt}.map(({_ipg_start,_ipg_end,...o}) => o)|]
 refToJS _   (Attr nt f) = [i|nt_#{nt}.#{f}|]
 refToJS env (Index nt e "this") =
-    [i|(({_ipg_start,_ipg_end,...o}) => o)(seq_#{nt}[#{exprToJS env e}])|]
-refToJS env (Index nt e f) = [i|seq_#{nt}[#{exprToJS env e}].#{f}|]
+    [i|(({_ipg_start,_ipg_end,...o}) => o)(seq_#{nt}[#{exprToJS env e} - seq_#{nt}_start])|]
+refToJS env (Index nt e f) = [i|seq_#{nt}[#{exprToJS env e} - seq_#{nt}_start].#{f}|]
 refToJS _   EOI = "EOI";
 refToJS _   (Start nt) = [i|nt_#{nt}._ipg_start|]
 refToJS _   (End nt) = [i|nt_#{nt}._ipg_end|]
@@ -169,9 +169,10 @@ termToJS indent env (Guard e)
 termToJS indent env (Array x start end nt args l r)
     = indent <> [i|// for #{x} = #{startExp} to #{endExp} do #{nt}#{call es}[#{lExp}, #{rExp}]\n|]
    <> indent <> [i|nt_#{nt} = { _ipg_end: right, _ipg_start: left };\n|] -- Special case
+   <> indent <> [i|seq_#{nt}_start = #{startExp};\n|]
    <> indent <> [i|loopEnd = #{endExp};\n|]
-   <> indent <> [i|seq_#{nt} = new Array(loopEnd);\n|]
-   <> indent <> [i|for (self.#{x} = #{startExp}; self.#{x} < loopEnd; self.#{x}++) {\n|]
+   <> indent <> [i|seq_#{nt} = new Array(loopEnd - seq_#{nt}_start);\n|]
+   <> indent <> [i|for (self.#{x} = seq_#{nt}_start; self.#{x} < loopEnd; self.#{x}++) {\n|]
    <> indent <> [i|  const left = #{lExp};\n|]
    <> indent <> [i|  const right = #{rExp};\n|]
    <> indent <>   "  if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
@@ -185,7 +186,7 @@ termToJS indent env (Array x start end nt args l r)
    <> indent <>   "  tmp._ipg_start += left;\n"
    <> indent <> [i|  nt_#{nt}._ipg_end = tmp._ipg_end;\n|] -- Special case
    <> indent <> [i|  nt_#{nt}._ipg_start = tmp._ipg_start;\n|] -- Special case
-   <> indent <> [i|  seq_#{nt}[self.#{x}] = tmp;\n|]
+   <> indent <> [i|  seq_#{nt}[self.#{x} - seq_#{nt}_start] = tmp;\n|]
    <> indent <>   "}\n"
    <> indent <> [i|delete self.#{x};\n|]
    <> indent <> [i|left = nt_#{nt}._ipg_start;\n|]
@@ -282,7 +283,7 @@ alternativeToJS instrument indent env (Alternative ts)
   where nts = nonTerminals ts
         seqs = arrayNonTerminals ts
         declare nt = indent <> [i|  let nt_#{nt :: T};\n|]
-        declareSeqs nt = indent <> [i|  let seq_#{nt :: T};\n|]
+        declareSeqs nt = indent <> [i|  let seq_#{nt :: T}; let seq_#{nt}_start = 0;\n|]
         instrumentation = case instrument of
                             Nothing -> ""
                             -- Purposely over-indented.

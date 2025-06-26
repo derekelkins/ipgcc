@@ -11,11 +11,6 @@ import GHC.Stack ( HasCallStack ) -- base
 import CoreIPG ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..) )
 import GenericExp ( Exp(..) )
 
--- import Debug.Trace ( trace ) -- TODO: DELETEME
-
--- traceShow :: (Show a) => a -> a
--- traceShow x = trace (show x) x
-
 (!!!) :: (HasCallStack, Ord k, Show k) => Map.Map k v -> k -> v
 m !!! k = case Map.lookup k m of
             Nothing -> error (show k ++ " is not in Map")
@@ -40,7 +35,8 @@ data EnvEntry a = EnvEntry {
     start_ :: Int,
     end_ :: Int,
     this_ :: Bindings a,
-    these_ :: [Bindings a]
+    these_ :: [Bindings a],
+    offset_ :: Int
   }
 
 type NTBindings a = Map.Map NT (EnvEntry a)
@@ -72,10 +68,8 @@ type Rule' = Rule NT T Id Exp'
 type Alternative' = Alternative NT T Id Exp'
 type Term' = Term NT T Id Exp'
 
--- TODO: Remove all `Show a` constraints.
-
 interpret
-    :: (Show a, HasCallStack)
+    :: (HasCallStack)
     => Grammar'
     -> ExternalFuncs a
     -> [Value a]
@@ -90,12 +84,12 @@ interpret (Grammar rules@(Rule _ startRule _ _:_)) efs args =
           externalFuncs = efs }
         buildFunc = buildInterpFunc ctxt -- Go, go knot tying.
 
-buildInterpFunc :: (Show a, HasCallStack) => Context a -> Rule' -> ([Id], InterpFunc a)
+buildInterpFunc :: (HasCallStack) => Context a -> Rule' -> ([Id], InterpFunc a)
 buildInterpFunc ctxt (Rule _ _ args alts) =
     (args, \env ps buf -> asum (map (\interpFunc -> interpFunc env ps buf) alts'))
   where alts' = map (interpAlt ctxt) alts
 
-interpAlt :: (Show a, HasCallStack) => Context a -> Alternative' -> InterpFunc a
+interpAlt :: (HasCallStack) => Context a -> Alternative' -> InterpFunc a
 interpAlt ctxt (Alternative terms) = \env ps buf -> go env ps buf (BS.length buf) 0 0 terms'
   where terms' = map (interpTerm ctxt) terms
         go env _ _ minStart maxEnd _ [] = Just (env, minStart, maxEnd)
@@ -127,13 +121,14 @@ interpNonTerminal ctxt nt args e_l e_r = \_ env@(ntbs, bs) ps buf ->
                                     start_ = start,
                                     end_ = end,
                                     this_ = bs'',
-                                    these_ = []
+                                    these_ = [],
+                                    offset_ = 0
                                 }
                             ntbs'' = Map.insertWith const nt initialEntry ntbs
                         in Just ((ntbs'', bs), start, end)
   where (ids, rf) = ruleFuncs ctxt !!! nt
 
-interpTerm :: (Show a, HasCallStack) => Context a -> Term' -> Int -> InterpFunc a
+interpTerm :: (HasCallStack) => Context a -> Term' -> Int -> InterpFunc a
 interpTerm ctxt = go
   where go (NonTerminal nt args e_l e_r) = interpNonTerminal ctxt nt args e_l e_r
         go (Terminal t e_l e_r) = \_ env ps buf ->
@@ -154,18 +149,20 @@ interpTerm ctxt = go
                 _ -> Nothing
         go (Array j s e nt es e_l e_r) = \start env@(ntbs, bs) ps buf ->
             let eoi = BS.length buf
-                initialEntry =
-                    EnvEntry { -- TODO
-                        start_ = error "Array term can't use A.START unless A has already occurred",
-                        end_ = start,
-                        this_ = error "Array term can't use A.this unless A has already occurred",
-                        these_ = []
-                    }
-                ntbs' = Map.insertWith (\_ old -> old) nt initialEntry ntbs
             in fmap (\(env', _, end) -> (env', start, end))
                   (case (eval ctxt eoi env ps s, eval ctxt eoi env ps e) of
                     (INT s', INT e') ->
-                        loop [] (fromIntegral s' :: Int) (fromIntegral e') start (ntbs', bs) ps buf)
+                        let offset = fromIntegral s' :: Int
+                            initialEntry =
+                                EnvEntry { -- TODO
+                                    start_ = error "Array term can't use A.START unless A has already occurred",
+                                    end_ = start,
+                                    this_ = error "Array term can't use A.this unless A has already occurred",
+                                    these_ = [],
+                                    offset_ = offset
+                                }
+                            ntbs' = Map.insertWith (\_ old -> old) nt initialEntry ntbs
+                        in loop [] offset (fromIntegral e') start (ntbs', bs) ps buf)
           where loop acc s' e' prev env@(ntbs, bs) ps buf
                     | s' < e' =
                         case body prev env (Map.insert j (INT (fromIntegral s')) ps) buf of
@@ -204,7 +201,8 @@ interpTerm ctxt = go
                         start_ = error "Repeat term can't use A.START unless A has already occurred",
                         end_ = start,
                         this_ = error "Repeat term can't use A.this unless A has already occurred",
-                        these_ = error "Repeat term can't use A.these unless A has already occurred" 
+                        these_ = error "Repeat term can't use A.these unless A has already occurred",
+                        offset_ = 0
                     }
                 ntbs' = Map.insertWith (\_ old -> old) nt initialEntry ntbs
             in fmap (\(env', _, end) -> (env', start, end)) (loop [] start (ntbs', bs) ps buf)
@@ -223,7 +221,8 @@ interpTerm ctxt = go
                         start_ = error "RepeatUntil term can't use A.START unless A has already occurred",
                         end_ = start,
                         this_ = error "RepeatUntil term can't use A.this unless A has already occurred",
-                        these_ = error "RepeatUntil term can't use A.these unless A has already occurred" 
+                        these_ = error "RepeatUntil term can't use A.these unless A has already occurred",
+                        offset_ = 0
                     }
                 ntbs' = Map.insertWith (\_ old -> old) nt1 initialEntry ntbs
             in fmap (\(env', _, end) -> (env', start, end)) (loop [] start (ntbs', bs) ps buf)
@@ -336,10 +335,13 @@ eval ctxt eoi (env, bs) ps = go
                     at' (STRING bs') (INT ix) = INT (fromIntegral (BS.index bs' (fromIntegral ix)))
           go (Ref (Id x)) = case Map.lookup x ps of Nothing -> bs !!! x; Just v -> v
           go (Ref (Attr nt x)) = access env nt x
-          go (Ref (Index nt e x)) = index (go e) (these_ (env !!! nt))
-              where index (INT ix) bs'
-                        | x == "this" = BINDINGS (bs' !!. fromIntegral ix)
-                        | otherwise = case bs' !!. fromIntegral ix of b -> b !!! x
+          go (Ref (Index nt e x)) = index (go e) (these_ ee)
+              where ee = env !!! nt
+                    offset = offset_ ee
+                    index (INT ix) bs'
+                        | x == "this" = BINDINGS (bs' !!. j)
+                        | otherwise = case bs' !!. j of b -> b !!! x
+                      where j = fromIntegral ix - offset
           go (Ref EOI) = INT (fromIntegral eoi)
           go (Ref (Start nt)) = INT (fromIntegral (start_ (env !!! nt)))
           go (Ref (End nt)) = INT (fromIntegral (end_ (env !!! nt)))
