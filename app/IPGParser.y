@@ -3,6 +3,9 @@ module IPGParser (
     IdType, Exp', Grammar', Rule', Alternative', Term', Ref',
     parseIPG, parse,
 ) where
+import qualified Data.ByteString as BS -- bytestring
+import qualified Data.ByteString.Lazy as LBS -- bytestring
+
 import CoreIPG ( Ref(..), MetaTag(..) )
 import FullIPG ( Grammar(..), Rule(..), Alternative(..), Term(..) )
 import GenericExp ( Exp(..) )
@@ -238,7 +241,7 @@ Args :: { [Exp'] }
     | Args ',' Exp { $3 : $1 }
 
 {
-type IdType = String
+type IdType = BS.ByteString
 type Exp' = Exp IdType IdType IdType
 type Grammar' = Grammar IdType IdType IdType Exp'
 type Rule' = Rule IdType IdType IdType Exp'
@@ -278,7 +281,7 @@ makeAssign n (Slice1' l) = Slice1 n l
 makeAssign n (Slice2' l r) = Slice2 n l r
 makeAssign n (Assign' e) = n := e
 
-parse :: String -> (Grammar', [IdType])
+parse :: LBS.ByteString -> (Grammar', [IdType])
 parse = parseIPG . alexScanTokens
 
 parseError :: [Token] -> a

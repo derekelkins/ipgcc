@@ -1,44 +1,69 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Main ( main ) where
-import Data.Char ( isSpace ) -- base
-import Data.List ( isPrefixOf ) -- base
+import qualified Data.ByteString as BS -- bytestring
+import qualified Data.ByteString.Char8 as CBS -- bytestring
+import qualified Data.ByteString.Lazy.Char8 as LBS -- bytestring
+import qualified Data.Map as Map -- containers
 import qualified Data.Set as Set -- containers
-import System.IO ( hPutStrLn, stderr ) -- base
+import System.Environment ( getArgs ) -- base
+import System.IO ( stderr ) -- base
+
+import Data.ByteString.Lazy.Search ( breakOn ) -- stringsearch
 
 import CheckIPG ( validate )
 import FullIPG ( ExpHelpers(..), toCore )
 import qualified GenericExp as E
+import Interpreter ( Bindings, NT, Value(..), interpret )
 import IPGParser ( IdType, Exp', parse )
-import JSExport ( toJS )
+-- import JSExport ( toJS )
 
 helper :: ExpHelpers IdType IdType IdType Exp'
 helper = ExpHelpers {
-    len = E.Int . fromIntegral . length,
+    len = E.Int . fromIntegral . BS.length,
     add = E.Add,
     num = E.Int . fromIntegral,
     ref = E.Ref
   }  
 
--- Replace with Data.Text.breakOn when I switch to Text.
-breakOn :: String -> String -> Maybe (String, String)
-breakOn _ [] = Nothing
-breakOn needle s@(c:cs)
-    | needle `isPrefixOf` s = Just ("", s)
-    | otherwise = fmap (\(x, y) -> (c:x, y)) (breakOn needle cs)
+isSpace :: Char -> Bool
+isSpace c = c `elem` (" \n\r\t" :: String)
+
+splitAround :: BS.ByteString -> LBS.ByteString -> Maybe (LBS.ByteString, LBS.ByteString)
+splitAround pattern s
+    = if LBS.null after then Nothing
+                        else Just (before, LBS.drop (fromIntegral $ BS.length pattern) after)
+  where (before, after) = breakOn pattern s
+
+externalFuncs :: Map.Map NT ([Value ()] -> Value ())
+externalFuncs = Map.fromList [
+    ("empty", \[] -> BINDINGS Map.empty),
+    ("decodeAscii", \[SEQUENCE cs] -> STRING (BS.pack $ map (\(INT c) -> fromIntegral c) cs)),
+    ("makeEntry", \[name, descr, typ] ->
+        BINDINGS (Map.fromList [("name", name), ("descriptor", descr), ("type", typ)])),
+    ("projectSections", \[SEQUENCE sections] ->
+        SEQUENCE (map (\(BINDINGS b) -> b Map.! "section") sections))
+  ]
 
 main :: IO ()
 main = do
-    input' <- getContents 
-    let (preamble, rest) = case breakOn "\n%preamble_end" input' of
+    (interpreterInput:_) <- getArgs
+    input' <- LBS.getContents 
+    let (preamble, rest) = case splitAround "\n%preamble_end" input' of
             Nothing -> ("", input')
-            Just (x, p) -> (x, dropWhile isSpace (drop 14 p))
-    let (input, postamble) = case breakOn "\n%postamble_begin" rest of
+            Just (x, p) -> (x, LBS.dropWhile isSpace p)
+    let (input, postamble) = case splitAround "\n%postamble_begin" rest of
             Nothing -> (rest, "")
-            Just (x, p) -> (x, dropWhile isSpace (drop 17 p))
+            Just (x, p) -> (x, LBS.dropWhile isSpace p)
     let (g, decls) = parse input
     let core = E.simplify (toCore helper g)
     case validate (Set.fromList decls) core of
-        Just errs -> mapM_ (hPutStrLn stderr) errs
+        Just errs -> mapM_ (CBS.hPutStrLn stderr) errs
         Nothing -> do
-            putStrLn preamble
-            putStrLn (toJS core)
-            putStr postamble
+            buf <- CBS.readFile interpreterInput
+            case interpret core externalFuncs [] buf of
+                Nothing -> putStrLn "null"
+                Just results -> print results
+        -- Nothing -> do
+        --     LBS.putStrLn preamble
+        --     LBS.putStrLn (toJS core)
+        --     LBS.putStr postamble

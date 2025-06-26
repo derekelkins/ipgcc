@@ -1,137 +1,254 @@
-module Interpreter ( interpret ) where
+{-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+module Interpreter ( Bindings, Buffer, Id, NT, Value(..), interpret ) where
 import Control.Applicative ( asum ) -- base
-import Data.Bits ( shift, (.&.), (.|.), xor ) -- base
+import Data.Bits ( complement, shift, xor, (.&.), (.|.) ) -- base
+import qualified Data.ByteString as BS -- bytestring
+import Data.List ( (!?) ) -- base
 import qualified Data.Map as Map -- containers
-import CoreIPG
+import GHC.Stack ( HasCallStack ) -- base
+
+import CoreIPG ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..) )
 import GenericExp ( Exp(..) )
 
-type Buffer = String -- TODO: Switch to ByteString.
+-- import Debug.Trace ( trace ) -- TODO: DELETEME
 
-type Bindings id = Map.Map id (Value id)
+-- traceShow :: (Show a) => a -> a
+-- traceShow x = trace (show x) x
 
-data Value id
+(!!!) :: (HasCallStack, Ord k, Show k) => Map.Map k v -> k -> v
+m !!! k = case Map.lookup k m of
+            Nothing -> error (show k ++ " is not in Map")
+            Just v -> v
+
+(!!.) :: HasCallStack => [v] -> Int -> v
+l !!. ix = case l !? ix of
+            Nothing -> error (show ix ++ " is out of bounds")
+            Just v -> v
+
+type Id = BS.ByteString
+type T = BS.ByteString
+type NT = BS.ByteString
+
+type Buffer = BS.ByteString
+
+type Bindings a = Map.Map Id (Value a)
+
+type Parameters a = Map.Map Id (Value a)
+
+data EnvEntry a = EnvEntry {
+    start_ :: Int,
+    end_ :: Int,
+    this_ :: Bindings a,
+    these_ :: [Bindings a]
+  }
+
+type NTBindings a = Map.Map NT (EnvEntry a)
+
+type Environment a = (NTBindings a, Bindings a)
+
+data Value a
     = INT Integer
-    | BOOL Boolean
+    | BOOL Bool
     | FLOAT Double
-    | STRING String
-    | BINDINGS (Bindings id)
-    | SEQUENCE [(Bindings id)]
+    | STRING Buffer
+    | BINDINGS (Bindings a)
+    | SEQUENCE [Value a]
+    | OPAQUE a
   deriving ( Eq, Ord, Show )
 
-type InterpFunc id = Bindings id -> Buffer -> Maybe (Bindings id, Int, Int)
+type InterpFunc a = Environment a -> Parameters a -> Buffer -> Maybe (Environment a, Int, Int)
 
-type ExternalFunc id = [Value id] -> Value id
-type ExternalFuncs t id = Map.Map t (ExternalFunc id)
+type ExternalFunc a = [Value a] -> Value a
+type ExternalFuncs a = Map.Map NT (ExternalFunc a)
 
-data Context nt t id = Context {
-    ruleFuncs :: Map.Map nt ([id], InterpFunc id),
-    externalFuncs :: ExternalFuncs t id }
+data Context a = Context {
+    ruleFuncs :: Map.Map NT ([Id], InterpFunc a),
+    externalFuncs :: ExternalFuncs a }
 
-type Grammar' nt t id = Grammar nt t id (Exp t)
-type Rule' nt t id = Rule nt t id (Exp t)
-type Alternative' nt t id = Alternative nt t id (Exp t)
-type Term' nt t id = Term nt t id (Exp t)
+type Exp' = Exp NT T Id
+type Grammar' = Grammar NT T Id Exp'
+type Rule' = Rule NT T Id Exp'
+type Alternative' = Alternative NT T Id Exp'
+type Term' = Term NT T Id Exp'
+
+-- TODO: Remove all `Show a` constraints.
 
 interpret
-    :: (Ord nt, Ord id)
-    => Grammar' nt t id
-    -> ExternalFuncs t id
-    -> Bindings id
+    :: (Show a, HasCallStack)
+    => Grammar'
+    -> ExternalFuncs a
+    -> [Value a]
     -> Buffer
-    -> Maybe (Bindings id, Int, Int)
-interpret (Grammar rules@(Rule _ startRule _ _:_) env_0 efs =
-    (ruleFuncs ctxt Map.! startRule) env_0
+    -> Maybe (Bindings a, Int, Int)
+interpret (Grammar rules@(Rule _ startRule _ _:_)) efs args =
+    let (params, body) = ruleFuncs ctxt !!! startRule
+        args' = Map.fromList (zip params args)
+    in fmap (\((_, bindings), s, e) -> (bindings, s, e)) . body (Map.empty, Map.empty) args'
   where ctxt = Context {
           ruleFuncs = Map.fromList (map (\rule@(Rule _ nt _ _) -> (nt, buildFunc rule)) rules),
           externalFuncs = efs }
-        buildFunc = buildeInterpFunc ctxt -- Go, go knot tying.
+        buildFunc = buildInterpFunc ctxt -- Go, go knot tying.
 
-buildInterpFunc :: (Ord nt, Ord id) => Context nt t id -> Rule' nt t id -> ([id], InterpFunc id)
-buildInterpFunc ctxt (Rule _ nt args alts) =
-    (args, \env buf -> asum (map (\interFunc -> interpFunc env buf) alts'))
+buildInterpFunc :: (Show a, HasCallStack) => Context a -> Rule' -> ([Id], InterpFunc a)
+buildInterpFunc ctxt (Rule _ _ args alts) =
+    (args, \env ps buf -> asum (map (\interpFunc -> interpFunc env ps buf) alts'))
   where alts' = map (interpAlt ctxt) alts
 
-interpAlt :: (Ord nt, Ord id) => Context nt t id -> Alternative' nt t id -> InterpFunc id
-interpAlt ctxt (Alternative terms) = \env buf -> go env buf terms'
+interpAlt :: (Show a, HasCallStack) => Context a -> Alternative' -> InterpFunc a
+interpAlt ctxt (Alternative terms) = \env ps buf -> go env ps buf (BS.length buf) 0 0 terms'
   where terms' = map (interpTerm ctxt) terms
-        go env buf [] = Just env
-        go env buf (f:fs) =
-            case f env buf of
+        go env _ _ minStart maxEnd _ [] = Just (env, minStart, maxEnd)
+        go env ps buf minStart maxEnd prev (f:fs) =
+            case f prev env ps buf of
                 Nothing -> Nothing
-                Just (env', start, end) -> go env' buf fs -- TODO: Do something with start/end
+                Just (env', start, end) ->
+                    go env' ps buf (min start minStart) (max end maxEnd) end fs
 
-attr :: String -> String -> String
-attr nt id = nt ++ '.':id
+slice :: Int -> Int -> Buffer -> Maybe Buffer
+slice l r buf | 0 <= l && l <= r && r <= BS.length buf = Just (BS.take (r - l) (BS.drop l buf))
+              | otherwise = Nothing
 
-this :: String -> String
-this nt = attr nt "this"
+interpNonTerminal :: HasCallStack => Context a -> NT -> [Exp'] -> Exp' -> Exp' -> Int -> InterpFunc a
+interpNonTerminal ctxt nt args e_l e_r = \_ env@(ntbs, bs) ps buf ->
+    let eoi = BS.length buf
+        args' = Map.fromList (zip ids (map (eval ctxt eoi env ps) args))
+    in case (eval ctxt eoi env ps e_l, eval ctxt eoi env ps e_r) of
+        (INT l, INT r) ->
+            case slice (fromIntegral l) (fromIntegral r) buf of
+                Nothing -> Nothing
+                Just buf' -> case rf (Map.empty, Map.empty) args' buf' of
+                    Nothing -> Nothing
+                    Just ((_, bs''), l', r') ->
+                        let start = fromIntegral l + l'
+                            end = fromIntegral l + r'
+                            initialEntry =
+                                EnvEntry {
+                                    start_ = start,
+                                    end_ = end,
+                                    this_ = bs'',
+                                    these_ = []
+                                }
+                            ntbs'' = Map.insertWith const nt initialEntry ntbs
+                        in Just ((ntbs'', bs), start, end)
+  where (ids, rf) = ruleFuncs ctxt !!! nt
 
-sTART :: String -> String
-sTART nt = attr nt "START"
-
-eND :: String -> String
-eND nt = attr nt "END"
-
-seq_ :: String -> String -> String
-seq_ nt i = nt ++ '#':i
-
--- TODO: these, START, END
-interpTerm :: (Ord nt, Ord id) => Context nt t id -> Term' nt t id -> InterpFunc id
+interpTerm :: (Show a, HasCallStack) => Context a -> Term' -> Int -> InterpFunc a
 interpTerm ctxt = go
-  where go (NonTerminal nt args e_l e_r) = \env buf ->
-            let eoi = length buf
-                env' = Map.fromList (zip ids (map (eval ctxt eoi) args))
-            in case (eval ctxt eoi e_l, eval ctxt eoi e_r) of
+  where go (NonTerminal nt args e_l e_r) = interpNonTerminal ctxt nt args e_l e_r
+        go (Terminal t e_l e_r) = \_ env ps buf ->
+            let eoi = BS.length buf
+            in case (eval ctxt eoi env ps e_l, eval ctxt eoi env ps e_r) of
                 (INT l, INT r) ->
-                    case slice buf l r of
-                        Nothing -> Nothing
-                        Just buf' -> case rf env' buf' of
-                            Nothing -> Nothing
-                            Just (env'', _, 0) ->
-                                Just (Map.insert (this nt) (BINDINGS env'') env, l, r)
-                            Just (env'', l', r') ->
-                                Just (Map.insert (this nt) (BINDINGS env'') env,
-                                      l + l', l + r')
-          where (ids, rf) = ruleFuncs ctxt Map.! nt
-        go (Terminal t e_l e_r) = \env buf ->
-            let eoi = length buf
-            in case (eval ctxt eoi e_l, eval ctxt eoi e_r) of
-                (INT l, INT r) ->
-                    case slice buf l r of
-                        Just buf' | t `isPrefixOf` buf' -> Just (env, l, l + length t)
+                    case slice (fromIntegral l) (fromIntegral r) buf of
+                        Just buf' | t `BS.isPrefixOf` buf' ->
+                            Just (env, fromIntegral l, fromIntegral l + BS.length t)
                         _ -> Nothing
-        go (id := e) = \env buf ->
-            let eoi = length buf
-            in Just (Map.insert id (eval ctxt eoi e) env, eoi, 0)
-        go (Guard e) = \env buf ->
-            let eoi = length buf
-            in case eval ctxt eoi e of
+        go (x := e) = \_ env@(ntbs, bs) ps buf ->
+            let eoi = BS.length buf
+            in Just ((ntbs, Map.insert x (eval ctxt eoi env ps e) bs), eoi, 0)
+        go (Guard e) = \_ env ps buf ->
+            let eoi = BS.length buf
+            in case eval ctxt eoi env ps e of
                 BOOL True -> Just (env, eoi, 0)
                 _ -> Nothing
-        go (Array id e e nt [e] e e) = \env buf -> -- TODO
-            undefined -- for id=e_1 to e_2 do A(a_1, ..., a_m)[e_l, e_r]
-        go (Any id e) = \env buf ->
-            let eoi = length buf
-            in case eval ctxt eoi e of
-                INT i ->
-                    case lookup i buf of
-                        Just c -> Just (Map.insert id (INT (ord c)), i, i + 1)
-                        Nothing -> Nothing
-        go (Slice id e_l e_r) = \env buf ->
-            let eoi = length buf
-            in case (eval ctxt eoi e_l, eval ctxt eoi e_r) of
-                (INT l, INT r) ->
-                    case slice buf l r of
-                        Just buf' -> Just (Map.insert id (STRING buf'), l, r)
+        go (Array j s e nt es e_l e_r) = \start env@(ntbs, bs) ps buf ->
+            let eoi = BS.length buf
+                initialEntry =
+                    EnvEntry { -- TODO
+                        start_ = error "Array term can't use A.START unless A has already occurred",
+                        end_ = start,
+                        this_ = error "Array term can't use A.this unless A has already occurred",
+                        these_ = []
+                    }
+                ntbs' = Map.insertWith (\_ old -> old) nt initialEntry ntbs
+            in fmap (\(env', _, end) -> (env', start, end))
+                  (case (eval ctxt eoi env ps s, eval ctxt eoi env ps e) of
+                    (INT s', INT e') ->
+                        loop [] (fromIntegral s' :: Int) (fromIntegral e') start (ntbs', bs) ps buf)
+          where loop acc s' e' prev env@(ntbs, bs) ps buf
+                    | s' < e' =
+                        case body prev env (Map.insert j (INT (fromIntegral s')) ps) buf of
+                            Nothing -> Nothing
+                            Just ((ntbs', bs'), _, end') ->
+                                loop (this_ (ntbs' !!! nt):acc) (s' + 1) e'
+                                    end' (ntbs', bs') ps buf
+                    | otherwise =
+                        Just ((Map.adjust (\ee -> ee { these_ = reverse acc }) nt ntbs, bs),
+                              prev,
+                              prev)
+                body = interpNonTerminal ctxt nt es e_l e_r
+        go (Any x e) = \_ env@(ntbs, bs) ps buf ->
+            let eoi = BS.length buf
+            in case eval ctxt eoi env ps e of
+                INT ix ->
+                    case BS.indexMaybe buf (fromIntegral ix) of
+                        Just c ->
+                            Just ((ntbs, Map.insert x (INT (fromIntegral c)) bs),
+                                  fromIntegral ix,
+                                  fromIntegral ix + 1)
                         _ -> Nothing
-        go (Repeat nt [e] id) = \env buf -> -- TODO
-            undefined -- repeat A(a_1, ..., a_m).id
-        go (RepeatUntil nt [e] id nt [e]) = \env buf -> -- TODO
-            undefined -- repeat A(a_1, ..., a_m).id until B(b_1, ..., b_k)
+        go (Slice x e_l e_r) = \_ env@(ntbs, bs) ps buf ->
+            let eoi = BS.length buf
+            in case (eval ctxt eoi env ps e_l, eval ctxt eoi env ps e_r) of
+                (INT l, INT r) ->
+                    case slice (fromIntegral l) (fromIntegral r) buf of
+                        Just buf' ->
+                            Just ((ntbs, Map.insert x (STRING buf') bs),
+                                  fromIntegral l,
+                                  fromIntegral r)
+                        _ -> Nothing
+        go (Repeat nt es x) = \start (ntbs, bs) ps buf ->
+            let initialEntry =
+                    EnvEntry { -- TODO
+                        start_ = error "Repeat term can't use A.START unless A has already occurred",
+                        end_ = start,
+                        this_ = error "Repeat term can't use A.this unless A has already occurred",
+                        these_ = error "Repeat term can't use A.these unless A has already occurred" 
+                    }
+                ntbs' = Map.insertWith (\_ old -> old) nt initialEntry ntbs
+            in fmap (\(env', _, end) -> (env', start, end)) (loop [] start (ntbs', bs) ps buf)
+          where loop acc prev env@(ntbs, bs) ps buf =
+                    case body prev env ps buf of
+                        Nothing ->
+                            Just ((ntbs, Map.insert "values" (SEQUENCE (reverse acc)) bs),
+                                  prev,
+                                  prev)
+                        Just (env'@(ntbs', _), _, end') ->
+                            loop (access ntbs' nt x:acc) end' env' ps buf
+                body = interpNonTerminal ctxt nt es (Ref (End nt)) (Ref EOI)
+        go (RepeatUntil nt1 es1 x nt2 es2) = \start (ntbs, bs) ps buf ->
+            let initialEntry =
+                    EnvEntry { -- TODO
+                        start_ = error "RepeatUntil term can't use A.START unless A has already occurred",
+                        end_ = start,
+                        this_ = error "RepeatUntil term can't use A.this unless A has already occurred",
+                        these_ = error "RepeatUntil term can't use A.these unless A has already occurred" 
+                    }
+                ntbs' = Map.insertWith (\_ old -> old) nt1 initialEntry ntbs
+            in fmap (\(env', _, end) -> (env', start, end)) (loop [] start (ntbs', bs) ps buf)
+          where loop acc prev env ps buf =
+                    case condition prev env ps buf of
+                        Just ((ntbs', bs'), _, r) ->
+                            Just ((ntbs', Map.insert "values" (SEQUENCE (reverse acc)) bs'),
+                                  r,
+                                  r)
+                        Nothing ->
+                            case body prev env ps buf of
+                                Nothing -> Nothing
+                                Just (env'@(ntbs', _), _, end') ->
+                                    loop (access ntbs' nt1 x:acc) end' env' ps buf
+                body = interpNonTerminal ctxt nt1 es1 (Ref (End nt1)) (Ref EOI)
+                condition = interpNonTerminal ctxt nt2 es2 (Ref (End nt1)) (Ref EOI)
 
-eval :: Context nt t id -> Int -> Bindings id -> Exp t -> Value id
-eval ctxt eoi env = go
-    where go (Int i) = INT i
+access :: HasCallStack => NTBindings a -> NT -> Id -> Value a
+access env nt "this" = BINDINGS (this_ (env !!! nt))
+access env nt "these" = SEQUENCE (map BINDINGS (these_ (env !!! nt)))
+access env nt x = case this_ (env !!! nt) of bs -> bs !!! x
+
+eval :: HasCallStack => Context a -> Int -> Environment a -> Parameters a -> Exp' -> Value a
+eval ctxt eoi (env, bs) ps = go
+    where go (Int n) = INT n
           go (Float f) = FLOAT f
           go (String s) = STRING s
           go (Add l r) = add (go l) (go r)
@@ -157,18 +274,18 @@ eval ctxt eoi env = go
           go (BitwiseNeg l) = bneg (go l)
               where bneg (INT x) = INT (complement x)
           go (Not l) = not' (go l)
-              where not' (BOOL b) = not b
-                    not' (INT i) = i == 0
+              where not' (BOOL b) = BOOL (not b)
+                    not' (INT n) = BOOL (n == 0)
           go (And l r) = and' (go l) (go r)
-              where and' (BOOL x) (BOOL y) = x && y
-                    and' (BOOL x) (INT y) = x && y /= 0
-                    and' (INT x) (BOOL y) = x /= 0 && y
-                    and' (INT x) (INT y) = x /= 0 && y /= 0
+              where and' (BOOL x) (BOOL y) = BOOL (x && y)
+                    and' (BOOL x) (INT y) = BOOL (x && y /= 0)
+                    and' (INT x) (BOOL y) = BOOL (x /= 0 && y)
+                    and' (INT x) (INT y) = BOOL (x /= 0 && y /= 0)
           go (Or l r) = or' (go l) (go r)
-              where or' (BOOL x) (BOOL y) = x || y
-                    or' (BOOL x) (INT y) = x || y /= 0
-                    or' (INT x) (BOOL y) = x /= 0 || y
-                    or' (INT x) (INT y) = x /= 0 || y /= 0
+              where or' (BOOL x) (BOOL y) = BOOL (x || y)
+                    or' (BOOL x) (INT y) = BOOL (x || y /= 0)
+                    or' (INT x) (BOOL y) = BOOL (x /= 0 || y)
+                    or' (INT x) (INT y) = BOOL (x /= 0 || y /= 0)
           go (BitwiseAnd l r) = band (go l) (go r)
               where band (INT x) (INT y) = INT (x .&. y)
           go (BitwiseXor l r) = bxor (go l) (go r)
@@ -183,38 +300,46 @@ eval ctxt eoi env = go
               where lessThan (INT x) (INT y) = BOOL (x < y)
                     lessThan (FLOAT x) (FLOAT y) = BOOL (x < y)
                     lessThan (STRING x) (STRING y) = BOOL (x < y)
+                    lessThan _ _ = BOOL False -- TODO: Type conversions
           go (LTE l r) = lte (go l) (go r)
               where lte (INT x) (INT y) = BOOL (x <= y)
                     lte (FLOAT x) (FLOAT y) = BOOL (x <= y)
                     lte (STRING x) (STRING y) = BOOL (x <= y)
+                    lte _ _ = BOOL False -- TODO: Type conversions
           go (GreaterThan l r) = greaterThan (go l) (go r)
               where greaterThan (INT x) (INT y) = BOOL (x > y)
                     greaterThan (FLOAT x) (FLOAT y) = BOOL (x > y)
                     greaterThan (STRING x) (STRING y) = BOOL (x > y)
+                    greaterThan _ _ = BOOL False -- TODO: Type conversions
           go (GTE l r) = gte (go l) (go r)
               where gte (INT x) (INT y) = BOOL (x >= y)
                     gte (FLOAT x) (FLOAT y) = BOOL (x >= y)
                     gte (STRING x) (STRING y) = BOOL (x >= y)
+                    gte _ _ = BOOL False -- TODO: Type conversions
           go (Equal l r) = equal (go l) (go r)
               where equal (INT x) (INT y) = BOOL (x == y)
                     equal (FLOAT x) (FLOAT y) = BOOL (x == y)
                     equal (STRING x) (STRING y) = BOOL (x == y)
+                    equal _ _ = BOOL False -- TODO: Type conversions
           go (NotEqual l r) = notEqual (go l) (go r)
               where notEqual (INT x) (INT y) = BOOL (x /= y)
                     notEqual (FLOAT x) (FLOAT y) = BOOL (x /= y)
                     notEqual (STRING x) (STRING y) = BOOL (x /= y)
-                    notEqual x y = NotEqual x y
+                    notEqual _ _ = BOOL False -- TODO: Type conversions
           go (If b t e) = if_ (go b) (go t) (go e)
               where if_ (INT x) y z = if x /= 0 then y else z
-                    if_ (BOOL b) y z = if b then y else z
-          go (Call f es) = (externalFuncs ctxt Map.! f) es'
+                    if_ (BOOL b') y z = if b' then y else z
+          go (Call f es) = (externalFuncs ctxt !!! f) es'
             where es' = map go es
-          go (At l i) = at (go l) (go i)
-              where at (SEQUENCE bs) (INT i) = BINDINGS (bs !! i)
-          go (Ref (Id i)) = env Map.! i
-          go (Ref (Attr nt i)) = env Map.! attr nt i
-          go (Ref (Index nt e i)) = index (go e) (env Map.! seq_ nt i)
-              where index (INT ix) (SEQUENCE bs) = BINDINGS (bs !! ix)
+          go (At l x) = at' (go l) (go x)
+              where at' (SEQUENCE bs') (INT ix) = bs' !!. fromIntegral ix
+                    at' (STRING bs') (INT ix) = INT (fromIntegral (BS.index bs' (fromIntegral ix)))
+          go (Ref (Id x)) = case Map.lookup x ps of Nothing -> bs !!! x; Just v -> v
+          go (Ref (Attr nt x)) = access env nt x
+          go (Ref (Index nt e x)) = index (go e) (these_ (env !!! nt))
+              where index (INT ix) bs'
+                        | x == "this" = BINDINGS (bs' !!. fromIntegral ix)
+                        | otherwise = case bs' !!. fromIntegral ix of b -> b !!! x
           go (Ref EOI) = INT (fromIntegral eoi)
-          go (Ref (Start nt)) = env Map.! sTART nt
-          go (Ref (End nt)) = env Map.! eND nt
+          go (Ref (Start nt)) = INT (fromIntegral (start_ (env !!! nt)))
+          go (Ref (End nt)) = INT (fromIntegral (end_ (env !!! nt)))

@@ -49,8 +49,6 @@ Sec(sh_type)
 
 NUL_BYTE -> "\x00";
 
-x7F_BYTE -> U8 ?[ U8.value == 0x7F ]; // TODO: Deal with this.
-
 U8 -> { value = . };
 
 // NOTE: Endianness is determined by the header, but the rest of the data will be in the target
@@ -62,7 +60,7 @@ U32 -> { bs = *[4] } { value = bs[0] | (bs[1] << 8) | (bs[2] << 16) | (bs[3] << 
 U64 -> { bs = *[8] }
        { value = bs[0] | (bs[1] << 8) | (bs[2] << 16) | (bs[3] << 24) | (bs[4] << 32) | (bs[5] << 40) | (bs[6] << 48) | (bs[7] << 56) };
 
-H -> x7F_BYTE "ELF"
+H -> "\x7FELF"
     { ei_class = . }
     { ei_data = . }
     { ei_version = . }
