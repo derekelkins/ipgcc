@@ -9,12 +9,15 @@ import qualified Data.ByteString.Lazy as LBS -- bytestring
 import CoreIPG ( Ref(..), MetaTag(..) )
 import FullIPG ( Grammar(..), Rule(..), Alternative(..), Term(..) )
 import GenericExp ( Exp(..) )
-import IPGLexer ( alexScanTokens, Token(..) )
+import IPGLexer ( alexError, alexGetInput, alexMonadScan, runAlex,
+                  Alex, AlexInput(..), AlexPosn(..), Token(..) )
 }
 
-%name parseIPG
+%name parseIPG Top
 %tokentype { Token }
 %error { parseError }
+%monad { Alex }
+%lexer { lexer } { TokenEOF }
 
 %token
     '%declare' { TokenDeclare }
@@ -281,9 +284,15 @@ makeAssign n (Slice1' l) = Slice1 n l
 makeAssign n (Slice2' l r) = Slice2 n l r
 makeAssign n (Assign' e) = n := e
 
-parse :: LBS.ByteString -> (Grammar', [IdType])
-parse = parseIPG . alexScanTokens
+parse :: LBS.ByteString -> Either String (Grammar', [IdType])
+parse input = runAlex input parseIPG
 
-parseError :: [Token] -> a
-parseError ts = error ("Parse error: " ++ show ts) -- TODO: Do something better.
+lexer :: (Token -> Alex a) -> Alex a
+lexer action = alexMonadScan >>= action
+
+-- TODO: Do something even better.
+parseError :: Token -> Alex a
+parseError _ = do
+    (AlexPn _ line col, _, _, _) <- alexGetInput
+    alexError ("Parse error at line " <> show line <> ", column " <> show col)
 }

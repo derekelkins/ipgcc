@@ -3,10 +3,12 @@ module Main ( main ) where
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Char8 as CBS -- bytestring
 import qualified Data.ByteString.Lazy.Char8 as LBS -- bytestring
+import qualified Data.ByteString.Builder as Builder -- bytestring
+import Data.List ( intersperse ) -- base
 import qualified Data.Map as Map -- containers
 import qualified Data.Set as Set -- containers
 import System.Environment ( getArgs ) -- base
-import System.IO ( stderr ) -- base
+import System.IO ( hPutStrLn, stderr ) -- base
 
 import Data.ByteString.Lazy.Search ( breakOn ) -- stringsearch
 
@@ -15,7 +17,17 @@ import FullIPG ( ExpHelpers(..), toCore )
 import qualified GenericExp as E
 import Interpreter ( Bindings, NT, Value(..), interpret )
 import IPGParser ( IdType, Exp', parse )
--- import JSExport ( toJS )
+import JSExport ( hexyString, toJS )
+
+asJSON :: Value a -> Builder.Builder
+asJSON (STRING s) = hexyString s
+asJSON (BOOL True) = "true"
+asJSON (BOOL False) = "false"
+asJSON (INT n) = Builder.integerDec n
+asJSON (FLOAT d) = Builder.doubleDec d
+asJSON (SEQUENCE xs) = "[" <> mconcat (intersperse ", " (map asJSON xs)) <> "]"
+asJSON (BINDINGS xs) = "{" <> mconcat (intersperse ", " (map process (Map.toList xs))) <> "}"
+    where process (k, v) = asJSON (STRING k) <> ": " <> asJSON v
 
 helper :: ExpHelpers IdType IdType IdType Exp'
 helper = ExpHelpers {
@@ -34,10 +46,11 @@ splitAround pattern s
                         else Just (before, LBS.drop (fromIntegral $ BS.length pattern) after)
   where (before, after) = breakOn pattern s
 
-externalFuncs :: Map.Map NT ([Value ()] -> Value ())
+externalFuncs :: Map.Map NT ([Value a] -> Value a)
 externalFuncs = Map.fromList [
     ("empty", \[] -> BINDINGS Map.empty),
-    ("decodeAscii", \[SEQUENCE cs] -> STRING (BS.pack $ map (\(INT c) -> fromIntegral c) cs)),
+    ("decodeAscii", \[SEQUENCE cs] ->
+        STRING (BS.pack $ map (\(INT c) -> fromIntegral c) cs)),
     ("makeEntry", \[name, descr, typ] ->
         BINDINGS (Map.fromList [("name", name), ("descriptor", descr), ("type", typ)])),
     ("projectSections", \[SEQUENCE sections] ->
@@ -46,7 +59,7 @@ externalFuncs = Map.fromList [
 
 main :: IO ()
 main = do
-    (interpreterInput:_) <- getArgs
+    -- (interpreterInput:_) <- getArgs
     input' <- LBS.getContents 
     let (preamble, rest) = case splitAround "\n%preamble_end" input' of
             Nothing -> ("", input')
@@ -54,16 +67,19 @@ main = do
     let (input, postamble) = case splitAround "\n%postamble_begin" rest of
             Nothing -> (rest, "")
             Just (x, p) -> (x, LBS.dropWhile isSpace p)
-    let (g, decls) = parse input
-    let core = E.simplify (toCore helper g)
-    case validate (Set.fromList decls) core of
-        Just errs -> mapM_ (CBS.hPutStrLn stderr) errs
-        Nothing -> do
-            buf <- CBS.readFile interpreterInput
-            case interpret core externalFuncs [] buf of
-                Nothing -> putStrLn "null"
-                Just results -> print results
-        -- Nothing -> do
-        --     LBS.putStrLn preamble
-        --     LBS.putStrLn (toJS core)
-        --     LBS.putStr postamble
+    case parse input of
+        Left err -> hPutStrLn stderr err
+        Right (g, decls) -> do
+            let core = E.simplify (toCore helper g)
+            case validate (Set.fromList decls) core of
+                Just errs -> mapM_ (CBS.hPutStrLn stderr) errs
+                -- Nothing -> do
+                --     buf <- CBS.readFile interpreterInput
+                --     case interpret core externalFuncs [] buf of
+                --         Nothing -> putStrLn "null"
+                --         Just (bs, _, _) ->
+                --             LBS.putStrLn (Builder.toLazyByteString (asJSON (BINDINGS bs)))
+                Nothing -> do
+                    LBS.putStrLn preamble
+                    LBS.putStrLn (toJS core)
+                    LBS.putStr postamble

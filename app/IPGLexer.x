@@ -1,78 +1,94 @@
 {
-module IPGLexer( alexScanTokens, Token(..) ) where
+module IPGLexer(
+    alexError, alexGetInput, alexMonadScan, runAlex,
+    Alex, AlexInput(..), AlexPosn(..), Token(..)
+) where
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Lazy as LBS -- bytestring
 import qualified Data.ByteString.Lex.Integral as I -- bytestring-lexing
 import qualified Data.ByteString.Lex.Fractional as F -- bytestring-lexing
 }
 
-%wrapper "basic-bytestring"
+%wrapper "monadUserState-bytestring"
 
 $digit = 0-9
 $alpha = [a-zA-Z]
 $hex = [0-9a-fA-F]
 $ascii = \x00-\xFF
-$print = $printable # [^$ascii]
+$print = \x20-\x7E
 $stringchar = $print # [\n\r\f\v]
 
 tokens :-
-    $white+ ;
-    "//".*  ;
-    "0x" $hex $hex? { TokenInt . readHex }
-    $digit+ \. $digit* { TokenDouble . readDouble }
-    $digit+ { TokenInt . readInteger }
-    ^"%declare" { \_ -> TokenDeclare }
-    "%instrument" { \_ -> TokenInstrument }
-    "%end" { \_ -> TokenEndDeclare }
-    EOI     { \_ -> TokenEOI }
-    repeat  { \_ -> TokenRepeat }
-    until   { \_ -> TokenUntil }
-    START   { \_ -> TokenStart }
-    END     { \_ -> TokenEnd }
-    for     { \_ -> TokenFor }
-    to      { \_ -> TokenTo }
-    do      { \_ -> TokenDo }
-    "?["    { \_ -> TokenGuard }
-    "?"     { \_ -> TokenQuestion }
-    ":"     { \_ -> TokenColon }
-    ";"     { \_ -> TokenSemicolon }
-    "."     { \_ -> TokenDot }
-    ","     { \_ -> TokenComma }
-    "("     { \_ -> TokenLParen }
-    ")"     { \_ -> TokenRParen }
-    "{"     { \_ -> TokenLCurly }
-    "}"     { \_ -> TokenRCurly }
-    "["     { \_ -> TokenLBracket }
-    "]"     { \_ -> TokenRBracket }
-    "**"    { \_ -> TokenExp }
-    "<<"    { \_ -> TokenLShift }
-    ">>"    { \_ -> TokenRShift }
-    "<="    { \_ -> TokenLTE }
-    ">="    { \_ -> TokenGTE }
-    "<"     { \_ -> TokenLAngle }
-    ">"     { \_ -> TokenRAngle }
-    "->"    { \_ -> TokenArrow }
-    "=="    { \_ -> TokenEqual }
-    "!="    { \_ -> TokenNotEqual }
-    "!"     { \_ -> TokenNot }
-    "="     { \_ -> TokenEq }
-    "&&"    { \_ -> TokenAnd }
-    "||"    { \_ -> TokenOr }
-    "&"     { \_ -> TokenAmpersand }
-    "|"     { \_ -> TokenPipe }
-    "^"     { \_ -> TokenCaret }
-    "%"     { \_ -> TokenPercent }
-    "~"     { \_ -> TokenTilde }
-    "+"     { \_ -> TokenAdd }
-    "-"     { \_ -> TokenSub }
-    "*"     { \_ -> TokenMul }
-    "/"     { \_ -> TokenDiv }
-    [_ $alpha] [_ $alpha $digit]* { TokenName . LBS.toStrict }
-    \" ($stringchar#[\"\\]|\\[0abfnrtv\\\"']|\\x$hex$hex)* \" { TokenString . readString }
+<0>    $white+ ;
+<0>    "//".*  ;
+<0>    "/*"    { nestComment `andBegin` cmt }
+<0>    "*/"    { \inp len -> alexError "Unexpected closing comment" }
+<cmt>  "/*"    { nestComment }
+<cmt>  "*/"    { unnestComment }
+<cmt>  "."     ;
+<cmt>  "\n"    ;
+<0>    "0x" $hex $hex?
+               { token $ \inp len -> TokenInt (readHex (current inp len)) }
+<0>    $digit+ \. $digit*
+               { token $ \inp len -> TokenDouble (readDouble (current inp len)) }
+<0>    $digit+ { token $ \inp len -> TokenInt (readInteger (current inp len)) }
+<0>    ^"%declare"
+               { token $ \inp len -> TokenDeclare }
+<0>    "%instrument"
+               { token $ \inp len -> TokenInstrument }
+<0>    "%end"  { token $ \inp len -> TokenEndDeclare }
+<0>    EOI     { token $ \inp len -> TokenEOI }
+<0>    repeat  { token $ \inp len -> TokenRepeat }
+<0>    until   { token $ \inp len -> TokenUntil }
+<0>    START   { token $ \inp len -> TokenStart }
+<0>    END     { token $ \inp len -> TokenEnd }
+<0>    for     { token $ \inp len -> TokenFor }
+<0>    to      { token $ \inp len -> TokenTo }
+<0>    do      { token $ \inp len -> TokenDo }
+<0>    "?["    { token $ \inp len -> TokenGuard }
+<0>    "?"     { token $ \inp len -> TokenQuestion }
+<0>    ":"     { token $ \inp len -> TokenColon }
+<0>    ";"     { token $ \inp len -> TokenSemicolon }
+<0>    "."     { token $ \inp len -> TokenDot }
+<0>    ","     { token $ \inp len -> TokenComma }
+<0>    "("     { token $ \inp len -> TokenLParen }
+<0>    ")"     { token $ \inp len -> TokenRParen }
+<0>    "{"     { token $ \inp len -> TokenLCurly }
+<0>    "}"     { token $ \inp len -> TokenRCurly }
+<0>    "["     { token $ \inp len -> TokenLBracket }
+<0>    "]"     { token $ \inp len -> TokenRBracket }
+<0>    "**"    { token $ \inp len -> TokenExp }
+<0>    "<<"    { token $ \inp len -> TokenLShift }
+<0>    ">>"    { token $ \inp len -> TokenRShift }
+<0>    "<="    { token $ \inp len -> TokenLTE }
+<0>    ">="    { token $ \inp len -> TokenGTE }
+<0>    "<"     { token $ \inp len -> TokenLAngle }
+<0>    ">"     { token $ \inp len -> TokenRAngle }
+<0>    "->"    { token $ \inp len -> TokenArrow }
+<0>    "=="    { token $ \inp len -> TokenEqual }
+<0>    "!="    { token $ \inp len -> TokenNotEqual }
+<0>    "!"     { token $ \inp len -> TokenNot }
+<0>    "="     { token $ \inp len -> TokenEq }
+<0>    "&&"    { token $ \inp len -> TokenAnd }
+<0>    "||"    { token $ \inp len -> TokenOr }
+<0>    "&"     { token $ \inp len -> TokenAmpersand }
+<0>    "|"     { token $ \inp len -> TokenPipe }
+<0>    "^"     { token $ \inp len -> TokenCaret }
+<0>    "%"     { token $ \inp len -> TokenPercent }
+<0>    "~"     { token $ \inp len -> TokenTilde }
+<0>    "+"     { token $ \inp len -> TokenAdd }
+<0>    "-"     { token $ \inp len -> TokenSub }
+<0>    "*"     { token $ \inp len -> TokenMul }
+<0>    "/"     { token $ \inp len -> TokenDiv }
+<0>    [_ $alpha] [_ $alpha $digit]*
+               { token $ \inp len -> TokenName (LBS.toStrict (current inp len)) }
+<0>    \" ($stringchar#[\"\\]|\\[0abfnrtv\\\"']|\\x$hex$hex)* \"
+               { token $ \inp len -> TokenString (readString (current inp len)) }
 
 {
 data Token
-    = TokenEOI
+    = TokenEOF
+    | TokenEOI
     | TokenDeclare
     | TokenInstrument
     | TokenEndDeclare
@@ -154,4 +170,35 @@ readString = BS.concat . go . BS.tail . BS.init . LBS.toStrict
           handleEscapes 0x78 rest = BS.singleton hex : go rest'
             where (hexString, rest') = BS.splitAt 2 rest
                   hex = case I.readHexadecimal hexString of Just (n, _) -> n
+
+type AlexUserState = Int
+
+alexInitUserState = 0 :: Int
+
+current :: AlexInput -> Int64 -> LBS.ByteString 
+current (_, _, s, _) len = LBS.take len s
+
+alexEOF :: Alex Token
+alexEOF = do
+    c <- alexGetStartCode
+    if c == cmt then
+        alexError "Error: unclosed comment"
+      else
+        return TokenEOF
+
+nestComment :: AlexAction Token
+nestComment input len = do
+    l <- alexGetUserState
+    alexSetUserState (l + 1)
+    skip input len
+
+unnestComment :: AlexAction Token
+unnestComment input len = do
+    l <- alexGetUserState
+    alexSetUserState (l - 1)
+    if l == 1 then
+        alexSetStartCode 0
+      else
+        return ()
+    skip input len
 }
