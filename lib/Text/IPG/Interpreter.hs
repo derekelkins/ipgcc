@@ -1,6 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-module Text.IPG.Interpreter ( Bindings, Buffer, Id, NT, Value(..), asJSON, interpret ) where
+module Text.IPG.Interpreter (
+    Bindings, Buffer, Id, NT, Value(..),
+    asJSON, asJSON', interpret, interpretStartingWith,
+) where
 import Control.Applicative ( asum ) -- base
 import Data.Bits ( complement, shift, xor, (.&.), (.|.) ) -- base
 import qualified Data.ByteString as BS -- bytestring
@@ -55,6 +58,10 @@ data Value a
     | OPAQUE a
   deriving ( Eq, Ord, Show )
 
+asJSON' :: Maybe (Value a) -> Builder.Builder
+asJSON' (Just v) = asJSON v
+asJSON' Nothing = "null"
+
 asJSON :: Value a -> Builder.Builder
 asJSON (STRING s) = hexyString s
 asJSON (BOOL True) = "true"
@@ -87,7 +94,17 @@ interpret
     -> [Value a]
     -> Buffer
     -> Maybe (Bindings a, Int, Int)
-interpret (Grammar rules@(Rule _ startRule _ _:_)) efs args =
+interpret g@(Grammar (Rule _ startRule _ _:_)) efs = interpretStartingWith g efs startRule
+
+interpretStartingWith
+    :: (HasCallStack)
+    => Grammar'
+    -> ExternalFuncs a
+    -> NT
+    -> [Value a]
+    -> Buffer
+    -> Maybe (Bindings a, Int, Int)
+interpretStartingWith (Grammar rules) efs startRule args =
     let (params, body) = ruleFuncs ctxt !!! startRule
         args' = Map.fromList (zip params args)
     in fmap (\((_, bindings), s, e) -> (bindings, s, e)) . body (Map.empty, Map.empty) args'

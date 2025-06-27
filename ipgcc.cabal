@@ -71,6 +71,7 @@ library
         Text.IPG.IPGLexer,
         Text.IPG.IPGParser,
         Text.IPG.PPrint,
+        Text.IPG.Simple,
         Text.IPG.TopLevel.FileSplit
 
     -- Modules included in this library but not exported.
@@ -150,6 +151,8 @@ test-suite ipgcc-test
     build-depends:
         base ^>=4.20.0.0,
         bytestring,
+        containers,
+        filepath,
         ipgcc,
         tasty,
         tasty-program,
