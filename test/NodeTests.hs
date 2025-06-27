@@ -30,12 +30,12 @@ goldenTests = do
         [ testGroup "Non-Debugging"
               [ goldenVsString (takeBaseName ipgFile) goldFile (export False ipgFile)
               | ipgFile <- ipgFiles
-              , let goldFile = replaceExtension ipgFile ".ipg.release.js"
+              , let goldFile = replaceExtension ipgFile ".release.js"
               ]
         , testGroup "Debugging"
               [ goldenVsString (takeBaseName ipgFile) goldFile (export True ipgFile)
               | ipgFile <- ipgFiles
-              , let goldFile = replaceExtension ipgFile ".ipg.debug.js"
+              , let goldFile = replaceExtension ipgFile ".debug.js"
               ]
         ]
 -- TODO: Add tests that actually run the export.
