@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings, QuasiQuotes #-}
-module Text.IPG.Export.JSExport ( Context(..), T, defaultContext, toJS, toJSWithContext ) where
+module Text.IPG.Export.JS ( Context(..), T, defaultContext, toJS, toJSWithContext ) where
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Lazy as LBS -- bytestring
 import qualified Data.ByteString.Builder as Builder -- bytestring
@@ -9,7 +9,7 @@ import qualified Data.Set as Set -- containers
 
 import Data.String.Interpolate ( i, __i ) -- string-interpolate
 
-import Text.IPG.CoreIPG
+import Text.IPG.Core
 import Text.IPG.GenericExp ( Exp(..) )
 import Text.IPG.PPrint ( hexyString, outParen, pprintTerm )
 

@@ -1,0 +1,538 @@
+RM6
+  -> HeaderV6[0, EOI]
+     Blocks[HeaderV6.END, EOI]
+     { blocks = Blocks.values };
+
+HeaderV6
+  -> "reMarkable .lines file, version=6          "[0, 43];
+
+Blocks
+  -> repeat FullBlock.block;
+
+FullBlock
+  -> MainBlockInfo[0, EOI]
+     Block(MainBlockInfo.blockType, MainBlockInfo.currentVersion)[MainBlockInfo.END, MainBlockInfo.END + MainBlockInfo.length]
+     Bytes[Block.END, MainBlockInfo.END + MainBlockInfo.length]
+     { block = makeBlock(MainBlockInfo.this, Block.data, Bytes.value) };
+
+MainBlockInfo
+  -> U32[0, EOI]
+     { length = U32.value }
+     U8[U32.END, EOI]
+     ?[ check(U8.value == 0, "unknown value is non-zero") ]
+     { minVersion = .[U8.END] }
+     ?[ check(minVersion >= 0, "minVersion < 0") ]
+     { currentVersion = .[U8.END + 1] }
+     ?[ check(currentVersion >= 0 && minVersion <= currentVersion, "currentVersion not between 0 and minVersion") ]
+     { blockType = .[U8.END + 2] };
+
+Block(blockType, version)
+  -> ?[ blockType == 0 ]
+     MigrationInfoBlock[0, EOI]
+     { data = MigrationInfoBlock.this }
+   / ?[ blockType == 1 ]
+     SceneTreeBlock[0, EOI]
+     { data = SceneTreeBlock.this }
+   / ?[ blockType == 2 ]
+     TreeNodeBlock[0, EOI]
+     { data = TreeNodeBlock.this }
+   / ?[ blockType == 3 ]
+     SceneGlyphItemBlock[0, EOI]
+     { data = SceneGlyphItemBlock.this }
+   / ?[ blockType == 4 ]
+     SceneGroupItemBlock[0, EOI]
+     { data = SceneGroupItemBlock.this }
+   / ?[ blockType == 5 ]
+     SceneLineItemBlock(version)[0, EOI]
+     { data = SceneLineItemBlock.this }
+   / ?[ blockType == 6 ]
+     SceneTextItemBlock[0, EOI]
+     { data = SceneTextItemBlock.this }
+   / ?[ blockType == 7 ]
+     RootTextBlock[0, EOI]
+     { data = RootTextBlock.this }
+   / ?[ blockType == 8 ]
+     SceneTombstoneItemBlock[0, EOI]
+     { data = SceneTombstoneItemBlock.this }
+   / ?[ blockType == 9 ]
+     AuthorIdsBlock[0, EOI]
+     { data = AuthorIdsBlock.this }
+   / ?[ blockType == 10 ]
+     PageInfoBlock[0, EOI]
+     { data = PageInfoBlock.this }
+   / ?[ blockType == 13 ]
+     SceneInfo[0, EOI]
+     { data = SceneInfo.this }
+   / UnknownBlock[0, EOI]
+     { data = UnknownBlock.data };
+
+AuthorIdsBlock
+  -> VarUInt[0, EOI]
+     for i = 0 to VarUInt.value do AuthorId[AuthorId.END, EOI]
+     { authorIds = AuthorId.these };
+
+AuthorId
+  -> SubBlock(0)[0, EOI]
+     VarUInt[SubBlock.END, SubBlock.END + SubBlock.length]
+     ?[ check(VarUInt.value == 16, "Expect UUID to have length 16") ]
+     { uuid = *[VarUInt.END, VarUInt.END + VarUInt.value] }
+     U16[VarUInt.END + VarUInt.value, SubBlock.END + SubBlock.length]
+     { authorId = U16.value }
+     ExpectEmpty[U16.END, SubBlock.END + SubBlock.length];
+
+MigrationInfoBlock
+  -> TaggedId(1)[0, EOI]
+     { migrationId = TaggedId.value }
+     TaggedBool(2)[TaggedId.END, EOI]
+     { isDevice = TaggedBool.value }
+     OptionalTaggedBool(3)[TaggedBool.END, EOI]
+     { unknown = OptionalTaggedBool.value };
+
+TreeNodeBlock
+  -> TaggedId(1)[0, EOI]
+     { nodeId = TaggedId.value }
+     LWWString(2)[TaggedId.END, EOI]
+     { label = LWWString.value }
+     LWWBool(3)[LWWString.END, EOI]
+     { visible = LWWBool.value }
+     OptionalLWWID(7)[LWWBool.END, EOI]
+     { anchorId = OptionalLWWID.value }
+     OptionalLWWU8(8)[OptionalLWWID.END, EOI]
+     { anchorType = OptionalLWWU8.value }
+     OptionalLWWFloat32(9)[OptionalLWWU8.END, EOI]
+     { anchorThreshold = OptionalLWWFloat32.value }
+     OptionalLWWFloat32(10)[OptionalLWWFloat32.END, EOI]
+     { anchorOriginX = OptionalLWWFloat32.value };
+
+PageInfoBlock
+  -> TaggedU32(1)[0, EOI]
+     { loadsCount = TaggedU32.value }
+     TaggedU32(2)[TaggedU32.END, EOI]
+     { mergesCount = TaggedU32.value }
+     TaggedU32(3)[TaggedU32.END, EOI]
+     { textCharsCount = TaggedU32.value }
+     TaggedU32(4)[TaggedU32.END, EOI]
+     { textLinesCount = TaggedU32.value }
+     OptionalU32(5)[TaggedU32.END, EOI]
+     { typeFolioUseCount = OptionalU32.value };
+
+SceneTreeBlock
+  -> TaggedId(1)[0, EOI]
+     { treeId = TaggedId.value }
+     TaggedId(2)[TaggedId.END, EOI]
+     { nodeId = TaggedId.value }
+     TaggedBool(3)[TaggedId.END, EOI]
+     { isUpdate = TaggedBool.value }
+     SubBlock(4)[TaggedBool.END, EOI]
+     TaggedId(1)[SubBlock.END, SubBlock.END + SubBlock.length]
+     { parentId = TaggedId.value }
+     ExpectEmpty[TaggedId.END, SubBlock.END + SubBlock.length];
+
+SceneInfo
+  -> LWWID(1)[0, EOI]
+     { currentLayer = LWWID.value }
+     OptionalLWWBool(2)[LWWID.END, EOI]
+     { backgroundVisible = OptionalLWWBool.value }
+     OptionalLWWBool(3)[OptionalLWWBool.END, EOI]
+     { rootDocumentVisible = OptionalLWWBool.value }
+     OptionalIntPair(4)[OptionalLWWBool.END, EOI]
+     { paperSize = OptionalIntPair.value };
+
+SceneItemInfo
+  -> TaggedId(1)[0, EOI]
+     { parentId = TaggedId.value }
+     TaggedId(2)[TaggedId.END, EOI]
+     { itemId = TaggedId.value }
+     TaggedId(3)[TaggedId.END, EOI]
+     { leftId = TaggedId.value }
+     TaggedId(4)[TaggedId.END, EOI]
+     { rightId = TaggedId.value }
+     TaggedU32(5)[TaggedId.END, EOI]
+     { deletedLength = TaggedU32.value };
+
+SceneTombstoneItemBlock
+  -> SceneItemInfo[0, EOI]
+     { item = makeCrdtSequenceItem(SceneItemInfo.this) };
+
+SceneGlyphItemBlock
+  -> SceneItemInfo[0, EOI]
+     SceneGlyphItemBlockValue[SceneItemInfo.END, EOI]
+     { item = makeCrdtSequenceItem(SceneItemInfo.this, SceneGlyphItemBlockValue.value) };
+
+SceneGlyphItemBlockValue
+  -> SubBlock(6)[0, EOI]
+     { outerEnd = SubBlock.END + SubBlock.length }
+     "\x01"[SubBlock.END, SubBlock.END + 1]
+     OptionalU32(2)[SubBlock.END + 1, EOI]
+     { optStart = OptionalU32.value }
+     OptionalU32(3)[OptionalU32.END, EOI]
+     { optLength = OptionalU32.value }
+     TaggedU32(4)[OptionalU32.END, EOI]
+     { colorId = TaggedU32.value }
+     String(5)[TaggedU32.END, EOI]
+     { text = String.value }
+     { start = optStart == getNull() ? 0 : optStart }
+     { length = optLength == getNull() ? getLength(text) : optLength }
+     SubBlock(6)[String.END, EOI]
+     VarUInt[SubBlock.END + 1, SubBlock.END + SubBlock.length]
+     for i = 0 to VarUInt.value do Rectangle[VarUInt.END + 32 * i, SubBlock.END + SubBlock.length]
+     { rectangles = Rectangle.these }
+     ExpectEmpty[Rectangle.END, SubBlock.END + SubBlock.length]
+     ExpectEmpty[ExpectEmpty.END, outerEnd]
+     { value = makeSceneGlyItemBlockValue(start, length, colorId, text, rectangles) }
+   / { value = getNull() };
+
+Rectangle
+  -> Float64[0, EOI]
+     { x = Float64.value }
+     Float64[Float64.END, EOI]
+     { y = Float64.value }
+     Float64[Float64.END, EOI]
+     { width = Float64.value }
+     Float64[Float64.END, EOI]
+     { height = Float64.value };
+
+SceneGroupItemBlock
+  -> SceneItemInfo[0, EOI]
+     SceneGroupItemBlockValue[SceneItemInfo.END, EOI]
+     { item = makeCrdtSequenceItem(SceneItemInfo.this, SceneGroupItemBlockValue.value) };
+
+SceneGroupItemBlockValue
+  -> SubBlock(6)[0, EOI]
+     "\x02"[SubBlock.END, SubBlock.END + 1]
+     TaggedId(2)[SubBlock.END + 1, SubBlock.END + SubBlock.length]
+     { value = TaggedId.value }
+     ExpectEmpty[TaggedId.END, SubBlock.END + SubBlock.length]
+   / { value = getNull() };
+
+SceneLineItemBlock(version)
+  -> SceneItemInfo[0, EOI]
+     SceneLineItemBlockValue(version)[SceneItemInfo.END, EOI]
+     { item = makeCrdtSequenceItem(SceneItemInfo.this, SceneLineItemBlockValue.value) };
+
+SceneLineItemBlockValue(version)
+  -> SubBlock(6)[0, EOI]
+     { outerEnd = SubBlock.END + SubBlock.length }
+     "\x03"[SubBlock.END, SubBlock.END + 1]
+     TaggedU32(1)[SubBlock.END + 1, outerEnd]
+     { toolId = TaggedU32.value }
+     TaggedU32(2)[TaggedU32.END, outerEnd]
+     { colorId = TaggedU32.value }
+     TaggedFloat64(3)[TaggedU32.END, outerEnd]
+     { thicknessScale = TaggedFloat64.value }
+     TaggedFloat32(4)[TaggedFloat64.END, outerEnd]
+     { startLength = TaggedFloat32.value }
+     SubBlock(5)[TaggedFloat32.END, outerEnd]
+     { pointSize = pointSerializedSize(version) }
+     ?[ check(SubBlock.length % pointSize == 0, "Point size does not divide subblock size") ]
+     for i = 0 to SubBlock.length / pointSize do Point(version)[SubBlock.END + pointSize * i, SubBlock.END + pointSize * (i + 1)]
+     { points = Point.these }
+     ExpectEmpty[Point.END, SubBlock.END + SubBlock.length]
+     TaggedId(6)[ExpectEmpty.END, outerEnd]
+     { timestamp = TaggedId.value }
+     OptionalTaggedId(7)[TaggedId.END, EOI]
+     { moveId = OptionalTaggedId.value }
+     ExpectEmpty[OptionalTaggedId.END, outerEnd]
+     { value = makeSceneLineItemBlockValue(toolId, colorId, thicknessScale, startLength, points, moveId) }
+   / { value = getNull() };
+
+Point(version)
+  -> Float32[0, EOI]
+     { x = Float32.value }
+     Float32[Float32.END, EOI]
+     { y = Float32.value }
+     PointVersions(version)[Float32.END, EOI]
+     { speed = PointVersions.speed }
+     { width = PointVersions.width }
+     { direction = PointVersions.direction }
+     { pressure = PointVersions.pressure };
+
+PointVersions(version)
+  -> ?[ version == 1 ]
+     Float32[0, EOI]
+     { speed = 4 * Float32.value }
+     Float32[Float32.END, EOI]
+     { direction = 255 * Float32.value / getTwoPi() }
+     Float32[Float32.END, EOI]
+     { width = int(round(4 * Float32.value)) }
+     Float32[Float32.END, EOI]
+     { pressure = 255 * Float32.value }
+   / ?[ version == 2 ]
+     U16[0, EOI]
+     { speed = U16.value }
+     U16[U16.END, EOI]
+     { width = U16.value }
+     { direction = .[U16.END] }
+     { pressure = .[U16.END + 1] };
+
+SceneTextItemBlock
+  -> SceneItemInfo[0, EOI]
+     { item = makeCrdtSequenceItem(SceneItemInfo.this) };
+
+RootTextBlock
+  -> TaggedId(1)[0, EOI]
+     { blockId = TaggedId.value }
+     ?[ checkRootTextBlockId(blockId) ]
+     SubBlock(2)[TaggedId.END, EOI]
+     { outerEnd = SubBlock.END + SubBlock.length }
+     SubBlock(1)[SubBlock.END, outerEnd]
+     { innerEnd = SubBlock.END + SubBlock.length }
+     SubBlock(1)[SubBlock.END, innerEnd]
+     VarUInt[SubBlock.END, EOI]
+     for i = 0 to VarUInt.value do TextItem[TextItem.END, SubBlock.END + SubBlock.length]
+     { textItems = TextItem.these }
+     ExpectEmpty[TextItem.END, SubBlock.END + SubBlock.length]
+     ExpectEmpty[ExpectEmpty.END, innerEnd]
+     SubBlock(2)[ExpectEmpty.END, outerEnd]
+     { innerEnd = SubBlock.END + SubBlock.length }
+     SubBlock(1)[SubBlock.END, innerEnd]
+     VarUInt[SubBlock.END, EOI]
+     for i = 0 to VarUInt.value do TextFormat[TextFormat.END, SubBlock.END + SubBlock.length]
+     { textFormats = TextFormat.these }
+     ExpectEmpty[TextFormat.END, SubBlock.END + SubBlock.length]
+     ExpectEmpty[ExpectEmpty.END, innerEnd]
+     ExpectEmpty[ExpectEmpty.END, outerEnd]
+     SubBlock(3)[ExpectEmpty.END, EOI]
+     Float64[SubBlock.END, SubBlock.END + SubBlock.length]
+     { xPosition = Float64.value }
+     Float64[Float64.END, SubBlock.END + SubBlock.length]
+     { yPosition = Float64.value }
+     ExpectEmpty[ExpectEmpty.END, SubBlock.END + SubBlock.length]
+     TaggedFloat32(4)[ExpectEmpty.END, EOI]
+     { width = TaggedFloat32.value };
+
+TextItem
+  -> SubBlock(0)[0, EOI]
+     TaggedId(2)[SubBlock.END, EOI]
+     { itemId = TaggedId.value }
+     TaggedId(3)[TaggedId.END, EOI]
+     { leftId = TaggedId.value }
+     TaggedId(4)[TaggedId.END, EOI]
+     { rightId = TaggedId.value }
+     TaggedU32(5)[TaggedId.END, EOI]
+     { deletedLength = TaggedU32.value }
+     TextItemValue[TaggedU32.END, SubBlock.END + SubBlock.length]
+     { value = TextItemValue.value }
+     ExpectEmpty[TextItemValue.END, SubBlock.END + SubBlock.length];
+
+TextItemValue
+  -> StringWithFormat(6)[0, EOI]
+     { value = processTextItemValue(StringWithFormat.value) }
+   / { value = "" };
+
+StringWithFormat(expectedIndex)
+  -> SubBlock(expectedIndex)[0, EOI]
+     VarUInt[SubBlock.END, SubBlock.END + SubBlock.length]
+     Bool[VarUInt.END, SubBlock.END + SubBlock.length]
+     ?[ check(Bool.value, "StringWithFormat flag unset") ]
+     ?[ check(Bool.END + VarUInt.value <= SubBlock.END + SubBlock.length, "StringWithFormat: Overfull block") ]
+     Bytes[Bool.END, Bool.END + VarUInt.value]
+     OptionalU32(2)[Bytes.END, SubBlock.END + SubBlock.length]
+     { value = makeStringWithFormat(decodeAscii(Bytes.value), OptionalU32.value) }
+     ExpectEmpty[OptionalU32.END, SubBlock.END + SubBlock.length];
+
+TextFormat
+  -> CrdtId[0, EOI]
+     { charId = CrdtId.this }
+     TaggedId(1)[CrdtId.END, EOI]
+     { timestamp = TaggedId.value }
+     SubBlock(2)[TaggedId.END, EOI]
+     "\x11"[SubBlock.END, SubBlock.END + 1]
+     { formatCode = .[SubBlock.END + 1] }
+     ExpectEmpty[SubBlock.END + 2, SubBlock.END + SubBlock.length]
+     { value = lwwU8(timestamp, formatCode < 0 || formatCode > 7 ? 1 : formatCode) };
+
+UnknownBlock
+  -> { data = *[0, EOI] };
+
+OptionalLWWBool(expectedIndex)
+  -> LWWBool(expectedIndex)[0, EOI]
+     { value = LWWBool.value }
+   / { value = getNull() };
+
+LWWBool(expectedIndex)
+  -> SubBlock(expectedIndex)[0, EOI]
+     TaggedId(1)[SubBlock.END, SubBlock.END + SubBlock.length]
+     TaggedBool(2)[TaggedId.END, SubBlock.END + SubBlock.length]
+     { value = lwwBool(TaggedId.value, TaggedBool.value) }
+     ExpectEmpty[TaggedBool.END, SubBlock.END + SubBlock.length];
+
+OptionalLWWU8(expectedIndex)
+  -> LWWU8(expectedIndex)[0, EOI]
+     { value = LWWU8.value }
+   / { value = getNull() };
+
+LWWU8(expectedIndex)
+  -> SubBlock(expectedIndex)[0, EOI]
+     TaggedId(1)[SubBlock.END, SubBlock.END + SubBlock.length]
+     TaggedU8(2)[TaggedId.END, SubBlock.END + SubBlock.length]
+     { value = lwwU8(TaggedId.value, TaggedU8.value) }
+     ExpectEmpty[TaggedU8.END, SubBlock.END + SubBlock.length];
+
+OptionalLWWFloat32(expectedIndex)
+  -> LWWFloat32(expectedIndex)[0, EOI]
+     { value = LWWFloat32.value }
+   / { value = getNull() };
+
+LWWFloat32(expectedIndex)
+  -> SubBlock(expectedIndex)[0, EOI]
+     TaggedId(1)[SubBlock.END, SubBlock.END + SubBlock.length]
+     TaggedFloat32(2)[TaggedId.END, SubBlock.END + SubBlock.length]
+     { value = lwwFloat32(TaggedId.value, TaggedFloat32.value) }
+     ExpectEmpty[TaggedFloat32.END, SubBlock.END + SubBlock.length];
+
+OptionalLWWID(expectedIndex)
+  -> LWWID(expectedIndex)[0, EOI]
+     { value = LWWID.value }
+   / { value = getNull() };
+
+LWWID(expectedIndex)
+  -> SubBlock(expectedIndex)[0, EOI]
+     TaggedId(1)[SubBlock.END, SubBlock.END + SubBlock.length]
+     { timestamp = TaggedId.value }
+     TaggedId(2)[TaggedId.END, SubBlock.END + SubBlock.length]
+     { value = lwwCrdtId(timestamp, TaggedId.value) }
+     ExpectEmpty[TaggedId.END, SubBlock.END + SubBlock.length];
+
+LWWString(expectedIndex)
+  -> SubBlock(expectedIndex)[0, EOI]
+     TaggedId(1)[SubBlock.END, SubBlock.END + SubBlock.length]
+     String(2)[TaggedId.END, SubBlock.END + SubBlock.length]
+     { value = lwwString(TaggedId.value, String.value) }
+     ExpectEmpty[String.END, SubBlock.END + SubBlock.length];
+
+String(expectedIndex)
+  -> SubBlock(expectedIndex)[0, EOI]
+     VarUInt[SubBlock.END, SubBlock.END + SubBlock.length]
+     Bool[VarUInt.END, SubBlock.END + SubBlock.length]
+     ?[ check(Bool.value, "String flag unset") ]
+     ?[ check(Bool.END + VarUInt.value <= SubBlock.END + SubBlock.length, "String: Overfull block") ]
+     Bytes[Bool.END, Bool.END + VarUInt.value]
+     { value = decodeAscii(Bytes.value) }
+     ExpectEmpty[Bytes.END, SubBlock.END + SubBlock.length];
+
+OptionalU32(expectedIndex)
+  -> TaggedU32(expectedIndex)[0, EOI]
+     { value = TaggedU32.value }
+   / { value = getNull() };
+
+OptionalIntPair(expectedIndex)
+  -> IntPair(expectedIndex)[0, EOI]
+     { value = IntPair.value }
+   / { value = getNull() };
+
+IntPair(expectedIndex)
+  -> SubBlock(expectedIndex)[0, EOI]
+     U32[SubBlock.END, SubBlock.END + SubBlock.length]
+     { fst = U32.value }
+     U32[U32.END, SubBlock.END + SubBlock.length]
+     { value = makePair(fst, U32.value) }
+     ExpectEmpty[U32.END, SubBlock.END + SubBlock.length];
+
+SubBlock(expectedIndex)
+  -> Length4Tag(expectedIndex)[0, EOI]
+     U32[Length4Tag.END, EOI]
+     { length = U32.value };
+
+CrdtId
+  -> { part1 = .[0] }
+     VarUInt[1, EOI]
+     { part2 = VarUInt.value };
+
+OptionalTaggedBool(expectedIndex)
+  -> TaggedBool(expectedIndex)[0, EOI]
+     { value = TaggedBool.value }
+   / { value = !(!0) };
+
+TaggedBool(expectedIndex)
+  -> Byte1Tag(expectedIndex)[0, EOI]
+     Bool[Byte1Tag.END, EOI]
+     { value = Bool.value };
+
+TaggedU8(expectedIndex)
+  -> Byte1Tag(expectedIndex)[0, EOI]
+     { value = .[Byte1Tag.END] };
+
+TaggedU32(expectedIndex)
+  -> Byte4Tag(expectedIndex)[0, EOI]
+     U32[Byte4Tag.END, EOI]
+     { value = U32.value };
+
+TaggedFloat32(expectedIndex)
+  -> Byte4Tag(expectedIndex)[0, EOI]
+     Float32[Byte4Tag.END, EOI]
+     { value = Float32.value };
+
+TaggedFloat64(expectedIndex)
+  -> Byte8Tag(expectedIndex)[0, EOI]
+     Float64[Byte8Tag.END, EOI]
+     { value = Float64.value };
+
+OptionalTaggedId(expectedIndex)
+  -> TaggedId(expectedIndex)[0, EOI]
+     { value = TaggedId.value }
+   / { value = getNull() };
+
+TaggedId(expectedIndex)
+  -> IDTag(expectedIndex)[0, EOI]
+     CrdtId[IDTag.END, EOI]
+     { value = makeCrdtId(CrdtId.part1, CrdtId.part2) };
+
+IDTag(expectedIndex)
+  -> Tag(expectedIndex, 15)[0, EOI];
+
+Byte1Tag(expectedIndex)
+  -> Tag(expectedIndex, 1)[0, EOI];
+
+Byte4Tag(expectedIndex)
+  -> Tag(expectedIndex, 4)[0, EOI];
+
+Byte8Tag(expectedIndex)
+  -> Tag(expectedIndex, 8)[0, EOI];
+
+Length4Tag(expectedIndex)
+  -> Tag(expectedIndex, 12)[0, EOI];
+
+Tag(expectedIndex, expectedTagType)
+  -> VarUInt[0, EOI]
+     ?[ expectedIndex == VarUInt.value >> 4 ]
+     ?[ expectedTagType == (VarUInt.value & 15) ];
+
+ExpectEmpty
+  -> ?[ warnIf(EOI != 0, "Underfull block") ]
+     { _ = *[0, EOI] };
+
+Bytes
+  -> { value = *[0, EOI] };
+
+Bool
+  -> "\x00"[0, 1]
+     { value = !(!0) }
+   / "\x01"[0, 1]
+     { value = !0 };
+
+U8
+  -> { value = .[0] };
+
+U16
+  -> { bs = *[0, 2] }
+     { value = bs[0] | bs[1] << 8 };
+
+U32
+  -> { bs = *[0, 4] }
+     { value = bs[0] | bs[1] << 8 | bs[2] << 16 | bs[3] << 24 };
+
+Float32
+  -> { bs = *[0, 4] }
+     { value = toFloat32(bs) };
+
+Float64
+  -> { bs = *[0, 8] }
+     { value = toFloat64(bs) };
+
+VarUInt
+  -> { value = .[0] }
+     ?[ value >> 7 == 0 ]
+   / U8[0, EOI]
+     VarUInt[U8.END, EOI]
+     { value = U8.value & 127 | VarUInt.value << 7 };

@@ -9,7 +9,7 @@ import qualified Data.ByteString.Builder as Builder -- bytestring
 import Data.Char ( ord ) -- base
 import Data.List ( intersperse ) -- base
 
-import Text.IPG.CoreIPG ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..) )
+import Text.IPG.Core ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..) )
 import Text.IPG.GenericExp ( Exp(..) )
 
 type T = BS.ByteString

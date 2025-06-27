@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveFunctor #-}
-module Text.IPG.CoreIPG ( 
+module Text.IPG.Core ( 
     Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..),
     nonTerminals, nonArrayNonTerminals, arrayNonTerminals,
 ) where

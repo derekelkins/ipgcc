@@ -5,17 +5,13 @@ import qualified Data.ByteString.Char8 as CBS -- bytestring
 import qualified Data.ByteString.Lazy.Char8 as LBS -- bytestring
 import qualified Data.ByteString.Builder as Builder -- bytestring
 import qualified Data.Map as Map -- containers
-import qualified Data.Set as Set -- containers
-import System.IO ( IOMode(..), hPutStrLn, openFile, stderr, stdin, stdout ) -- base
+import System.IO ( IOMode(..), hPutStrLn, openFile, stderr, stdout ) -- base
 
 import qualified Options.Applicative as Opt -- optparse-applicative
 
-import Text.IPG.FullIPG ( ExpHelpers(..), toCore )
-import qualified Text.IPG.GenericExp as E
 import Text.IPG.Interpreter ( NT, Value(..), asJSON, interpret )
-import Text.IPG.IPGParser ( IdType, Exp' )
-import Text.IPG.Export.JSExport ( Context(..), defaultContext, toJS, toJSWithContext )
-import Text.IPG.PPrint ( hexyString, pprint )
+import Text.IPG.Export.JS ( Context(..), defaultContext, toJSWithContext )
+import Text.IPG.PPrint ( pprint )
 import Text.IPG.Simple ( parse )
 
 data ExportType = JS | PPRINT deriving ( Eq, Ord, Show, Read )
@@ -69,7 +65,7 @@ main = do
 
     case parse (not (noValidation opts)) ipgInput of
         Left errs -> mapM_ (hPutStrLn stderr) errs
-        Right (preamble, core, decls, postamble) -> do
+        Right (preamble, core, _, postamble) -> do
             case exportType opts of
                 PPRINT -> LBS.hPutStrLn h (Builder.toLazyByteString (pprint core))
                 JS -> do
@@ -85,14 +81,6 @@ main = do
                         LBS.hPutStrLn h (toJSWithContext
                             (defaultContext { debugMode = debugModeFlag opts }) core)
                         LBS.hPutStr h postamble
-
-helper :: ExpHelpers IdType IdType IdType Exp'
-helper = ExpHelpers {
-    len = E.Int . fromIntegral . BS.length,
-    add = E.Add,
-    num = E.Int . fromIntegral,
-    ref = E.Ref
-  }  
 
 externalFuncs :: Map.Map NT ([Value a] -> Value a)
 externalFuncs = Map.fromList [

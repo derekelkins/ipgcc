@@ -6,12 +6,12 @@ import qualified Data.ByteString.Lazy.Char8 as LBS -- bytestring
 import qualified Data.Set as Set -- containers
 import qualified Data.Map as Map -- containers
 
-import Text.IPG.CheckIPG ( validate )
-import Text.IPG.CoreIPG as Core
-import Text.IPG.FullIPG ( ExpHelpers(..), toCore )
+import Text.IPG.Check ( validate )
+import Text.IPG.Core as Core
+import Text.IPG.Full ( ExpHelpers(..), toCore )
 import qualified Text.IPG.GenericExp as E
 import qualified Text.IPG.Interpreter as I
-import qualified Text.IPG.IPGParser as P
+import qualified Text.IPG.Parser as P
 import Text.IPG.TopLevel.FileSplit ( splitFile )
 
 type T = P.IdType

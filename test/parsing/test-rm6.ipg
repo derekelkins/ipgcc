@@ -1,0 +1,554 @@
+// We have a series of tagged blocks consisting of basic types and small
+// structs of these. We also have a Last-Writer-Wins (LWW) CRDT and a
+// more complicated, but not *too* sophisticated, sequence CRDT. Sequences
+// of these tagged blocks form nodes of a Scene tree.
+
+// The expectedIndexes are like protobuf field IDs. (For all I know they may
+// literally *be* protobuf (or similar) field IDs. These expectedIndexes allow
+// removing fields since the corresponding "key" won't be there. See
+// SceneGlyphItemBlock.
+
+const fs = require("node:fs");
+require('util').inspect.defaultOptions.depth = 5;
+
+function warnIf(doWarn, message) {
+  if (doWarn) {
+    console.error(message);
+    // console.warn(message);
+  }
+  return true;
+}
+
+function check(b, message) {
+  if (!b) {
+    throw message;
+  }
+  return true;
+}
+
+function decodeAscii(bytes) {
+  return new TextDecoder("ascii").decode(bytes);
+}
+
+function getNull() {
+  return null;
+}
+
+function getLength(s) {
+  return s.length;
+}
+
+function getTwoPi() {
+  return 2*Math.pi;
+}
+
+function lwwBool(id, value) {
+  return { id, value };
+}
+
+function lwwU8(id, value) {
+  return { id, value };
+}
+
+function lwwFloat32(id, value) {
+  return { id, value };
+}
+
+function lwwCrdtId(id, value) {
+  return { id, value };
+}
+
+function lwwString(id, value) {
+  return { id, value };
+}
+
+function makeCrdtId(part1, part2) {
+  return { part1, part2 };
+}
+
+function makePair(fst, snd) {
+  return { fst, snd };
+}
+
+function makeStringWithFormat(s, fmt) {
+  return { s, fmt };
+}
+
+function processTextItemValue(value) {
+  if (value.fmt !== null) {
+    return value.fmt;
+  }
+  return value.s;
+}
+
+function makeCrdtSequenceItem(info, value) {
+  return { ...info, value };
+}
+
+function blockTypeToName(blockType) {
+    switch(blockType) {
+        case 0x00: return "MigrationInfoBlock";
+        case 0x01: return "SceneTreeBlock";
+        case 0x02: return "TreeNodeBlock";
+        case 0x03: return "SceneGlyphItemBlock";
+        case 0x04: return "SceneGroupItemBlock";
+        case 0x05: return "SceneLineItemBlock";
+        case 0x06: return "SceneTextItemBlock";
+        case 0x07: return "RootTextBlock";
+        case 0x08: return "SceneTombstoneItemBlock";
+        case 0x09: return "AuthorIdsBlock";
+        case 0x0A: return "PageInfoBlock";
+        case 0x0D: return "SceneInfo";
+        default: return "Unknown";
+    }
+}
+
+function makeBlock(mainBlockInfo, data, extraData) {
+  return { ...mainBlockInfo, typeName: blockTypeToName(mainBlockInfo.blockType), data, extraData };
+}
+
+function makeSceneGlyItemBlockValue(start, length, colorId, text, rectangles) {
+  return { start, length, colorId, text, rectangles };
+}
+
+function toFloat32(bs) {
+  // return new Float32Array(bs.buffer)[0];
+  return new DataView(new Uint8Array(bs).buffer).getFloat32(0, true);
+}
+
+function toFloat64(bs) {
+  // return new Float64Array(bs.buffer)[0];
+  return new DataView(new Uint8Array(bs).buffer).getFloat64(0, true);
+}
+
+function pointSerializedSize(version) {
+    switch(version) {
+        case 1: return 0x18;
+        case 2: return 0x0E;
+        default: throw `Don't know the pointSerializedSize for version ${version}`;
+    }
+}
+
+function makeSceneLineItemBlockValue(
+  toolId, colorId, thicknessScale, startLength, points, moveId)
+{
+  return { toolId, colorId, thicknessScale, startLength, points, moveId };
+}
+
+function checkRootTextBlockId(blockId) {
+  return check(blockId.part1 === 0 && blockId.part2 === 0, "Expect root text block to have RootId");
+}
+
+%preamble_end
+
+// The below is presented in a top-down order.
+
+RM6 -> HeaderV6 Blocks { blocks = Blocks.values };
+
+HeaderV6 -> "reMarkable .lines file, version=6          ";
+
+Blocks -> repeat FullBlock.block;
+
+FullBlock
+     -> MainBlockInfo
+        Block(MainBlockInfo.blockType, MainBlockInfo.currentVersion)[MainBlockInfo.length]
+        Bytes[Block.END, MainBlockInfo.END + MainBlockInfo.length]
+        { block = makeBlock(MainBlockInfo.this, Block.data, Bytes.value) }; 
+
+MainBlockInfo
+     -> U32 { length = U32.value } // Relative to after the MainBlockInfo.
+        U8 ?[ check(U8.value == 0, "unknown value is non-zero") ] // The purpose of this is not understood.
+        { minVersion = . }
+        ?[ check(minVersion >= 0, "minVersion < 0") ]
+        { currentVersion = . }
+        ?[ check(currentVersion >= 0 && minVersion <= currentVersion,
+                 "currentVersion not between 0 and minVersion") ]
+        { blockType = . };
+
+Block(blockType, version)
+    -> ?[ blockType == 0x00 ] MigrationInfoBlock { data = MigrationInfoBlock.this }
+     / ?[ blockType == 0x01 ] SceneTreeBlock { data = SceneTreeBlock.this }
+     / ?[ blockType == 0x02 ] TreeNodeBlock { data = TreeNodeBlock.this }
+     / ?[ blockType == 0x03 ] SceneGlyphItemBlock { data = SceneGlyphItemBlock.this }
+     / ?[ blockType == 0x04 ] SceneGroupItemBlock { data = SceneGroupItemBlock.this }
+     / ?[ blockType == 0x05 ] SceneLineItemBlock(version) { data = SceneLineItemBlock.this }
+     / ?[ blockType == 0x06 ] SceneTextItemBlock { data = SceneTextItemBlock.this }
+     / ?[ blockType == 0x07 ] RootTextBlock { data = RootTextBlock.this }
+     / ?[ blockType == 0x08 ] SceneTombstoneItemBlock { data = SceneTombstoneItemBlock.this }
+     / ?[ blockType == 0x09 ] AuthorIdsBlock { data = AuthorIdsBlock.this }
+     / ?[ blockType == 0x0A ] PageInfoBlock { data = PageInfoBlock.this }
+     / ?[ blockType == 0x0D ] SceneInfo { data = SceneInfo.this }
+     / UnknownBlock { data = UnknownBlock.data };
+
+AuthorIdsBlock
+    -> VarUInt
+       for i = 0 to VarUInt.value do AuthorId[AuthorId.END, EOI]
+       { authorIds = AuthorId.these };
+
+AuthorId
+    -> SubBlock(0)
+         VarUInt[SubBlock.length]
+         ?[ check(VarUInt.value == 16, "Expect UUID to have length 16") ]
+         { uuid = *[VarUInt.value] }
+         U16[VarUInt.END + VarUInt.value, SubBlock.END + SubBlock.length]
+         { authorId = U16.value }
+       ExpectEmpty[U16.END, SubBlock.END + SubBlock.length];
+
+MigrationInfoBlock
+    -> TaggedId(1) { migrationId = TaggedId.value }
+       TaggedBool(2) { isDevice = TaggedBool.value }
+       OptionalTaggedBool(3) { unknown = OptionalTaggedBool.value };
+
+TreeNodeBlock
+    -> TaggedId(1) { nodeId = TaggedId.value }
+       LWWString(2) { label = LWWString.value }
+       LWWBool(3) { visible = LWWBool.value }
+       OptionalLWWID(7) { anchorId = OptionalLWWID.value }
+       OptionalLWWU8(8) { anchorType = OptionalLWWU8.value }
+       OptionalLWWFloat32(9) { anchorThreshold = OptionalLWWFloat32.value }
+       OptionalLWWFloat32(10) { anchorOriginX = OptionalLWWFloat32.value };
+
+PageInfoBlock
+    -> TaggedU32(1) { loadsCount = TaggedU32.value }
+       TaggedU32(2) { mergesCount = TaggedU32.value }
+       TaggedU32(3) { textCharsCount = TaggedU32.value }
+       TaggedU32(4) { textLinesCount = TaggedU32.value }
+       OptionalU32(5) { typeFolioUseCount = OptionalU32.value };
+
+SceneTreeBlock
+    -> TaggedId(1) { treeId = TaggedId.value }
+       TaggedId(2) { nodeId = TaggedId.value }
+       TaggedBool(3) { isUpdate = TaggedBool.value }
+       SubBlock(4)
+         TaggedId(1)[SubBlock.length] { parentId = TaggedId.value }
+       ExpectEmpty[TaggedId.END, SubBlock.END + SubBlock.length];
+
+SceneInfo
+    -> LWWID(1) { currentLayer = LWWID.value }
+       OptionalLWWBool(2) { backgroundVisible = OptionalLWWBool.value }
+       OptionalLWWBool(3) { rootDocumentVisible = OptionalLWWBool.value }
+       OptionalIntPair(4) { paperSize = OptionalIntPair.value };
+
+SceneItemInfo
+    -> TaggedId(1) { parentId = TaggedId.value }
+       TaggedId(2) { itemId = TaggedId.value }
+       TaggedId(3) { leftId = TaggedId.value }
+       TaggedId(4) { rightId = TaggedId.value }
+       TaggedU32(5) { deletedLength = TaggedU32.value };
+
+SceneTombstoneItemBlock
+    -> SceneItemInfo
+       { item = makeCrdtSequenceItem(SceneItemInfo.this) };
+
+// TODO: Need an example with this.
+SceneGlyphItemBlock // ItemType == 0x01
+    -> SceneItemInfo
+       SceneGlyphItemBlockValue
+       { item = makeCrdtSequenceItem(SceneItemInfo.this, SceneGlyphItemBlockValue.value) };
+
+SceneGlyphItemBlockValue
+    -> SubBlock(6) { outerEnd = SubBlock.END + SubBlock.length }
+         "\x01" // ItemType
+         OptionalU32(2) { optStart = OptionalU32.value }
+         OptionalU32(3) { optLength = OptionalU32.value }
+         TaggedU32(4) { colorId = TaggedU32.value }
+         String(5) { text = String.value }
+         { start = optStart == getNull() ? 0 : optStart } // Presumably
+         { length = optLength == getNull() ? getLength(text) : optLength }
+         SubBlock(6)
+           VarUInt[SubBlock.END + 1, SubBlock.END + SubBlock.length] // numRects
+           for i = 0 to VarUInt.value do Rectangle[VarUInt.END + 32*i, SubBlock.END + SubBlock.length]
+           { rectangles = Rectangle.these }
+         ExpectEmpty[Rectangle.END, SubBlock.END + SubBlock.length]
+       ExpectEmpty[ExpectEmpty.END, outerEnd]
+       { value = makeSceneGlyItemBlockValue(start, length, colorId, text, rectangles) }
+     / { value = getNull() };
+
+Rectangle
+    -> Float64 { x = Float64.value }
+       Float64 { y = Float64.value }
+       Float64 { width = Float64.value }
+       Float64 { height = Float64.value };
+
+SceneGroupItemBlock
+    -> SceneItemInfo
+       SceneGroupItemBlockValue
+       { item = makeCrdtSequenceItem(SceneItemInfo.this, SceneGroupItemBlockValue.value) };
+
+SceneGroupItemBlockValue
+    -> SubBlock(6)
+         "\x02" // ItemType
+         TaggedId(2)[SubBlock.END + 1, SubBlock.END + SubBlock.length]
+         { value = TaggedId.value }
+       ExpectEmpty[TaggedId.END, SubBlock.END + SubBlock.length]
+     / { value = getNull() };
+
+SceneLineItemBlock(version) // ItemType == 0x03
+    -> SceneItemInfo
+       SceneLineItemBlockValue(version)
+       { item = makeCrdtSequenceItem(SceneItemInfo.this, SceneLineItemBlockValue.value) };
+
+SceneLineItemBlockValue(version)
+    -> SubBlock(6) { outerEnd = SubBlock.END + SubBlock.length }
+         "\x03" // ItemType
+         TaggedU32(1)[SubBlock.END + 1, outerEnd]
+         { toolId = TaggedU32.value }
+         TaggedU32(2)[TaggedU32.END, outerEnd]
+         { colorId = TaggedU32.value }
+         TaggedFloat64(3)[TaggedU32.END, outerEnd]
+         { thicknessScale = TaggedFloat64.value }
+         TaggedFloat32(4)[TaggedFloat64.END, outerEnd]
+         { startLength = TaggedFloat32.value }
+         SubBlock(5)[TaggedFloat32.END, outerEnd]
+           { pointSize = pointSerializedSize(version) }
+           ?[ check(SubBlock.length % pointSize == 0, "Point size does not divide subblock size") ]
+           for i = 0 to SubBlock.length / pointSize do
+               Point(version)[SubBlock.END + pointSize*i, SubBlock.END + pointSize*(i + 1)]
+           { points = Point.these }
+         ExpectEmpty[Point.END, SubBlock.END + SubBlock.length]
+         TaggedId(6)[ExpectEmpty.END, outerEnd]
+         { timestamp = TaggedId.value } // Allegedly unused
+         OptionalTaggedId(7) { moveId = OptionalTaggedId.value }
+       ExpectEmpty[OptionalTaggedId.END, outerEnd]
+       { value = makeSceneLineItemBlockValue(toolId, colorId, thicknessScale, startLength,
+                                             points, moveId) }
+     / { value = getNull() };
+
+Point(version)
+    -> Float32 { x = Float32.value }
+       Float32 { y = Float32.value }
+       PointVersions(version)
+       { speed = PointVersions.speed }
+       { width = PointVersions.width }
+       { direction = PointVersions.direction }
+       { pressure = PointVersions.pressure };
+
+PointVersions(version)
+    -> ?[ version == 1 ]
+       Float32 { speed = 4 * Float32.value }
+       Float32 { direction = 255 * Float32.value / getTwoPi() }
+       Float32 { width = int(round(4 * Float32.value)) }
+       Float32 { pressure = 255 * Float32.value }
+     / ?[ version == 2 ]
+       U16 { speed = U16.value }
+       U16 { width = U16.value }
+       { direction = . }
+       { pressure = . };
+
+// TODO: Should I still attempt to parse a SubBlock(6) even though we don't parse any value from it?
+// TODO: Need an example with this.
+SceneTextItemBlock // ItemType == 0x05
+    -> SceneItemInfo
+       { item = makeCrdtSequenceItem(SceneItemInfo.this) };
+
+RootTextBlock
+    -> TaggedId(1) { blockId = TaggedId.value }
+       ?[ checkRootTextBlockId(blockId) ]
+
+       SubBlock(2) { outerEnd = SubBlock.END + SubBlock.length }
+         SubBlock(1)[SubBlock.END, outerEnd] { innerEnd = SubBlock.END + SubBlock.length }
+           SubBlock(1)[SubBlock.END, innerEnd]
+             VarUInt // numSubBlocks
+             for i = 0 to VarUInt.value do
+               TextItem[TextItem.END, SubBlock.END + SubBlock.length]
+             { textItems = TextItem.these }
+           ExpectEmpty[TextItem.END, SubBlock.END + SubBlock.length]
+         ExpectEmpty[ExpectEmpty.END, innerEnd]
+
+         SubBlock(2)[ExpectEmpty.END, outerEnd] { innerEnd = SubBlock.END + SubBlock.length }
+           SubBlock(1)[SubBlock.END, innerEnd]
+             VarUInt // numSubBlocks
+             for i = 0 to VarUInt.value do
+               TextFormat[TextFormat.END, SubBlock.END + SubBlock.length]
+             { textFormats = TextFormat.these }
+           ExpectEmpty[TextFormat.END, SubBlock.END + SubBlock.length]
+         ExpectEmpty[ExpectEmpty.END, innerEnd]
+       ExpectEmpty[ExpectEmpty.END, outerEnd]
+
+       SubBlock(3)
+         Float64[SubBlock.length] { xPosition = Float64.value }
+         Float64[Float64.END, SubBlock.END + SubBlock.length] { yPosition = Float64.value }
+       ExpectEmpty[ExpectEmpty.END, SubBlock.END + SubBlock.length]
+
+       TaggedFloat32(4) { width = TaggedFloat32.value };
+
+TextItem
+    -> SubBlock(0)
+         TaggedId(2) { itemId = TaggedId.value }
+         TaggedId(3) { leftId = TaggedId.value }
+         TaggedId(4) { rightId = TaggedId.value }
+         TaggedU32(5) { deletedLength = TaggedU32.value }
+         TextItemValue[TaggedU32.END, SubBlock.END + SubBlock.length]
+         { value = TextItemValue.value }
+       ExpectEmpty[TextItemValue.END, SubBlock.END + SubBlock.length];
+
+TextItemValue
+    -> StringWithFormat(6) { value = processTextItemValue(StringWithFormat.value) }
+     / { value = "" };
+
+StringWithFormat(expectedIndex)
+    -> SubBlock(expectedIndex)
+         VarUInt[SubBlock.length]
+         Bool[VarUInt.END, SubBlock.END + SubBlock.length]
+         ?[ check(Bool.value, "StringWithFormat flag unset") ] // The guess is this is an isAscii flag.
+         ?[ check(Bool.END + VarUInt.value <= SubBlock.END + SubBlock.length, "StringWithFormat: Overfull block") ]
+         Bytes[VarUInt.value]
+         OptionalU32(2)[Bytes.END, SubBlock.END + SubBlock.length]
+       { value = makeStringWithFormat(decodeAscii(Bytes.value), OptionalU32.value) }
+       ExpectEmpty[OptionalU32.END, SubBlock.END + SubBlock.length];
+
+TextFormat
+    -> CrdtId { charId = CrdtId.this }
+       TaggedId(1) { timestamp = TaggedId.value }
+       SubBlock(2)
+         "\x11" // Source is unsure about this.
+         { formatCode = . }
+       ExpectEmpty[SubBlock.END + 2, SubBlock.END + SubBlock.length]
+       { value = lwwU8(timestamp, formatCode < 0 || formatCode > 7 ? 1 : formatCode) };
+
+UnknownBlock -> { data = * };
+
+OptionalLWWBool(expectedIndex)
+    -> LWWBool(expectedIndex) { value = LWWBool.value }
+     / { value = getNull() };
+
+LWWBool(expectedIndex)
+     -> SubBlock(expectedIndex)
+          TaggedId(1)[SubBlock.length]
+          TaggedBool(2)[TaggedId.END, SubBlock.END + SubBlock.length]
+          { value = lwwBool(TaggedId.value, TaggedBool.value) }
+        ExpectEmpty[TaggedBool.END, SubBlock.END + SubBlock.length];
+
+OptionalLWWU8(expectedIndex)
+    -> LWWU8(expectedIndex) { value = LWWU8.value }
+     / { value = getNull() };
+
+LWWU8(expectedIndex)
+     -> SubBlock(expectedIndex)
+          TaggedId(1)[SubBlock.length]
+          TaggedU8(2)[TaggedId.END, SubBlock.END + SubBlock.length]
+          { value = lwwU8(TaggedId.value, TaggedU8.value) }
+        ExpectEmpty[TaggedU8.END, SubBlock.END + SubBlock.length];
+
+OptionalLWWFloat32(expectedIndex)
+    -> LWWFloat32(expectedIndex) { value = LWWFloat32.value }
+     / { value = getNull() };
+
+LWWFloat32(expectedIndex)
+     -> SubBlock(expectedIndex)
+          TaggedId(1)[SubBlock.length]
+          TaggedFloat32(2)[TaggedId.END, SubBlock.END + SubBlock.length]
+          { value = lwwFloat32(TaggedId.value, TaggedFloat32.value) }
+        ExpectEmpty[TaggedFloat32.END, SubBlock.END + SubBlock.length];
+
+OptionalLWWID(expectedIndex)
+    -> LWWID(expectedIndex) { value = LWWID.value }
+     / { value = getNull() };
+
+LWWID(expectedIndex)
+     -> SubBlock(expectedIndex)
+          TaggedId(1)[SubBlock.length]
+          { timestamp = TaggedId.value }
+          TaggedId(2)[TaggedId.END, SubBlock.END + SubBlock.length]
+          { value = lwwCrdtId(timestamp, TaggedId.value) }
+        ExpectEmpty[TaggedId.END, SubBlock.END + SubBlock.length];
+
+LWWString(expectedIndex)
+     -> SubBlock(expectedIndex)
+          TaggedId(1)[SubBlock.length]
+          String(2)[TaggedId.END, SubBlock.END + SubBlock.length]
+          { value = lwwString(TaggedId.value, String.value) }
+        ExpectEmpty[String.END, SubBlock.END + SubBlock.length];
+
+String(expectedIndex)
+     -> SubBlock(expectedIndex)
+          VarUInt[SubBlock.length]
+          Bool[VarUInt.END, SubBlock.END + SubBlock.length]
+          ?[ check(Bool.value, "String flag unset") ] // The guess is this is an isAscii flag.
+          ?[ check(Bool.END + VarUInt.value <= SubBlock.END + SubBlock.length, "String: Overfull block") ]
+          Bytes[VarUInt.value]
+          { value = decodeAscii(Bytes.value) }
+        ExpectEmpty[Bytes.END, SubBlock.END + SubBlock.length];
+
+OptionalU32(expectedIndex)
+     -> TaggedU32(expectedIndex) { value = TaggedU32.value }
+      / { value = getNull() };
+
+OptionalIntPair(expectedIndex)
+    -> IntPair(expectedIndex) { value = IntPair.value }
+     / { value = getNull() };
+
+IntPair(expectedIndex)
+     -> SubBlock(expectedIndex)
+          U32[SubBlock.length]
+          { fst = U32.value }
+          U32[U32.END, SubBlock.END + SubBlock.length]
+          { value = makePair(fst, U32.value) }
+        ExpectEmpty[U32.END, SubBlock.END + SubBlock.length];
+
+// I indent terms following a SubBlock to suggest their nesting level.
+SubBlock(expectedIndex) -> Length4Tag(expectedIndex) U32 { length = U32.value };
+
+CrdtId -> { part1 = . } VarUInt { part2 = VarUInt.value };
+
+OptionalTaggedBool(expectedIndex)
+    -> TaggedBool(expectedIndex) { value = TaggedBool.value }
+     / { value = !!0 };
+
+TaggedBool(expectedIndex) -> Byte1Tag(expectedIndex) Bool { value = Bool.value };
+
+TaggedU8(expectedIndex) -> Byte1Tag(expectedIndex) { value = . };
+
+TaggedU32(expectedIndex) -> Byte4Tag(expectedIndex) U32 { value = U32.value };
+
+TaggedFloat32(expectedIndex) -> Byte4Tag(expectedIndex) Float32 { value = Float32.value };
+
+TaggedFloat64(expectedIndex) -> Byte8Tag(expectedIndex) Float64 { value = Float64.value };
+
+OptionalTaggedId(expectedIndex)
+    -> TaggedId(expectedIndex) { value = TaggedId.value }
+     / { value = getNull() };
+
+TaggedId(expectedIndex)
+    -> IDTag(expectedIndex) CrdtId { value = makeCrdtId(CrdtId.part1, CrdtId.part2) };
+
+IDTag(expectedIndex) -> Tag(expectedIndex, 0xF); // ID
+
+Byte1Tag(expectedIndex) -> Tag(expectedIndex, 0x1); // Byte1
+
+Byte4Tag(expectedIndex) -> Tag(expectedIndex, 0x4); // Byte4
+
+Byte8Tag(expectedIndex) -> Tag(expectedIndex, 0x8); // Byte8
+
+Length4Tag(expectedIndex) -> Tag(expectedIndex, 0xC); // Length4
+
+Tag(expectedIndex, expectedTagType)
+     -> VarUInt 
+        ?[ expectedIndex == (VarUInt.value >> 4) ]
+        ?[ expectedTagType == (VarUInt.value & 0x0F) ];
+
+// This is used to detect and deal with underfull blocks.
+ExpectEmpty
+    -> ?[ warnIf(EOI != 0, "Underfull block") ] // warnIf always returns true
+       { _ = * }; // Consume all the remaining input
+
+Bytes -> { value = * };
+
+Bool -> "\x00" { value = !!0 } / "\x01" { value = !0 };
+
+U8 -> { value = . };
+
+U16 -> { bs = *[2] } { value = bs[0] | (bs[1] << 8) }; // Little endian
+
+U32 -> { bs = *[4] } { value = bs[0] | (bs[1] << 8) | (bs[2] << 16) | (bs[3] << 24) };
+
+Float32 -> { bs = *[4] } { value = toFloat32(bs) }; // IEEE754
+
+Float64 -> { bs = *[8] } { value = toFloat64(bs) }; // IEEE754
+
+VarUInt -> { value = . } ?[ (value >> 7) == 0 ]
+         / U8 VarUInt { value = (U8.value & 0x7F) | (VarUInt.value << 7) };
+
+%postamble_begin
+
+console.log(JSON.stringify(RM6(fs.readFileSync("./text_example.rm"))));

@@ -1,7 +1,7 @@
 module Text.IPG.GenericExp ( Exp(..), simplify, simplifyExp ) where
 import Data.Bits ( shift, complement, xor, (.&.), (.|.) ) -- base
 
-import Text.IPG.CoreIPG ( Grammar, Ref )
+import Text.IPG.Core ( Grammar, Ref )
 
 data Exp nt t id
     = Int Integer

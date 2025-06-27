@@ -12,7 +12,7 @@ import Data.List ( (!?), intersperse ) -- base
 import qualified Data.Map as Map -- containers
 import GHC.Stack ( HasCallStack ) -- base
 
-import Text.IPG.CoreIPG ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..) )
+import Text.IPG.Core ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..) )
 import Text.IPG.GenericExp ( Exp(..) )
 import Text.IPG.PPrint ( hexyString )
 

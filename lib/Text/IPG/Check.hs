@@ -1,13 +1,13 @@
 {-# LANGUAGE OverloadedStrings, QuasiQuotes #-}
-module Text.IPG.CheckIPG ( validate ) where
+module Text.IPG.Check ( validate ) where
 import qualified Data.Set as Set -- containers
 import qualified Data.Map as Map -- containers
 
 import Data.String.Interpolate ( i ) -- string-interpolate
 
-import Text.IPG.CoreIPG ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..) )
+import Text.IPG.Core ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..) )
 import Text.IPG.GenericExp ( Exp(..) )
-import Text.IPG.IPGParser ( IdType )
+import Text.IPG.Parser ( IdType )
 
 type T = IdType
 type Exp' = Exp T T T
@@ -18,8 +18,8 @@ type Term' = Term T T T Exp'
 --   - Referenced rules are defined or declared as external
 --   - Attributes are defined before use
 --   - EOI is not used as a parameter name
---   - _ipg_start and _ipg_end are not used as attribute names (maybe check this in JSExport)
---   - _ipg_startsWith is not used as a rule name (maybe check this in JSExport)
+--   - _ipg_start and _ipg_end are not used as attribute names (maybe check this in Export.JS)
+--   - _ipg_startsWith is not used as a rule name (maybe check this in Export.JS)
 --   - START, END, this, these should not occur in the LHS of assignments 
 --      (TODO: Be more discerning about `these`.)
 --   - Rules invoked with the proper arities

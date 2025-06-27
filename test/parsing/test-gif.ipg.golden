@@ -1,0 +1,165 @@
+GIF
+  -> Header[0, EOI]
+     LogicalScreen[Header.END, EOI]
+     { logicalScreen = LogicalScreen.this }
+     Blocks[LogicalScreen.END, EOI]
+     { blocks = Blocks.values };
+
+Header
+  -> "GIF89a"[0, 6];
+
+LogicalScreen
+  -> LogicalScreenDescriptor[0, EOI]
+     { descriptor = LogicalScreenDescriptor.this }
+     MaybeColorTable(LogicalScreenDescriptor.hasGlobalColorTable)[LogicalScreenDescriptor.END, LogicalScreenDescriptor.END + 3 * LogicalScreenDescriptor.globalColorTableSize]
+     { globalColorTable = MaybeColorTable.table };
+
+LogicalScreenDescriptor
+  -> U16[0, EOI]
+     { width = U16.value }
+     U16[U16.END, EOI]
+     { height = U16.value }
+     { packedFields = .[U16.END] }
+     { backgroundColorIndex = .[U16.END + 1] }
+     { pixelAspectRation = .[U16.END + 2] }
+     { hasGlobalColorTable = packedFields >> 7 }
+     { colorResolution = (packedFields >> 4 & 7) + 1 }
+     { sorted = packedFields >> 3 & 1 }
+     { globalColorTableSize = 2 << (packedFields & 7) };
+
+MaybeColorTable(hasColorTable)
+  -> ?[ hasColorTable == 0 ]
+     { table = emptyTable() }
+   / ColorTable[0, EOI]
+     { table = ColorTable.table };
+
+ColorTable
+  -> for i = 0 to EOI / 3 do RGB[3 * i, 3 * i + 3]
+     { table = RGB.these };
+
+Blocks
+  -> repeat Block.block until Trailer;
+
+Block
+  -> GraphicBlock[0, EOI]
+     { block = GraphicBlock.block }
+   / ApplicationExtension[0, EOI]
+     { block = ApplicationExtension.this }
+   / CommentExtension[0, EOI]
+     { block = CommentExtension.this };
+
+GraphicBlock
+  -> MaybeGraphicControlExtension[0, EOI]
+     GraphicRenderingBlock[MaybeGraphicControlExtension.END, EOI]
+     { block = makeGraphicBlock(MaybeGraphicControlExtension.extension, GraphicRenderingBlock.block) };
+
+MaybeGraphicControlExtension
+  -> "!\xf9"[0, 2]
+     "\x04"[2, 3]
+     { packedFields = .[3] }
+     { disposalMethod = packedFields >> 2 & 7 }
+     { userInputFlag = packedFields >> 1 & 1 }
+     { transparentColorFlag = packedFields & 1 }
+     U16[4, EOI]
+     { delayTime = U16.value }
+     { transparentColorIndex = .[U16.END] }
+     BlockTerminator[U16.END + 1, EOI]
+     { extension = makeGraphicControlExtension(disposalMethod, userInputFlag, transparentColorFlag, delayTime, transparentColorIndex) }
+   / { extension = getNull() };
+
+GraphicRenderingBlock
+  -> TableBasedImage[0, EOI]
+     { block = TableBasedImage.this }
+   / PlainTextExtension[0, EOI]
+     { block = PlainTextExtension.this };
+
+TableBasedImage
+  -> { type = "tableBasedImage" }
+     ImageDescriptor[0, EOI]
+     { descriptor = ImageDescriptor.this }
+     MaybeColorTable(ImageDescriptor.localColorTableFlag)[ImageDescriptor.END, ImageDescriptor.END + 3 * ImageDescriptor.localColorTableSize]
+     { localColorTable = MaybeColorTable.table }
+     ImageData[MaybeColorTable.END, EOI]
+     { data = ImageData.this };
+
+ImageDescriptor
+  -> ","[0, 1]
+     U16[1, EOI]
+     { imageLeftPosition = U16.value }
+     U16[U16.END, EOI]
+     { imageTopPosition = U16.value }
+     U16[U16.END, EOI]
+     { imageWidth = U16.value }
+     U16[U16.END, EOI]
+     { imageHeight = U16.value }
+     { packedFields = .[U16.END] }
+     { localColorTableFlag = packedFields >> 7 }
+     { interlaceFlag = packedFields >> 6 & 1 }
+     { sorted = packedFields >> 5 & 1 }
+     { localColorTableSize = 2 << (packedFields & 7) };
+
+ImageData
+  -> { lzwMinimumCodeSize = .[0] }
+     Subblocks[1, EOI]
+     { imageData = concat(Subblocks.values) };
+
+PlainTextExtension
+  -> "!\x01"[0, 2]
+     "\x03"[2, 3]
+     { type = "plainTextExtension" }
+     U16[3, EOI]
+     { textGridLeftPosition = U16.value }
+     U16[U16.END, EOI]
+     { textGridTopPosition = U16.value }
+     U16[U16.END, EOI]
+     { textGridWidth = U16.value }
+     U16[U16.END, EOI]
+     { textGridHeight = U16.value }
+     { characterCellWidth = .[U16.END] }
+     { characterCellHeight = .[U16.END + 1] }
+     { textForegroundColorIndex = .[U16.END + 2] }
+     { textBackgroundColorIndex = .[U16.END + 3] }
+     Subblocks[U16.END + 4, EOI]
+     { plainTextData = concat(Subblocks.values) };
+
+B(n)
+  -> { value = *[0, n] };
+
+ApplicationExtension
+  -> "!\xff"[0, 2]
+     "\x0b"[2, 3]
+     { type = "applicationExtension" }
+     B(8)[3, EOI]
+     { applicationIdentifier = decodeAscii(B.value) }
+     B(3)[B.END, EOI]
+     { applicationAuthenticationCode = decodeAscii(B.value) }
+     Subblocks[B.END, EOI]
+     { applicationData = concat(Subblocks.values) };
+
+CommentExtension
+  -> "!\xfe"[0, 2]
+     { type = "commentExtension" }
+     Subblocks[2, EOI]
+     { commentData = decodeAscii(concat(Subblocks.values)) };
+
+Subblocks
+  -> repeat Subblock.data until BlockTerminator;
+
+Subblock
+  -> { size = .[0] }
+     { data = *[1, 1 + size] };
+
+Trailer
+  -> ";"[0, 1];
+
+U16
+  -> { bs = *[0, 2] }
+     { value = bs[0] | bs[1] << 8 };
+
+BlockTerminator
+  -> "\x00"[0, 1];
+
+RGB
+  -> { r = .[0] }
+     { g = .[1] }
+     { b = .[2] };

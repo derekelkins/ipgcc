@@ -1,5 +1,5 @@
 {
-module Text.IPG.IPGParser (
+module Text.IPG.Parser (
     IdType, Exp', Grammar', Rule', Alternative', Term', Ref',
     parseIPG, parse, parseWithStartPos,
 ) where
@@ -8,10 +8,10 @@ import qualified Data.ByteString.Lazy as LBS -- bytestring
 import qualified Data.ByteString.Lazy.Char8 as CLBS -- bytestring
 import Data.List ( intersperse ) -- base
 
-import Text.IPG.CoreIPG ( Ref(..), MetaTag(..) )
-import Text.IPG.FullIPG ( Grammar(..), Rule(..), Alternative(..), Term(..) )
+import Text.IPG.Core ( Ref(..), MetaTag(..) )
+import Text.IPG.Full ( Grammar(..), Rule(..), Alternative(..), Term(..) )
 import Text.IPG.GenericExp ( Exp(..) )
-import Text.IPG.IPGLexer (
+import Text.IPG.Lexer (
     alexError, alexGetInput, alexMonadScan, alexSetInput, getCurrentLine, runAlex,
     Alex, AlexInput, AlexPosn(..), Token(..) )
 

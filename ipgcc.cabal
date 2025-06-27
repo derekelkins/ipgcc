@@ -62,14 +62,14 @@ library
 
     -- Modules exported by the library.
     exposed-modules:
-        Text.IPG.CheckIPG,
-        Text.IPG.CoreIPG,
-        Text.IPG.Export.JSExport,
-        Text.IPG.FullIPG,
+        Text.IPG.Check,
+        Text.IPG.Core,
+        Text.IPG.Export.JS,
+        Text.IPG.Full,
         Text.IPG.GenericExp,
         Text.IPG.Interpreter,
-        Text.IPG.IPGLexer,
-        Text.IPG.IPGParser,
+        Text.IPG.Lexer,
+        Text.IPG.Parser,
         Text.IPG.PPrint,
         Text.IPG.Simple,
         Text.IPG.TopLevel.FileSplit
@@ -168,7 +168,7 @@ test-suite parsing-test
     -- other-modules:
 
     -- LANGUAGE extensions used by modules in this package.
-    other-extensions: OverloadedStrings
+    -- other-extensions:
 
     -- The interface type and version of the test suite.
     type:             exitcode-stdio-1.0
@@ -183,7 +183,6 @@ test-suite parsing-test
     build-depends:
         base ^>=4.20.0.0,
         bytestring,
-        containers,
         filepath,
         ipgcc,
         tasty,

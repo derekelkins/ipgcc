@@ -1,5 +1,5 @@
 {
-module Text.IPG.IPGLexer(
+module Text.IPG.Lexer(
     alexError, alexGetInput, alexMonadScan, alexSetInput, getCurrentLine, runAlex,
     Alex, AlexInput, AlexPosn(..), Token(..)
 ) where
