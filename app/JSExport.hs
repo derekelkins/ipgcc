@@ -12,8 +12,6 @@ import Data.String.Interpolate ( i, __i ) -- string-interpolate
 import CoreIPG
 import GenericExp ( Exp(..) )
 
--- TODO: Use Text rather than String.
-
 -- It's worth noting that the way this export works already supports blackbox parsers.
 -- ANY function that takes a slice and returns an object with the _ipg_start/_ipg_end fields
 -- suitably set can just immediately be referenced. If we assume a blackbox parser will always

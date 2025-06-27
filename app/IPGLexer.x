@@ -1,6 +1,6 @@
 {
 module IPGLexer(
-    alexError, alexGetInput, alexMonadScan, getCurrentLine, runAlex,
+    alexError, alexGetInput, alexMonadScan, alexSetInput, getCurrentLine, runAlex,
     Alex, AlexInput, AlexPosn(..), Token(..)
 ) where
 import qualified Data.ByteString as BS -- bytestring

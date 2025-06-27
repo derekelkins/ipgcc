@@ -153,7 +153,7 @@ in Happy notation,  are:
 %left '.'                   -- 17
 ```
 
-C-style line comments are supported. Multi-line comments currently are not.
+C-style comments are supported.
 
 `EOI` as a stand-alone expression is treated specially. It should not be used as a
 parameter name. You could use it as an attribute or rule name if you like.
@@ -294,6 +294,13 @@ the equivalent of `Prev.START` and `Prev.END` where `Prev` is the previous
 non-terminal, or similar (see the interval inference) for terminals.
 They will be `EOI` and `0` respectively if there is no previous term.
 
+**WARNING**: The `A(e).id` notation uses the same indexing as the for loop.
+With `for i = 10 to 20 do A[l, r]`, `A(j).id` is valid for `j` from 10
+to 19, but `A.these` is an array with 10 elements indexed from 0. It is
+probably best to endeavor to start the loops at 0. I may even remove
+the ability to specify a start, perhaps using a syntax like
+`for i upto 20 do A[l, r]`.
+
 Assignment terms come in three versions: `{ id = *[l, r] }`, `{ id = .[l] }`,
 and `{ id = e }` for an arbitrary expression `e`. The first two consume
 input while the last does not.
@@ -307,7 +314,7 @@ It is essentially equivalent to `{ tmp = *[l, l + 1] } { id = tmp[0] }`.
 
 `{ id = e }` simply evaluates the expression `e` and binds it to the attribute
 `id`. It consumes no input and can never fail. Note that `*[l, r]` and `.[l]`
-are not expressions. 
+are not expressions, so you can't do something like `{ id = process(*[l, r]) }`.
 
 Currently, the repeat and repeat-until terms are quite restricted.
 (TODO: Figure out something that is elegant and lifts these restrictions.

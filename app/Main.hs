@@ -16,7 +16,7 @@ import CheckIPG ( validate )
 import FullIPG ( ExpHelpers(..), toCore )
 import qualified GenericExp as E
 import Interpreter ( Bindings, NT, Value(..), interpret )
-import IPGParser ( IdType, Exp', parse )
+import IPGParser ( IdType, Exp', parseWithStartPos )
 import JSExport ( hexyString, toJS )
 
 asJSON :: Value a -> Builder.Builder
@@ -57,17 +57,24 @@ externalFuncs = Map.fromList [
         SEQUENCE (map (\(BINDINGS b) -> b Map.! "section") sections))
   ]
 
+computeStartLine :: LBS.ByteString -> Int
+computeStartLine "" = 1
+computeStartLine s = 3 + fromIntegral (LBS.count '\n' s)
+
 main :: IO ()
 main = do
     -- (interpreterInput:_) <- getArgs
     input' <- LBS.getContents 
     let (preamble, rest) = case splitAround "\n%preamble_end" input' of
             Nothing -> ("", input')
-            Just (x, p) -> (x, LBS.dropWhile isSpace p)
+            Just (x, p) -> (x, LBS.drop 1 (LBS.dropWhile ('\n' /=) p))
     let (input, postamble) = case splitAround "\n%postamble_begin" rest of
             Nothing -> (rest, "")
             Just (x, p) -> (x, LBS.dropWhile isSpace p)
-    case parse input of
+    let byteOffset = fromIntegral (LBS.length preamble) -- This isn't 100% correct but it doesn't really matter
+    let startLine = computeStartLine preamble
+    let startCol = 1
+    case parseWithStartPos byteOffset startLine startCol input of
         Left err -> hPutStrLn stderr err
         Right (g, decls) -> do
             let core = E.simplify (toCore helper g)

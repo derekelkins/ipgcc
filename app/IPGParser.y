@@ -1,16 +1,17 @@
 {
 module IPGParser (
     IdType, Exp', Grammar', Rule', Alternative', Term', Ref',
-    parseIPG, parse,
+    parseIPG, parse, parseWithStartPos,
 ) where
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Lazy as LBS -- bytestring
+import qualified Data.ByteString.Lazy.Char8 as CLBS -- bytestring
 import Data.List ( intersperse ) -- base
 
 import CoreIPG ( Ref(..), MetaTag(..) )
 import FullIPG ( Grammar(..), Rule(..), Alternative(..), Term(..) )
 import GenericExp ( Exp(..) )
-import IPGLexer ( alexError, alexGetInput, alexMonadScan, getCurrentLine, runAlex,
+import IPGLexer ( alexError, alexGetInput, alexMonadScan, alexSetInput, getCurrentLine, runAlex,
                   Alex, AlexInput, AlexPosn(..), Token(..) )
 
 -- Decent intro: https://serokell.io/blog/parsing-with-happy
@@ -294,6 +295,12 @@ makeAssign n (Assign' e) = n := e
 parse :: LBS.ByteString -> Either String (Grammar', [IdType])
 parse input = runAlex input parseIPG
 
+parseWithStartPos :: Int -> Int -> Int -> LBS.ByteString -> Either String (Grammar', [IdType])
+parseWithStartPos n l col input = runAlex input $ do
+    (_, c, bs, bpos) <- alexGetInput
+    alexSetInput (AlexPn n l col, c, bs, bpos)
+    parseIPG
+
 lexer :: (Token -> Alex a) -> Alex a
 lexer action = alexMonadScan >>= action
 
@@ -304,6 +311,6 @@ parseError _ followers = do
     alexError (
         errLine <> "\n"
      <> replicate (col - 2) ' ' <> "^\n"
-     <> "Parse error at line " <> show line <> ", column " <> show col <> ".\n"
+     <> "Parse error at line " <> show line <> ", column " <> show (col - 1) <> ".\n"
      <> "Possible following tokens are: " <> unwords (intersperse "," followers))
 }
