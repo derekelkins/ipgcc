@@ -1,5 +1,5 @@
 {
-module IPGParser (
+module Text.IPG.IPGParser (
     IdType, Exp', Grammar', Rule', Alternative', Term', Ref',
     parseIPG, parse, parseWithStartPos,
 ) where
@@ -8,11 +8,12 @@ import qualified Data.ByteString.Lazy as LBS -- bytestring
 import qualified Data.ByteString.Lazy.Char8 as CLBS -- bytestring
 import Data.List ( intersperse ) -- base
 
-import CoreIPG ( Ref(..), MetaTag(..) )
-import FullIPG ( Grammar(..), Rule(..), Alternative(..), Term(..) )
-import GenericExp ( Exp(..) )
-import IPGLexer ( alexError, alexGetInput, alexMonadScan, alexSetInput, getCurrentLine, runAlex,
-                  Alex, AlexInput, AlexPosn(..), Token(..) )
+import Text.IPG.CoreIPG ( Ref(..), MetaTag(..) )
+import Text.IPG.FullIPG ( Grammar(..), Rule(..), Alternative(..), Term(..) )
+import Text.IPG.GenericExp ( Exp(..) )
+import Text.IPG.IPGLexer (
+    alexError, alexGetInput, alexMonadScan, alexSetInput, getCurrentLine, runAlex,
+    Alex, AlexInput, AlexPosn(..), Token(..) )
 
 -- Decent intro: https://serokell.io/blog/parsing-with-happy
 }

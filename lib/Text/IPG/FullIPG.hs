@@ -1,10 +1,10 @@
 {-# LANGUAGE DeriveFunctor #-}
-module FullIPG ( 
+module Text.IPG.FullIPG ( 
     Grammar(..), Rule(..), Alternative(..), Term(..),
     ExpHelpers(..),
     toCore, toCoreRule, toCoreAlternative, toCoreTerm,
 ) where
-import qualified CoreIPG as Core
+import qualified Text.IPG.CoreIPG as Core
 
 newtype Grammar nt t id e = Grammar [Rule nt t id e]
     deriving ( Functor, Show )

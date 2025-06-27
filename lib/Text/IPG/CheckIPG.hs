@@ -1,13 +1,13 @@
 {-# LANGUAGE OverloadedStrings, QuasiQuotes #-}
-module CheckIPG ( validate ) where
+module Text.IPG.CheckIPG ( validate ) where
 import qualified Data.Set as Set -- containers
 import qualified Data.Map as Map -- containers
 
 import Data.String.Interpolate ( i ) -- string-interpolate
 
-import CoreIPG ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..) )
-import GenericExp ( Exp(..) )
-import IPGParser ( IdType )
+import Text.IPG.CoreIPG ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..) )
+import Text.IPG.GenericExp ( Exp(..) )
+import Text.IPG.IPGParser ( IdType )
 
 type T = IdType
 type Exp' = Exp T T T

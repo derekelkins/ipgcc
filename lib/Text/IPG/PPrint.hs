@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module PPrint (
+module Text.IPG.PPrint (
     pprint, pprintRule, pprintExpr, pprintAlternative, pprintTerm, pprintRef, pprintMetaTag,
     pprint', pprintRule', pprintAlternative', pprintTerm', pprintRef',
     hexyString, outParen
@@ -9,8 +9,8 @@ import qualified Data.ByteString.Builder as Builder -- bytestring
 import Data.Char ( ord ) -- base
 import Data.List ( intersperse ) -- base
 
-import CoreIPG ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..) )
-import GenericExp ( Exp(..) )
+import Text.IPG.CoreIPG ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..) )
+import Text.IPG.GenericExp ( Exp(..) )
 
 type T = BS.ByteString
 type Out = Builder.Builder

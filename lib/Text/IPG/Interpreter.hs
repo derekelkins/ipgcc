@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-module Interpreter ( Bindings, Buffer, Id, NT, Value(..), asJSON, interpret ) where
+module Text.IPG.Interpreter ( Bindings, Buffer, Id, NT, Value(..), asJSON, interpret ) where
 import Control.Applicative ( asum ) -- base
 import Data.Bits ( complement, shift, xor, (.&.), (.|.) ) -- base
 import qualified Data.ByteString as BS -- bytestring
@@ -9,9 +9,9 @@ import Data.List ( (!?), intersperse ) -- base
 import qualified Data.Map as Map -- containers
 import GHC.Stack ( HasCallStack ) -- base
 
-import CoreIPG ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..) )
-import GenericExp ( Exp(..) )
-import PPrint ( hexyString )
+import Text.IPG.CoreIPG ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..) )
+import Text.IPG.GenericExp ( Exp(..) )
+import Text.IPG.PPrint ( hexyString )
 
 (!!!) :: (HasCallStack, Ord k, Show k) => Map.Map k v -> k -> v
 m !!! k = case Map.lookup k m of

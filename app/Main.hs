@@ -6,19 +6,18 @@ import qualified Data.ByteString.Lazy.Char8 as LBS -- bytestring
 import qualified Data.ByteString.Builder as Builder -- bytestring
 import qualified Data.Map as Map -- containers
 import qualified Data.Set as Set -- containers
-import System.Environment ( getArgs ) -- base
 import System.IO ( IOMode(..), hPutStrLn, openFile, stderr, stdin, stdout ) -- base
 
-import Data.ByteString.Lazy.Search ( breakOn ) -- stringsearch
 import qualified Options.Applicative as Opt -- optparse-applicative
 
-import CheckIPG ( validate )
-import FullIPG ( ExpHelpers(..), toCore )
-import qualified GenericExp as E
-import Interpreter ( Bindings, NT, Value(..), asJSON, interpret )
-import IPGParser ( IdType, Exp', parseWithStartPos )
-import JSExport ( Context(..), defaultContext, toJS, toJSWithContext )
-import PPrint ( hexyString, pprint )
+import Text.IPG.CheckIPG ( validate )
+import Text.IPG.FullIPG ( ExpHelpers(..), toCore )
+import qualified Text.IPG.GenericExp as E
+import Text.IPG.Interpreter ( Bindings, NT, Value(..), asJSON, interpret )
+import Text.IPG.IPGParser ( IdType, Exp', parseWithStartPos )
+import Text.IPG.Export.JSExport ( Context(..), defaultContext, toJS, toJSWithContext )
+import Text.IPG.PPrint ( hexyString, pprint )
+import Text.IPG.TopLevel.FileSplit ( splitFile )
 
 data ExportType = JS | PPRINT deriving ( Eq, Ord, Show, Read )
 
@@ -105,22 +104,6 @@ helper = ExpHelpers {
 computeStartLine :: LBS.ByteString -> Int
 computeStartLine "" = 1
 computeStartLine s = 3 + fromIntegral (LBS.count '\n' s)
-
-splitAround :: BS.ByteString -> LBS.ByteString -> Maybe (LBS.ByteString, LBS.ByteString)
-splitAround pattern s
-    = if LBS.null after then Nothing
-                        else Just (before, LBS.drop (fromIntegral $ BS.length pattern) after)
-  where (before, after) = breakOn pattern s
-
-splitFile :: LBS.ByteString -> (LBS.ByteString, LBS.ByteString, LBS.ByteString)
-splitFile input' = (preamble, input, postamble)
-    where (preamble, rest) = case splitAround "\n%preamble_end" input' of
-            Nothing -> ("", input')
-            Just (x, p) -> (x, LBS.drop 1 (LBS.dropWhile ('\n' /=) p))
-          (input, postamble) = case splitAround "\n%postamble_begin" rest of
-            Nothing -> (rest, "")
-            Just (x, p) -> (x, LBS.dropWhile isSpace p)
-          isSpace c = c `elem` (" \n\r\t" :: String)
 
 externalFuncs :: Map.Map NT ([Value a] -> Value a)
 externalFuncs = Map.fromList [

@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings, QuasiQuotes #-}
-module JSExport ( Context(..), T, defaultContext, toJS, toJSWithContext ) where
+module Text.IPG.Export.JSExport ( Context(..), T, defaultContext, toJS, toJSWithContext ) where
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Lazy as LBS -- bytestring
 import qualified Data.ByteString.Builder as Builder -- bytestring
@@ -9,9 +9,9 @@ import qualified Data.Set as Set -- containers
 
 import Data.String.Interpolate ( i, __i ) -- string-interpolate
 
-import CoreIPG
-import GenericExp ( Exp(..) )
-import PPrint ( hexyString, outParen, pprintTerm )
+import Text.IPG.CoreIPG
+import Text.IPG.GenericExp ( Exp(..) )
+import Text.IPG.PPrint ( hexyString, outParen, pprintTerm )
 
 -- It's worth noting that the way this export works already supports blackbox parsers.
 -- ANY function that takes a slice and returns an object with the _ipg_start/_ipg_end fields
