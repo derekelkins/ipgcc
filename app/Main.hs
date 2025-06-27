@@ -17,7 +17,8 @@ import FullIPG ( ExpHelpers(..), toCore )
 import qualified GenericExp as E
 import Interpreter ( Bindings, NT, Value(..), interpret )
 import IPGParser ( IdType, Exp', parseWithStartPos )
-import JSExport ( hexyString, toJS )
+import JSExport ( defaultContext, hexyString, toJS, toJSWithContext, Context(..) )
+import PPrint ( pprint )
 
 asJSON :: Value a -> Builder.Builder
 asJSON (STRING s) = hexyString s
@@ -78,6 +79,7 @@ main = do
         Left err -> hPutStrLn stderr err
         Right (g, decls) -> do
             let core = E.simplify (toCore helper g)
+            -- LBS.putStrLn (Builder.toLazyByteString (pprint core))
             case validate (Set.fromList decls) core of
                 Just errs -> mapM_ (CBS.hPutStrLn stderr) errs
                 -- Nothing -> do
@@ -88,5 +90,5 @@ main = do
                 --             LBS.putStrLn (Builder.toLazyByteString (asJSON (BINDINGS bs)))
                 Nothing -> do
                     LBS.putStrLn preamble
-                    LBS.putStrLn (toJS core)
+                    LBS.putStrLn (toJSWithContext (defaultContext { debugMode = True }) core)
                     LBS.putStr postamble

@@ -60,5 +60,4 @@ arrayNonTerminals = nub . concatMap processTerm
     where processTerm (Array _ _ _ nt _ _ _) = [nt]
           processTerm _ = []
 
--- TODO: Add pretty-printer.
 -- Also, perhaps add termination checker.
