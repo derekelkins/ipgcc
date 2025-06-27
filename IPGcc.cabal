@@ -69,7 +69,7 @@ executable IPGcc
 
     -- Other library packages from which modules are imported.
     build-depends:    base ^>=4.20.0.0, array, bytestring, bytestring-lexing, containers,
-        string-interpolate, stringsearch
+        optparse-applicative, string-interpolate, stringsearch
 
     -- Directories containing source files.
     hs-source-dirs:   app

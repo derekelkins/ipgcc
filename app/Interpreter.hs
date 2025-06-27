@@ -1,15 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-module Interpreter ( Bindings, Buffer, Id, NT, Value(..), interpret ) where
+module Interpreter ( Bindings, Buffer, Id, NT, Value(..), asJSON, interpret ) where
 import Control.Applicative ( asum ) -- base
 import Data.Bits ( complement, shift, xor, (.&.), (.|.) ) -- base
 import qualified Data.ByteString as BS -- bytestring
-import Data.List ( (!?) ) -- base
+import qualified Data.ByteString.Builder as Builder -- bytestring
+import Data.List ( (!?), intersperse ) -- base
 import qualified Data.Map as Map -- containers
 import GHC.Stack ( HasCallStack ) -- base
 
 import CoreIPG ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..) )
 import GenericExp ( Exp(..) )
+import PPrint ( hexyString )
 
 (!!!) :: (HasCallStack, Ord k, Show k) => Map.Map k v -> k -> v
 m !!! k = case Map.lookup k m of
@@ -52,6 +54,16 @@ data Value a
     | SEQUENCE [Value a]
     | OPAQUE a
   deriving ( Eq, Ord, Show )
+
+asJSON :: Value a -> Builder.Builder
+asJSON (STRING s) = hexyString s
+asJSON (BOOL True) = "true"
+asJSON (BOOL False) = "false"
+asJSON (INT n) = Builder.integerDec n
+asJSON (FLOAT d) = Builder.doubleDec d
+asJSON (SEQUENCE xs) = "[" <> mconcat (intersperse ", " (map asJSON xs)) <> "]"
+asJSON (BINDINGS xs) = "{" <> mconcat (intersperse ", " (map process (Map.toList xs))) <> "}"
+    where process (k, v) = hexyString k <> ": " <> asJSON v
 
 type InterpFunc a = Environment a -> Parameters a -> Buffer -> Maybe (Environment a, Int, Int)
 

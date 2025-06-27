@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings, QuasiQuotes #-}
-module JSExport ( hexyString, defaultContext, toJS, toJSWithContext, Context(..), T ) where
+module JSExport ( Context(..), T, defaultContext, toJS, toJSWithContext ) where
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Lazy as LBS -- bytestring
 import qualified Data.ByteString.Builder as Builder -- bytestring

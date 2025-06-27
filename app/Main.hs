@@ -4,31 +4,95 @@ import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Char8 as CBS -- bytestring
 import qualified Data.ByteString.Lazy.Char8 as LBS -- bytestring
 import qualified Data.ByteString.Builder as Builder -- bytestring
-import Data.List ( intersperse ) -- base
 import qualified Data.Map as Map -- containers
 import qualified Data.Set as Set -- containers
 import System.Environment ( getArgs ) -- base
-import System.IO ( hPutStrLn, stderr ) -- base
+import System.IO ( IOMode(..), hPutStrLn, openFile, stderr, stdin, stdout ) -- base
 
 import Data.ByteString.Lazy.Search ( breakOn ) -- stringsearch
+import qualified Options.Applicative as Opt -- optparse-applicative
 
 import CheckIPG ( validate )
 import FullIPG ( ExpHelpers(..), toCore )
 import qualified GenericExp as E
-import Interpreter ( Bindings, NT, Value(..), interpret )
+import Interpreter ( Bindings, NT, Value(..), asJSON, interpret )
 import IPGParser ( IdType, Exp', parseWithStartPos )
-import JSExport ( defaultContext, hexyString, toJS, toJSWithContext, Context(..) )
-import PPrint ( pprint )
+import JSExport ( Context(..), defaultContext, toJS, toJSWithContext )
+import PPrint ( hexyString, pprint )
 
-asJSON :: Value a -> Builder.Builder
-asJSON (STRING s) = hexyString s
-asJSON (BOOL True) = "true"
-asJSON (BOOL False) = "false"
-asJSON (INT n) = Builder.integerDec n
-asJSON (FLOAT d) = Builder.doubleDec d
-asJSON (SEQUENCE xs) = "[" <> mconcat (intersperse ", " (map asJSON xs)) <> "]"
-asJSON (BINDINGS xs) = "{" <> mconcat (intersperse ", " (map process (Map.toList xs))) <> "}"
-    where process (k, v) = asJSON (STRING k) <> ": " <> asJSON v
+data ExportType = JS | PPRINT deriving ( Eq, Ord, Show, Read )
+
+data Options = Options {
+    inFile :: Maybe String,
+    outFile :: Maybe String,
+    exportType :: !ExportType,
+    debugModeFlag :: !Bool,
+    interpretFlag :: !Bool
+  }
+
+options :: Opt.ParserInfo Options
+options = Opt.info (Options
+    <$> Opt.optional (Opt.strOption (
+            Opt.long "in-file"
+         <> Opt.short 'i'
+         <> Opt.metavar "FILE"
+         <> Opt.help "Source grammar file. stdin if omitted."))
+    <*> Opt.optional (Opt.strOption (
+            Opt.long "out-file"
+         <> Opt.short 'o'
+         <> Opt.metavar "FILE"
+         <> Opt.help "Output file. stdout if omitted."))
+    <*> Opt.option Opt.auto (
+            Opt.long "export-type"
+         <> Opt.short 't'
+         <> Opt.help "Export type. JS or PPRINT. Default JS."
+         <> Opt.value JS)
+    <*> Opt.switch (
+            Opt.long "debug-mode"
+         <> Opt.help "Enable debug mode in output.")
+    <*> Opt.switch (
+            Opt.long "interpret"
+         <> Opt.short 'I'
+         <> Opt.help "Interpret grammar instead. --in-file is required for the .ipg and stdin will be the parser's input.")
+    Opt.<**> Opt.helper) (
+        Opt.fullDesc
+     <> Opt.progDesc "Interval Parsing Grammar parser generator"
+     <> Opt.header "IPGcc")
+
+main :: IO ()
+main = do
+    opts <- Opt.execParser options
+    ipgInput' <- case inFile opts of Nothing -> LBS.getContents; Just f -> LBS.readFile f
+    h <- case outFile opts of Nothing -> return stdout; Just f -> openFile f WriteMode
+
+    let (preamble, ipgInput, postamble) = splitFile ipgInput'
+
+    let byteOffset = fromIntegral (LBS.length preamble) -- This isn't 100% correct but it doesn't really matter
+    let startLine = computeStartLine preamble
+    let startCol = 1
+
+    case parseWithStartPos byteOffset startLine startCol ipgInput of
+        Left err -> hPutStrLn stderr err
+        Right (g, decls) -> do
+            let core = E.simplify (toCore helper g)
+            case exportType opts of
+                PPRINT -> LBS.hPutStrLn h (Builder.toLazyByteString (pprint core))
+                JS -> do
+                    case validate (Set.fromList decls) core of
+                        Just errs -> mapM_ (CBS.hPutStrLn stderr) errs
+                        Nothing -> do
+                            if interpretFlag opts then do
+                                buf <- CBS.getContents
+                                case interpret core externalFuncs [] buf of
+                                    Nothing -> hPutStrLn h "null"
+                                    Just (bs, _, _) ->
+                                        LBS.hPutStrLn h
+                                            (Builder.toLazyByteString (asJSON (BINDINGS bs)))
+                              else do
+                                LBS.hPutStrLn h preamble
+                                LBS.hPutStrLn h (toJSWithContext
+                                    (defaultContext { debugMode = debugModeFlag opts }) core)
+                                LBS.hPutStr h postamble
 
 helper :: ExpHelpers IdType IdType IdType Exp'
 helper = ExpHelpers {
@@ -38,14 +102,25 @@ helper = ExpHelpers {
     ref = E.Ref
   }  
 
-isSpace :: Char -> Bool
-isSpace c = c `elem` (" \n\r\t" :: String)
+computeStartLine :: LBS.ByteString -> Int
+computeStartLine "" = 1
+computeStartLine s = 3 + fromIntegral (LBS.count '\n' s)
 
 splitAround :: BS.ByteString -> LBS.ByteString -> Maybe (LBS.ByteString, LBS.ByteString)
 splitAround pattern s
     = if LBS.null after then Nothing
                         else Just (before, LBS.drop (fromIntegral $ BS.length pattern) after)
   where (before, after) = breakOn pattern s
+
+splitFile :: LBS.ByteString -> (LBS.ByteString, LBS.ByteString, LBS.ByteString)
+splitFile input' = (preamble, input, postamble)
+    where (preamble, rest) = case splitAround "\n%preamble_end" input' of
+            Nothing -> ("", input')
+            Just (x, p) -> (x, LBS.drop 1 (LBS.dropWhile ('\n' /=) p))
+          (input, postamble) = case splitAround "\n%postamble_begin" rest of
+            Nothing -> (rest, "")
+            Just (x, p) -> (x, LBS.dropWhile isSpace p)
+          isSpace c = c `elem` (" \n\r\t" :: String)
 
 externalFuncs :: Map.Map NT ([Value a] -> Value a)
 externalFuncs = Map.fromList [
@@ -57,38 +132,3 @@ externalFuncs = Map.fromList [
     ("projectSections", \[SEQUENCE sections] ->
         SEQUENCE (map (\(BINDINGS b) -> b Map.! "section") sections))
   ]
-
-computeStartLine :: LBS.ByteString -> Int
-computeStartLine "" = 1
-computeStartLine s = 3 + fromIntegral (LBS.count '\n' s)
-
-main :: IO ()
-main = do
-    -- (interpreterInput:_) <- getArgs
-    input' <- LBS.getContents 
-    let (preamble, rest) = case splitAround "\n%preamble_end" input' of
-            Nothing -> ("", input')
-            Just (x, p) -> (x, LBS.drop 1 (LBS.dropWhile ('\n' /=) p))
-    let (input, postamble) = case splitAround "\n%postamble_begin" rest of
-            Nothing -> (rest, "")
-            Just (x, p) -> (x, LBS.dropWhile isSpace p)
-    let byteOffset = fromIntegral (LBS.length preamble) -- This isn't 100% correct but it doesn't really matter
-    let startLine = computeStartLine preamble
-    let startCol = 1
-    case parseWithStartPos byteOffset startLine startCol input of
-        Left err -> hPutStrLn stderr err
-        Right (g, decls) -> do
-            let core = E.simplify (toCore helper g)
-            -- LBS.putStrLn (Builder.toLazyByteString (pprint core))
-            case validate (Set.fromList decls) core of
-                Just errs -> mapM_ (CBS.hPutStrLn stderr) errs
-                -- Nothing -> do
-                --     buf <- CBS.readFile interpreterInput
-                --     case interpret core externalFuncs [] buf of
-                --         Nothing -> putStrLn "null"
-                --         Just (bs, _, _) ->
-                --             LBS.putStrLn (Builder.toLazyByteString (asJSON (BINDINGS bs)))
-                Nothing -> do
-                    LBS.putStrLn preamble
-                    LBS.putStrLn (toJSWithContext (defaultContext { debugMode = True }) core)
-                    LBS.putStr postamble
