@@ -1,0 +1,65 @@
+QOI
+  -> QOIHeader[0, EOI]
+     { width = QOIHeader.width }
+     { height = QOIHeader.height }
+     { channels = QOIHeader.channels }
+     { colorspace = QOIHeader.colorspace }
+     QOIChunks[QOIHeader.END, EOI]
+     { chunks = QOIChunks.values };
+
+QOIHeader
+  -> "qoif"[0, 4]
+     BE_U32[4, EOI]
+     { width = BE_U32.value }
+     BE_U32[BE_U32.END, EOI]
+     { height = BE_U32.value }
+     { channels = .[BE_U32.END] }
+     { colorspace = .[BE_U32.END + 1] };
+
+QOIChunks
+  -> repeat QOIChunk.chunk until EndMarker;
+
+QOIChunk
+  -> { tagByte = .[0] }
+     Chunk(tagByte)[1, EOI]
+     { chunk = Chunk.this };
+
+Chunk(tagByte)
+  -> ?[ tagByte == 254 ]
+     { tag = "rgb" }
+     { r = .[0] }
+     { g = .[1] }
+     { b = .[2] }
+   / ?[ tagByte == 255 ]
+     { tag = "rgba" }
+     { r = .[0] }
+     { g = .[1] }
+     { b = .[2] }
+     { a = .[3] }
+   / ?[ tagByte >> 6 == 0 ]
+     { tag = "index" }
+     { index = tagByte & 63 }
+   / ?[ tagByte >> 6 == 1 ]
+     { tag = "diff" }
+     { dr = (tagByte >> 4 & 3) - 2 }
+     { dg = (tagByte >> 2 & 3) - 2 }
+     { db = (tagByte & 3) - 2 }
+   / ?[ tagByte >> 6 == 2 ]
+     { tag = "luma" }
+     { diffGreen = (tagByte & 63) - 32 }
+     U8[0, EOI]
+     { drdg = (U8.value >> 4) - 8 }
+     { dbdg = (U8.value & 15) - 8 }
+   / ?[ tagByte >> 6 == 3 ]
+     { tag = "run" }
+     { run = (tagByte & 63) + 1 };
+
+EndMarker
+  -> "\x00\x00\x00\x00\x00\x00\x00\x01"[0, 8];
+
+U8
+  -> { value = .[0] };
+
+BE_U32
+  -> { bs = *[0, 4] }
+     { value = bs[3] | bs[2] << 8 | bs[1] << 16 | bs[0] << 24 };
