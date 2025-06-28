@@ -44,6 +44,7 @@ run doDebugging f = do
             -- TODO: There's surely a ByteString version of this.
             LBS.pack <$> readProcess nODE_EXE [tmpFile] ""
 
+-- TODO: Have tests that compare interpreter and node output.
 goldenTests :: IO TestTree
 goldenTests = do
     ipgFiles <- findByExtension [".ipg"] "test/node/"

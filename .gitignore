@@ -1,1 +1,7 @@
 dist-newstyle/
+node_modules/
+hpc/
+package.json
+package-lock.json
+cabal.project
+cabal.project.local
