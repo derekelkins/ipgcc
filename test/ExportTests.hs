@@ -13,7 +13,7 @@ main = defaultMain =<< goldenTests
 
 export :: Bool -> FilePath -> IO LBS.ByteString
 export doDebugging f = do
-    results <- parseFile False f
+    results <- parseFile True f
     case results of
         Left err -> return $ LBS.pack (show err)
         Right (preamble, g, _, postamble) -> return $
