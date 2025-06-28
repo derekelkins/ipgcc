@@ -27,7 +27,14 @@ synopsis:
     A parser generator for the Interval Parsing Grammars formalism.
 
 -- A longer description of the package.
--- description:
+description:
+    This package provides an implementation of a variation of the
+    Interval Parsing Grammars formalism described in
+    [Interval Parsing Grammars for File Format Parsing](https://doi.org/10.1145/3591264).
+    This includes an interpreter and a parser generator.
+    Currently, the parser generator only targets JavaScript,
+    but other backends could easily be added.
+    This formalism is geared toward parsing binary file formats.
 
 -- The license under which the package is released.
 license:            BSD-3-Clause
@@ -39,16 +46,17 @@ license-file:       LICENSE
 author:             Derek Elkins
 
 -- An email address to which users can send suggestions, bug reports, and patches.
-maintainer:         derek.a.elkins@gmail.com
+maintainer:         derek.a.elkins+github@gmail.com
 
 category:           Parsing
 
 -- A copyright notice.
 -- copyright:
+
 build-type:         Simple
 
 -- Extra doc files to be distributed with the package, such as a CHANGELOG or a README.
-extra-doc-files:    CHANGELOG.md
+extra-doc-files:    CHANGELOG.md, README.md
 
 -- Extra source files to be distributed with the package, such as examples, or a tutorial module.
 -- extra-source-files:
@@ -56,6 +64,14 @@ extra-doc-files:    CHANGELOG.md
 common warnings
     ghc-options: -Wall
 
+source-repository head
+    type: git
+    location: https://github.com/derekelkins/ipgcc
+
+-- The Node-based tests require node to run.
+-- The executable to use for node can be set via the
+-- NODE_EXE environment variable. Otherwise, it defaults
+-- to "node".
 flag Node
     description: Enable Node-based tests
     default: False
@@ -88,12 +104,12 @@ library
     -- Other library packages from which modules are imported.
     build-depends:
         base ^>=4.20.0.0,
-        array,
-        bytestring,
-        bytestring-lexing,
-        containers,
-        string-interpolate,
-        stringsearch
+        array >= 0.5.7 && < 0.6,
+        bytestring >= 0.12.1 && < 0.13,
+        bytestring-lexing >= 0.5.0 && < 0.6,
+        containers >= 0.7 && < 0.8,
+        string-interpolate >= 0.3.4 && < 0.4,
+        stringsearch >= 0.3.6 && < 0.4
 
     -- Directories containing source files.
     hs-source-dirs:   lib
@@ -119,10 +135,10 @@ executable ipgcc
     -- Other library packages from which modules are imported.
     build-depends:
         base ^>=4.20.0.0,
-        bytestring,
-        containers,
+        bytestring >= 0.12.1 && < 0.13,
+        containers >= 0.7 && < 0.8,
         ipgcc,
-        optparse-applicative
+        optparse-applicative >= 0.19.0 && < 0.20
 
     -- Directories containing source files.
     hs-source-dirs:   app
@@ -155,8 +171,8 @@ test-suite interpreter-test
     -- Test dependencies.
     build-depends:
         base ^>=4.20.0.0,
-        bytestring,
-        containers,
+        bytestring >= 0.12.1 && < 0.13,
+        containers >= 0.7 && < 0.8,
         filepath,
         ipgcc,
         tasty,
@@ -187,7 +203,7 @@ test-suite parsing-test
     -- Test dependencies.
     build-depends:
         base ^>=4.20.0.0,
-        bytestring,
+        bytestring >= 0.12.1 && < 0.13,
         filepath,
         ipgcc,
         tasty,
@@ -218,8 +234,8 @@ test-suite export-test
     -- Test dependencies.
     build-depends:
         base ^>=4.20.0.0,
-        bytestring,
-        containers,
+        bytestring >= 0.12.1 && < 0.13,
+        containers >= 0.7 && < 0.8,
         filepath,
         ipgcc,
         tasty,
@@ -255,8 +271,8 @@ test-suite node-test
     -- Test dependencies.
     build-depends:
         base ^>=4.20.0.0,
-        bytestring,
-        containers,
+        bytestring >= 0.12.1 && < 0.13,
+        containers >= 0.7 && < 0.8,
         directory,
         filepath,
         ipgcc,
