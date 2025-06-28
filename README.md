@@ -215,7 +215,7 @@ An **invalid interval** is one where the start is *strictly* after the end,
 i.e. for `[l, r]` we have `l > r`. Empty intervals, i.e. where `l == r` are
 allowed and useful. Nothing stops having different terms parse overlapping
 slices of the input. In fact, this is a powerful technique that allows
-multi-pass parsing.
+multi-pass parsing. (See `test/node/test-elf.ipg` for an example.)
 
 In a way similar to [Parsing Expression Grammars](https://en.wikipedia.org/wiki/Parsing_expression_grammar)
 (PEGs), we have a *biased* alternation operator, `/`. Here, the first alternative
@@ -479,6 +479,8 @@ There are also potentially grammar-level optimizations that could be done, e.g.
 recognizing a pattern of recursion as a repetition, though I don't see implementing
 any of these unless some very compelling case comes up.
 
+TODO: Describe debug mode.
+
 ### Reserved Identifiers
 
 The following names should not be used in your grammar to avoid conflicting with the
@@ -503,13 +505,13 @@ Here are the requirements on the input when it is not a string.
 
 ## Examples
 
-See the `examples/` directory for some non-trivial example grammars. They contain
-JavaScript code in comments that can be added to the output to produce a full
-application.
+See the `test/*/` directories for some non-trivial example grammars. The examples
+in `test/node/`, in particular, contain JavaScript code in the preamble/postamble
+producing self-contained executable examples.
 
 ### ELF
 
-`examples/elf.ipg` is a translation of the ELF parser from the paper's
+`test/node/test-elf.ipg` is a translation of the ELF parser from the paper's
 code artifacts. It does not handle the fullness of [ELF](https://www.man7.org/linux/man-pages/man5/elf.5.html),
 but it is a good illustration of a file format that significantly leveraged
 random access.
@@ -520,7 +522,7 @@ leads to stack overflows even on the example ELF files they used.
 
 ### GIF
 
-`examples/gif.ipg` is a full [GIF89a](https://giflib.sourceforge.net/gifstandard/GIF89a.html)
+`test/node/test-gif.ipg` is a full [GIF89a](https://giflib.sourceforge.net/gifstandard/GIF89a.html)
 parser. Originally, I started translating the example from the code artifact,
 but some ambiguities and incompleteness led me to look at the GIF spec. At that
 point I decided just implementing it from scratch and more closely following the
@@ -534,9 +536,9 @@ As an example of using IPG, GIF is an example of a chunk-based format.
 I made a [QOI](https://qoiformat.org/) parser as an early simple but "real" example.
 Unfortunately, it doesn't really leverage anything special about IPG.
 
-Nevertheless, `examples/qoi-syntax.ipg` provides a parser that will output the
+Nevertheless, `test/node/test-qoi-syntax.ipg` provides a parser that will output the
 structure of a QOI file. To make it more interesting and better validate the code,
-`examples/qoi.ipg` actually produces a full QOI to PNG converter. The parser itself
+`test/parsing/test-qoi.ipg` actually produces a full QOI to PNG converter. The parser itself
 passes through a `state` object via parameterized rules which maintains the
 decoders state. This is updated by functions called in assignment terms in the
 grammar. In theory, using impure functions like this as expressions is ill-defined.

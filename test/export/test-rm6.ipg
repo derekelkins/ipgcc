@@ -9,7 +9,6 @@
 // SceneGlyphItemBlock.
 
 const fs = require("node:fs");
-require('util').inspect.defaultOptions.depth = 5;
 
 function warnIf(doWarn, message) {
   if (doWarn) {
