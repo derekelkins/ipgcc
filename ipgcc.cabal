@@ -56,6 +56,11 @@ extra-doc-files:    CHANGELOG.md
 common warnings
     ghc-options: -Wall
 
+flag Node
+    description: Enable Node-based tests
+    default: False
+    manual: True
+
 library
     -- Import common warning flags.
     import:           warnings
@@ -188,9 +193,46 @@ test-suite parsing-test
         tasty,
         tasty-golden
 
+test-suite export-test
+    -- Import common warning flags.
+    import:           warnings
+
+    -- Base language which the package is written in.
+    default-language: Haskell2010
+
+    -- Modules included in this executable, other than Main.
+    -- other-modules:
+
+    -- LANGUAGE extensions used by modules in this package.
+    other-extensions: OverloadedStrings
+
+    -- The interface type and version of the test suite.
+    type:             exitcode-stdio-1.0
+
+    -- Directories containing source files.
+    hs-source-dirs:   test
+
+    -- The entrypoint to the test suite.
+    main-is:          ExportTests.hs
+
+    -- Test dependencies.
+    build-depends:
+        base ^>=4.20.0.0,
+        bytestring,
+        containers,
+        filepath,
+        ipgcc,
+        tasty,
+        tasty-golden
+
 test-suite node-test
     -- Import common warning flags.
     import:           warnings
+
+    if flag(Node)
+      buildable: True
+    else 
+      buildable: False
 
     -- Base language which the package is written in.
     default-language: Haskell2010
@@ -215,8 +257,9 @@ test-suite node-test
         base ^>=4.20.0.0,
         bytestring,
         containers,
+        directory,
         filepath,
         ipgcc,
+        process,
         tasty,
-        tasty-program,
         tasty-golden
