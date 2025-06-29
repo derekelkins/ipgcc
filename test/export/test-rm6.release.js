@@ -2766,12 +2766,12 @@ function RootTextBlock(input, begin = 0, end = input.length) {
     left = nt_SubBlock_1._ipg_start;
     right = nt_SubBlock_1._ipg_end;
 
-    // { innerEnd = SubBlock@1.END + SubBlock@1.length }
-    self.innerEnd = nt_SubBlock_1._ipg_end + nt_SubBlock_1.length;
+    // { innerEnd1 = SubBlock@1.END + SubBlock@1.length }
+    self.innerEnd1 = nt_SubBlock_1._ipg_end + nt_SubBlock_1.length;
 
-    // SubBlock@2(1)[SubBlock@1.END, innerEnd]
+    // SubBlock@2(1)[SubBlock@1.END, innerEnd1]
     left = nt_SubBlock_1._ipg_end;
-    right = self.innerEnd;
+    right = self.innerEnd1;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     nt_SubBlock_2 = SubBlock(input, begin + left, begin + right, 1);
     if (nt_SubBlock_2 === null) break _ipg_alt;
@@ -2842,9 +2842,9 @@ function RootTextBlock(input, begin = 0, end = input.length) {
     left = nt_ExpectEmpty_0._ipg_start;
     right = nt_ExpectEmpty_0._ipg_end;
 
-    // ExpectEmpty@1[ExpectEmpty@0.END, innerEnd]
+    // ExpectEmpty@1[ExpectEmpty@0.END, innerEnd1]
     left = nt_ExpectEmpty_0._ipg_end;
-    right = self.innerEnd;
+    right = self.innerEnd1;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     nt_ExpectEmpty_1 = ExpectEmpty(input, begin + left, begin + right);
     if (nt_ExpectEmpty_1 === null) break _ipg_alt;
@@ -2872,12 +2872,12 @@ function RootTextBlock(input, begin = 0, end = input.length) {
     left = nt_SubBlock_3._ipg_start;
     right = nt_SubBlock_3._ipg_end;
 
-    // { innerEnd = SubBlock@3.END + SubBlock@3.length }
-    self.innerEnd = nt_SubBlock_3._ipg_end + nt_SubBlock_3.length;
+    // { innerEnd2 = SubBlock@3.END + SubBlock@3.length }
+    self.innerEnd2 = nt_SubBlock_3._ipg_end + nt_SubBlock_3.length;
 
-    // SubBlock@4(1)[SubBlock@3.END, innerEnd]
+    // SubBlock@4(1)[SubBlock@3.END, innerEnd2]
     left = nt_SubBlock_3._ipg_end;
-    right = self.innerEnd;
+    right = self.innerEnd2;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     nt_SubBlock_4 = SubBlock(input, begin + left, begin + right, 1);
     if (nt_SubBlock_4 === null) break _ipg_alt;
@@ -2948,9 +2948,9 @@ function RootTextBlock(input, begin = 0, end = input.length) {
     left = nt_ExpectEmpty_2._ipg_start;
     right = nt_ExpectEmpty_2._ipg_end;
 
-    // ExpectEmpty@3[ExpectEmpty@2.END, innerEnd]
+    // ExpectEmpty@3[ExpectEmpty@2.END, innerEnd2]
     left = nt_ExpectEmpty_2._ipg_end;
-    right = self.innerEnd;
+    right = self.innerEnd2;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     nt_ExpectEmpty_3 = ExpectEmpty(input, begin + left, begin + right);
     if (nt_ExpectEmpty_3 === null) break _ipg_alt;

@@ -1,10 +1,13 @@
 {-# LANGUAGE DeriveFunctor #-}
-module Text.IPG.Core ( 
+module Text.IPG.Core (
     Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..),
-    nonTerminals, nonArrayNonTerminals, arrayNonTerminals, renumber, rearrange,
+    nonTerminals, nonArrayNonTerminals, arrayNonTerminals, renumber, rearrange, crushUses
 ) where
 import Data.List ( nub ) -- base
+import qualified Data.Graph as G
+import qualified Data.IntMap as IntMap -- containers
 import qualified Data.Map as Map -- containers
+import qualified Data.Set as Set -- containers
 
 data MetaTag = INSTRUMENT -- %instrument
     deriving ( Eq, Ord, Show )
@@ -20,7 +23,7 @@ data Rule nt t id e = Rule [MetaTag] nt [id] [Alternative nt t id e]
 data Alternative nt t id e = Alternative [Term nt t id e]
     deriving ( Functor, Show )
 
-data Term nt t id e 
+data Term nt t id e
     = NonTerminal (nt, Int) [e] e e     -- A@n(a_1, ..., a_m)[e_l, e_r]
     | Terminal t e e                    -- s[e_l, e_r]
     | id := e                           -- {id = e}
@@ -33,7 +36,7 @@ data Term nt t id e
                                         -- repeat A@n(a_1, ..., a_m)[e_l, e_r].id starting on [e_l0, e_r0]
                                         --     until B@m(b_1, ..., b_k)
   deriving ( Functor, Show )
-    
+
 data Ref nt id e
     = Id id                 -- id, essentially self.id
     | Attr (nt, Int) id     -- A.id
@@ -81,7 +84,7 @@ renumber mapRef terms = go Map.empty terms
           allNTs = Map.unionsWith (++)
                     (map (\(k, v) -> Map.singleton k [v]) (nonTerminals terms))
           tnt seen = let g = mapNT (mapRef g) h in g
-            where h (nt, -1) = 
+            where h (nt, -1) =
                     case Map.lookup nt seen of
                         Just n -> (nt, n)
                         Nothing -> case nub <$> Map.lookup nt allNTs of
@@ -89,8 +92,33 @@ renumber mapRef terms = go Map.empty terms
                                         _ -> error ("Ambiguous reference to " ++ show nt)
                   h nt = nt
 
-rearrange :: [Term nt t id e] -> [Term nt t id e]
-rearrange ts = ts -- TODO: Topologically sort based on data dependency order.
+-- TODO: Ensure that the terms are sorted in written order where possible.
+rearrange
+    :: (Ord id, Ord nt)
+    => (e -> Set.Set (Either id (nt, Int)))
+    -> [Term nt t id e]
+    -> [Term nt t id e]
+rearrange uses' ts = map ((\(x, _, _) -> x ) . term) (G.reverseTopSort deps)
+    where uses = crushTerm uses'
+          defs = IntMap.fromDistinctAscList (zipWith (\j t -> (j, defines t)) [0..] ts)
+          (deps, term) =
+            G.graphFromEdges'
+                (map
+                    (\((i, t), jts) ->
+                        let u = uses t
+                            js = foldMap
+                                    (\(j, _) ->
+                                        if u `overlaps` (defs IntMap.! j) then [j] else [])
+                                    jts
+                        in (t, i, js))
+                    (selects (zip [0..] ts)))
+
+overlaps :: (Ord a) => Set.Set a -> Set.Set a -> Bool
+overlaps x y = not (Set.null (Set.intersection x y))
+
+selects :: [a] -> [(a, [a])]
+selects [] = []
+selects (x:xs) = (x, xs):map (\(y, ys) -> (y, x:ys)) (selects xs)
 
 mapNT :: (e -> e') -> ((nt, Int) -> (nt', Int)) -> Ref nt id e -> Ref nt' id e'
 mapNT _ _ (Id x) = Id x
@@ -100,15 +128,45 @@ mapNT _ _ EOI = EOI
 mapNT _ f (Start nt) = Start (f nt)
 mapNT _ f (End nt) = End (f nt)
 
+crushUses :: (Monoid m) => (e -> m) -> (id -> m) -> ((nt, Int) -> m) -> Ref nt id e -> m
+crushUses _ h _ (Id x) = h x
+crushUses _ _ f (Attr nt _) = f nt
+crushUses g _ f (Index nt e _) = f nt <> g e
+crushUses _ _ f (Start nt) = f nt
+crushUses _ _ f (End nt) = f nt
+crushUses _ _ _ EOI = mempty
+
+defines :: (Ord id, Ord nt) => Term nt t id e -> Set.Set (Either id (nt, Int))
+defines (NonTerminal nt _ _ _) = Set.singleton (Right nt)
+defines (x := _) = Set.singleton (Left x)
+defines (Array _ _ _ nt _ _ _) = Set.singleton (Right nt)
+defines (Any x _) = Set.singleton (Left x)
+defines (Slice x _ _) = Set.singleton (Left x)
+defines (Repeat nt _ _ _ _ _ _) = Set.singleton (Right nt)
+defines (RepeatUntil nt1 _ _ _ _ _ _ nt2 _) = Set.fromList [Right nt1, Right nt2]
+defines _ = mempty
+
+crushTerm :: (Monoid m) => (e -> m) -> Term nt t id e -> m
+crushTerm f (NonTerminal _ es l r) = foldMap f es <> f l <> f r
+crushTerm f (Terminal _ l r) = f l <> f r
+crushTerm f (_ := e) = f e
+crushTerm f (Guard e) = f e
+crushTerm f (Array _ s e _ es l r) = f s <> f e <> foldMap f es <> f l <> f r
+crushTerm f (Any _ e) = f e
+crushTerm f (Slice _ l r) = f l <> f r
+crushTerm f (Repeat _ es l r _ l0 r0) = foldMap f es <> f l <> f r <> f l0 <> f r0
+crushTerm f (RepeatUntil _ es1 l r _ l0 r0 _ es2) =
+    foldMap f es1 <> f l <> f r <> f l0 <> f r0 <> foldMap f es2
+
 nonArrayNonTerminals :: (Eq nt) => [Term nt t id e] -> [(nt, Int)]
-nonArrayNonTerminals = nub . concatMap processTerm
+nonArrayNonTerminals = nub . foldMap processTerm
     where processTerm (NonTerminal nt _ _ _) = [nt]
           processTerm (Repeat nt _ _ _ _ _ _) = [nt]
           processTerm (RepeatUntil nt1 _ _ _ _ _ _ nt2 _) = [nt1, nt2]
           processTerm _ = []
 
 nonTerminals :: (Eq nt) => [Term nt t id e] -> [(nt, Int)]
-nonTerminals = nub . concatMap processTerm
+nonTerminals = nub . foldMap processTerm
     where processTerm (NonTerminal nt _ _ _) = [nt]
           processTerm (Repeat nt _ _ _ _ _ _) = [nt]
           processTerm (RepeatUntil nt1 _ _ _ _ _ _ nt2 _) = [nt1, nt2]
@@ -116,7 +174,7 @@ nonTerminals = nub . concatMap processTerm
           processTerm _ = []
 
 arrayNonTerminals :: (Eq nt) => [Term nt t id e] -> [(nt, Int)]
-arrayNonTerminals = nub . concatMap processTerm
+arrayNonTerminals = nub . foldMap processTerm
     where processTerm (Array _ _ _ nt _ _ _) = [nt]
           processTerm _ = []
 

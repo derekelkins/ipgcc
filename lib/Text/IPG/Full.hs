@@ -1,11 +1,12 @@
-{-# LANGUAGE DeriveFunctor #-}
-module Text.IPG.Full ( 
+{-# LANGUAGE DeriveFunctor, Rank2Types #-}
+module Text.IPG.Full (
     Grammar(..), Rule(..), Alternative(..), Term(..), StartingOn(..),
     ExpHelpers(..),
     toCore, toCoreRule, toCoreAlternative, toCoreTerm,
 ) where
-import qualified Data.IntSet as Set -- containers
+import qualified Data.IntSet as IntSet -- containers
 import qualified Data.Map as Map -- containers
+import qualified Data.Set as Set -- containers
 
 import qualified Text.IPG.Core as Core
 
@@ -20,7 +21,7 @@ data Rule nt t id e = Rule [Core.MetaTag] nt [id] [Alternative nt t id e]
 data Alternative nt t id e = Alternative [Term nt t id e]
     deriving ( Functor, Show )
 
-data Term nt t id e 
+data Term nt t id e
     = NonTerminal0 (nt, Int) [e]        -- A@n(e_1, ..., e_m)
     | NonTerminal1 (nt, Int) [e] e      -- A@n(e_1, ..., e_m)[e_l]
     | NonTerminal2 (nt, Int) [e] e e    -- A@n(e_1, ..., e_m)[e_l, e_r]
@@ -64,35 +65,45 @@ data ExpHelpers nt t id e = ExpHelpers {
     add :: e -> e -> e,
     num :: Int -> e,
     ref :: Core.Ref nt id e -> e,
-    mapRef :: (Core.Ref nt id e -> Core.Ref nt id e) -> e -> e
+    mapRef :: (Core.Ref nt id e -> Core.Ref nt id e) -> e -> e,
+    crushRef :: forall m. (Monoid m) => (Core.Ref nt id e -> m) -> e -> m
   }
 
-toCore :: (Ord nt, Show nt) => ExpHelpers nt t id e -> Grammar nt t id e -> Core.Grammar nt t id e
+toCore
+    :: (Ord id, Ord nt, Show nt)
+    => ExpHelpers nt t id e
+    -> Grammar nt t id e
+    -> Core.Grammar nt t id e
 toCore h (Grammar rules) = Core.Grammar (map (toCoreRule h) rules)
 
-toCoreRule :: (Ord nt, Show nt) => ExpHelpers nt t id e -> Rule nt t id e -> Core.Rule nt t id e
+toCoreRule
+    :: (Ord id, Ord nt, Show nt)
+    => ExpHelpers nt t id e
+    -> Rule nt t id e
+    -> Core.Rule nt t id e
 toCoreRule h (Rule mt nt args alts) = Core.Rule mt nt args (map (toCoreAlternative h) alts)
 
 toCoreAlternative
-    :: (Ord nt, Show nt)
+    :: (Ord id, Ord nt, Show nt)
     => ExpHelpers nt t id e
     -> Alternative nt t id e
     -> Core.Alternative nt t id e
 toCoreAlternative h (Alternative terms) =
-    Core.Alternative (Core.rearrange (Core.renumber (mapRef h) (go terms (num h 0) Map.empty [])))
+    Core.Alternative (Core.rearrange g (Core.renumber (mapRef h) (go terms (num h 0) Map.empty [])))
   where go [] _ _ acc = reverse acc
         go (t:ts) nt seen acc = let (t', nt', seen') = toCoreTerm h nt seen t
                            in go ts nt' seen' (t':acc)
+        g = crushRef h (Core.crushUses g (Set.singleton . Left) (Set.singleton . Right))
 
-type NM nt = Map.Map nt Set.IntSet
+type NM nt = Map.Map nt IntSet.IntSet
 
 freshen :: (Ord nt) => NM nt -> (nt, Int) -> (NM nt, (nt, Int))
 freshen m (nt, -1) = (m', (nt, n))
     where n = maybe 0 (findNext 0) (Map.lookup nt m)
-          m' = Map.insertWith Set.union nt (Set.singleton n) m
-          findNext k s | k `Set.member` s = findNext (k + 1) s
+          m' = Map.insertWith IntSet.union nt (IntSet.singleton n) m
+          findNext k s | k `IntSet.member` s = findNext (k + 1) s
                        | otherwise = k
-freshen m x@(nt, n) = (Map.insertWith Set.union nt (Set.singleton n) m, x)
+freshen m x@(nt, n) = (Map.insertWith IntSet.union nt (IntSet.singleton n) m, x)
 
 toCoreTerm
     :: (Ord nt)

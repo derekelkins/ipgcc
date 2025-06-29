@@ -99,7 +99,7 @@ library
     -- other-modules:
 
     -- LANGUAGE extensions used by modules in this package.
-    other-extensions: DeriveFunctor, OverloadedStrings, QuasiQuotes
+    other-extensions: DeriveFunctor, OverloadedStrings, QuasiQuotes, Rank2Types
 
     -- Other library packages from which modules are imported.
     build-depends:
@@ -247,7 +247,7 @@ test-suite node-test
 
     if flag(Node)
       buildable: True
-    else 
+    else
       buildable: False
 
     -- Base language which the package is written in.

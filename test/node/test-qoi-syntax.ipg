@@ -48,4 +48,4 @@ BE_U32 -> { bs = *[4] } { value = bs[3] | (bs[2] << 8) | (bs[1] << 16) | (bs[0] 
 
 %postamble_begin
 
-console.log(JSON.stringify(QOI(fs.readFileSync("./test/node/samples/1.qoi"))));
+console.log(JSON.stringify(QOI(fs.readFileSync("./test/node/samples/1.qoi")), null, 2));

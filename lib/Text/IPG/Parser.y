@@ -286,7 +286,7 @@ type Ref' = Ref IdType IdType Exp'
 data NameExpTail
     = Start'                -- name '.' START               { Ref (Start $1) }
     | End'                  -- name '.' END                 { Ref (End $1) }
-    | Attr' IdType          -- name '.' name                { Ref (Attr $1 $3) } 
+    | Attr' IdType          -- name '.' name                { Ref (Attr $1 $3) }
     | Index' Exp' IdType    -- name '(' Exp ')' '.' name    { Ref (Index $1 $3 $6) }
     | Call' [Exp']          -- name '(' Args ')'            { Call $1 (reverse $3) }
     | Id'                   -- name                         { Ref (Id $1) }
@@ -308,7 +308,7 @@ data AssignTail
     | Assign' Exp'
 
 makeAssign :: IdType -> AssignTail -> Term'
-makeAssign n Any0' = Any0 n 
+makeAssign n Any0' = Any0 n
 makeAssign n (Any1' e) = Any1 n e
 makeAssign n Slice0' = Slice0 n
 makeAssign n (Slice1' l) = Slice1 n l

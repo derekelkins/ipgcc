@@ -162,4 +162,4 @@ RGB -> { r = . } { g = . } { b = . };
 
 %postamble_begin
 
-console.log(JSON.stringify(GIF(fs.readFileSync("./test/node/samples/1.gif"))));
+console.log(JSON.stringify(GIF(fs.readFileSync("./test/node/samples/1.gif")), null, 2));

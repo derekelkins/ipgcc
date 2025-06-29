@@ -276,21 +276,21 @@ RootTextBlock
      SubBlock@0(2)[TaggedId@0.END, EOI]
      { outerEnd = SubBlock@0.END + SubBlock@0.length }
      SubBlock@1(1)[SubBlock@0.END, outerEnd]
-     { innerEnd = SubBlock@1.END + SubBlock@1.length }
-     SubBlock@2(1)[SubBlock@1.END, innerEnd]
+     { innerEnd1 = SubBlock@1.END + SubBlock@1.length }
+     SubBlock@2(1)[SubBlock@1.END, innerEnd1]
      VarUInt@0[SubBlock@2.END, EOI]
      for i = 0 to VarUInt@0.value do TextItem@0[TextItem@0.END, SubBlock@2.END + SubBlock@2.length]
      { textItems = TextItem@0.these }
      ExpectEmpty@0[TextItem@0.END, SubBlock@2.END + SubBlock@2.length]
-     ExpectEmpty@1[ExpectEmpty@0.END, innerEnd]
+     ExpectEmpty@1[ExpectEmpty@0.END, innerEnd1]
      SubBlock@3(2)[ExpectEmpty@1.END, outerEnd]
-     { innerEnd = SubBlock@3.END + SubBlock@3.length }
-     SubBlock@4(1)[SubBlock@3.END, innerEnd]
+     { innerEnd2 = SubBlock@3.END + SubBlock@3.length }
+     SubBlock@4(1)[SubBlock@3.END, innerEnd2]
      VarUInt@1[SubBlock@4.END, EOI]
      for i = 0 to VarUInt@1.value do TextFormat@0[TextFormat@0.END, SubBlock@4.END + SubBlock@4.length]
      { textFormats = TextFormat@0.these }
      ExpectEmpty@2[TextFormat@0.END, SubBlock@4.END + SubBlock@4.length]
-     ExpectEmpty@3[ExpectEmpty@2.END, innerEnd]
+     ExpectEmpty@3[ExpectEmpty@2.END, innerEnd2]
      ExpectEmpty@4[ExpectEmpty@3.END, outerEnd]
      SubBlock@5(3)[ExpectEmpty@4.END, EOI]
      Float64@0[SubBlock@5.END, SubBlock@5.END + SubBlock@5.length]

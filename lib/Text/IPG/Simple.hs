@@ -23,8 +23,9 @@ helper = ExpHelpers {
     add = E.Add,
     num = E.Int . fromIntegral,
     ref = E.Ref,
-    mapRef = E.mapRef
-  }  
+    mapRef = E.mapRef,
+    crushRef = E.crushRef
+  }
 
 parseFile
     :: Bool

@@ -156,7 +156,7 @@ data Token
 
 tokenNonTerminal :: BS.ByteString -> Token
 tokenNonTerminal s = TokenNonTerminal (name, idx)
-    where (name, idxString) = CBS.break ('@' /=) s 
+    where (name, idxString) = CBS.break ('@' /=) s
           idx = case I.readDecimal (BS.tail idxString) of Just (n, _) -> fromIntegral n
 
 readInteger :: LBS.ByteString -> Integer
@@ -202,7 +202,7 @@ alexInitUserState = AlexUserState {
     currentLine = BS.empty
   }
 
-current :: AlexInput -> Int64 -> LBS.ByteString 
+current :: AlexInput -> Int64 -> LBS.ByteString
 current (_, _, s, _) len = LBS.take len s
 
 saveLine :: AlexAction Token
@@ -223,7 +223,7 @@ alexEOF = do
     if c == cmt then do
         state <- alexGetUserState
         case commentStart state of
-            Just (AlexPn _ line col) -> 
+            Just (AlexPn _ line col) ->
                 alexError $
                  "Unclosed comment starting at line " <> show line <> ", column " <> show col <> "."
             Nothing -> error "Unset commentStart. This should never happen."

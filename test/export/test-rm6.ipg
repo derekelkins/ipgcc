@@ -345,23 +345,23 @@ RootTextBlock
        ?[ checkRootTextBlockId(blockId) ]
 
        SubBlock(2) { outerEnd = SubBlock.END + SubBlock.length }
-         SubBlock(1)[SubBlock.END, outerEnd] { innerEnd = SubBlock.END + SubBlock.length }
-           SubBlock(1)[SubBlock.END, innerEnd]
+         SubBlock(1)[SubBlock.END, outerEnd] { innerEnd1 = SubBlock.END + SubBlock.length }
+           SubBlock(1)[SubBlock.END, innerEnd1]
              VarUInt // numSubBlocks
              for i = 0 to VarUInt.value do
                TextItem[TextItem.END, SubBlock.END + SubBlock.length]
              { textItems = TextItem.these }
            ExpectEmpty[TextItem.END, SubBlock.END + SubBlock.length]
-         ExpectEmpty[ExpectEmpty.END, innerEnd]
+         ExpectEmpty[ExpectEmpty.END, innerEnd1]
 
-         SubBlock(2)[ExpectEmpty.END, outerEnd] { innerEnd = SubBlock.END + SubBlock.length }
-           SubBlock(1)[SubBlock.END, innerEnd]
+         SubBlock(2)[ExpectEmpty.END, outerEnd] { innerEnd2 = SubBlock.END + SubBlock.length }
+           SubBlock(1)[SubBlock.END, innerEnd2]
              VarUInt // numSubBlocks
              for i = 0 to VarUInt.value do
                TextFormat[TextFormat.END, SubBlock.END + SubBlock.length]
              { textFormats = TextFormat.these }
            ExpectEmpty[TextFormat.END, SubBlock.END + SubBlock.length]
-         ExpectEmpty[ExpectEmpty.END, innerEnd]
+         ExpectEmpty[ExpectEmpty.END, innerEnd2]
        ExpectEmpty[ExpectEmpty.END, outerEnd]
 
        SubBlock(3)

@@ -14,7 +14,7 @@ import Text.IPG.Export.JS ( Context(..), defaultContext, toJSWithContext )
 import Text.IPG.PPrint ( pprint )
 import Text.IPG.Simple ( parse )
 
-data ExportType = JS | PPRINT deriving ( Eq, Ord, Show, Read )
+data ExportType = JS | CORE deriving ( Eq, Ord, Show, Read )
 
 data Options = Options {
     inFile :: Maybe String,
@@ -40,7 +40,7 @@ options = Opt.info (Options
     <*> Opt.option Opt.auto (
             Opt.long "export-type"
          <> Opt.short 't'
-         <> Opt.help "Export type. JS or PPRINT. Default JS."
+         <> Opt.help "Export type. JS or CORE. Default JS."
          <> Opt.value JS)
     <*> Opt.switch (
             Opt.long "no-validation"
@@ -67,7 +67,7 @@ main = do
         Left errs -> mapM_ (hPutStrLn stderr) errs
         Right (preamble, core, _, postamble) -> do
             case exportType opts of
-                PPRINT -> LBS.hPutStrLn h (Builder.toLazyByteString (pprint core))
+                CORE -> LBS.hPutStrLn h (Builder.toLazyByteString (pprint core))
                 JS -> do
                     if interpretFlag opts then do
                         buf <- CBS.getContents

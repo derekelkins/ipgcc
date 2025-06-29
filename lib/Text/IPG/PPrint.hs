@@ -20,7 +20,7 @@ outParen True x = "(" <> x <> ")"
 outParen False x = x
 
 hexyString :: T -> Out
-hexyString s = "\"" <> mconcat (map go (BS.unpack s)) <> "\""
+hexyString s = "\"" <> foldMap go (BS.unpack s) <> "\""
     where go 0x5C = "\\\\"
           go 0x22 = "\\\""
           go c | isPrintable c = Builder.word8 c
@@ -45,11 +45,11 @@ pprintRule :: Rule T T T (Exp T T T) -> Out
 pprintRule = pprintRule' (pprintExpr 0)
 
 pprintRule' :: (e -> Out) -> Rule T T T e -> Out
-pprintRule' ppExp (Rule mts nt [] alts) = 
-    mconcat (map ((<> " ") . pprintMetaTag) mts)  <> Builder.byteString nt <> "\n  -> "
+pprintRule' ppExp (Rule mts nt [] alts) =
+    foldMap ((<> " ") . pprintMetaTag) mts  <> Builder.byteString nt <> "\n  -> "
  <> mconcat (intersperse "\n   / " (map (pprintAlternative' ppExp) alts)) <> ";"
-pprintRule' ppExp (Rule mts nt args alts) = 
-    mconcat (map ((<> " ") . pprintMetaTag) mts)
+pprintRule' ppExp (Rule mts nt args alts) =
+    foldMap ((<> " ") . pprintMetaTag) mts
  <> Builder.byteString nt <> "("
  <> mconcat (intersperse ", " (map Builder.byteString args))
  <> ")\n  -> " <> mconcat (intersperse "\n   / " (map (pprintAlternative' ppExp) alts)) <> ";"
@@ -90,7 +90,7 @@ pprintTerm' ppExp (RepeatUntil nt1 es1 l r x l0 r0 nt2 es2) =
     "repeat " <> pprintNT nt1 <> pprintArgList ppExp es1 <> pprintInterval ppExp l r
  <> "." <> Builder.byteString x <> " starting on " <> pprintInterval ppExp l0 r0
  <> " until " <> pprintNT nt2 <> pprintArgList ppExp es2
-    
+
 pprintRef :: Ref T T (Exp T T T) -> Out
 pprintRef = pprintRef' (pprintExpr 0)
 
@@ -106,7 +106,7 @@ pprintRef' _ (End nt) = pprintNT nt <> ".END"
 pprintExpr :: Int -> Exp T T T -> Out
 pprintExpr _ (Int n) = Builder.integerDec n
 pprintExpr _ (Float n) = floatToOut n
-    where floatToOut = mconcat . map (Builder.word8 . fromIntegral . ord) . show -- TODO: Crude
+    where floatToOut = foldMap (Builder.word8 . fromIntegral . ord) . show -- TODO: Crude
 pprintExpr _ (String s) = hexyString s
 pprintExpr p (Add l r) =
     outParen (p > 11) (pprintExpr 11 l <> " + " <> pprintExpr 12 r)

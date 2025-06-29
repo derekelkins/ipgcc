@@ -54,7 +54,7 @@ exprToJS ctxt env e = exprToJS' ctxt env 0 e
 exprToJS' :: Context -> Env -> Int -> Expr -> Out
 exprToJS' _ _ _ (Int n) = Builder.integerDec n
 exprToJS' _ _ _ (Float n) = floatToOut n
-    where floatToOut = mconcat . map (Builder.word8 . fromIntegral . ord) . show -- TODO: Crude
+    where floatToOut = foldMap (Builder.word8 . fromIntegral . ord) . show -- TODO: Crude
 exprToJS' _ _ _ (String s) = hexyString s
 exprToJS' c env p (Add l r) =
     outParen (p > 11) (exprToJS' c env 11 l <> " + " <> exprToJS' c env 12 r)
@@ -113,7 +113,7 @@ paramList :: [T] -> T
 paramList = BS.concat . map (", a_"<>)
 
 argList :: [Out] -> Out
-argList = mconcat . map ((", "<>))
+argList = foldMap ((", "<>))
 
 -- left and right will be the interval *actually* consumed by the previous term if
 -- it is a consuming term, otherwise it will be unchanged from earlier terms.
@@ -136,7 +136,7 @@ termToJS indent c env z@(NonTerminal nt args l r)
    <> indent <> [i|left = nt_#{u nt}._ipg_start;\n|]
    <> indent <> [i|right = nt_#{u nt}._ipg_end;\n\n|]
   where lExp = exprToJS c env l; rExp = exprToJS c env r; es = map (exprToJS c env) args
-termToJS indent c env z@(Terminal "" l r) 
+termToJS indent c env z@(Terminal "" l r)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> indent <> [i|left = #{lExp};\n|]
    <> indent <> [i|right = #{rExp};\n|]
@@ -284,10 +284,10 @@ alternativeToJS :: Maybe (T, [T]) -> Out -> Context -> Env -> Alternative T T T 
 alternativeToJS instrument indent c env (Alternative ts)
     = indent <> "_ipg_alt: {\n"
    <> indent <> "  let left = EOI; let right = 0; let loopEnd = 0;\n"
-   <>              mconcat (map declare nts)
-   <>              mconcat (map declareSeqs seqs)
+   <>              foldMap declare nts
+   <>              foldMap declareSeqs seqs
    <> indent <> "  self = { _ipg_start: EOI, _ipg_end: 0 };\n\n"
-   <>              mconcat (map (termToJS ("  " <> indent) c env) ts)
+   <>              foldMap (termToJS ("  " <> indent) c env) ts
    <>              instrumentation
    <>              debuggingPostamble
    <> indent <> "  return self;\n"
@@ -302,14 +302,14 @@ alternativeToJS instrument indent c env (Alternative ts)
                             Just (nt, args) -> indent <>
                                 [i|    console.error({#{nt}: self#{paramList args}});\n|]
         debuggingPostamble = whenDebug c (indent <> "_ipg_failTreeStack.pop();\n")
-    
+
 ruleToJS :: Context -> Rule T T T Expr -> Out
 ruleToJS c (Rule mt nt args alts) =
     [__i|
       function #{nt}(input, begin = 0, end = input.length#{paramList args}) {
         const EOI = end - begin; let self;
         #{debuggingPreamble}
-      #{mconcat (map (alternativeToJS instrument "  " c env) alts)}
+      #{foldMap (alternativeToJS instrument "  " c env) alts}
         #{debuggingPostamble}
         return null;
       }\n\n
@@ -335,7 +335,7 @@ ruleToJS c (Rule mt nt args alts) =
 
 toJSWithContext :: Context -> Grammar T T T Expr -> LBS.ByteString
 toJSWithContext c (Grammar rules) = Builder.toLazyByteString $
-    [__i| 
+    [__i|
       function _ipg_startsWith(s, l, r, prefix) {
         if (r - l < prefix.length) return false;
         if (typeof s === 'string') return s.startsWith(prefix, l);
@@ -349,7 +349,7 @@ toJSWithContext c (Grammar rules) = Builder.toLazyByteString $
       const _ipg_failTreeRoot = { children: [] };
       const _ipg_failTreeStack = [_ipg_failTreeRoot];\n
     |]
-   <> mconcat (map (ruleToJS c) rules)
+   <> foldMap (ruleToJS c) rules
 
 toJS :: Grammar T T T Expr -> LBS.ByteString
 toJS = toJSWithContext defaultContext

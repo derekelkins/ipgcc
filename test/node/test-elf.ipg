@@ -140,4 +140,4 @@ RelSecEntry -> U64 { offset = U64.value } U64 { info = U64.value };
 
 %postamble_begin
 
-console.log(JSON.stringify(ELF(fs.readFileSync("./test/node/samples/1.elf"))));
+console.log(JSON.stringify(ELF(fs.readFileSync("./test/node/samples/1.elf")), null, 2));

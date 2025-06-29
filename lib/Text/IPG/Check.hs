@@ -11,7 +11,7 @@ import Text.IPG.Parser ( IdType )
 
 type T = IdType
 type Exp' = Exp T T T
-type Grammar' = Grammar T T T Exp' 
+type Grammar' = Grammar T T T Exp'
 type Term' = Term T T T Exp'
 
 -- Things to check:
@@ -20,11 +20,11 @@ type Term' = Term T T T Exp'
 --   - EOI is not used as a parameter name
 --   - _ipg_start and _ipg_end are not used as attribute names (maybe check this in Export.JS)
 --   - _ipg_startsWith is not used as a rule name (maybe check this in Export.JS)
---   - START, END, this, these should not occur in the LHS of assignments 
+--   - START, END, this, these should not occur in the LHS of assignments
 --      (TODO: Be more discerning about `these`.)
 --   - Rules invoked with the proper arities
 validate :: Set.Set T -> Grammar' -> Maybe [T]
-validate externalRules (Grammar rules) = mconcat (map check rules) <> basicChecks
+validate externalRules (Grammar rules) = foldMap check rules <> basicChecks
   where
     possibleAttributes' =
         Map.fromList (map (\(Rule _ nt _ alts) -> (nt, Set.unions (map attrInAlt alts))) rules)
@@ -48,8 +48,8 @@ validate externalRules (Grammar rules) = mconcat (map check rules) <> basicCheck
         if "_ipg_startsWith" `Set.member` externalRules
           || "_ipg_startsWith" `Map.member` parameters then
             Just ["_ipg_startsWith can't be the name of a Rule"] else Nothing,
-        mconcat (map checkParameters (Map.toList parameters)),
-        mconcat (map checkAttributes (Map.toList possibleAttributes'))
+        foldMap checkParameters (Map.toList parameters),
+        foldMap checkAttributes (Map.toList possibleAttributes')
       ]
     checkParameters :: (T, (Int, Set.Set T)) -> Maybe [T]
     checkParameters (nt, (_, params))
@@ -66,7 +66,7 @@ validate externalRules (Grammar rules) = mconcat (map check rules) <> basicCheck
         | otherwise = Nothing
 
     check (Rule _ nt params alts) =
-        mconcat (map (\(Alternative ts) -> checkTerms nt (Set.fromList params) Set.empty ts) alts)
+        foldMap (\(Alternative ts) -> checkTerms nt (Set.fromList params) Set.empty ts) alts
     checkTerms :: T -> Set.Set T -> Set.Set T -> [Term'] -> Maybe [T]
     checkTerms _ _ _ [] = Nothing
     checkTerms nt params locals (NonTerminal (a, _) es l r:ts) =
@@ -75,7 +75,7 @@ validate externalRules (Grammar rules) = mconcat (map check rules) <> basicCheck
                         else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
             Just (n, _) -> if n == length es then Nothing
                             else Just [[i|Arity mismatch when calling #{a} in rule #{nt}|]])
-        <> mconcat (map (checkExp nt params locals) es)
+        <> foldMap (checkExp nt params locals) es
         <> checkExp nt params locals l
         <> checkExp nt params locals r
         <> checkTerms nt params locals ts
@@ -109,7 +109,7 @@ validate externalRules (Grammar rules) = mconcat (map check rules) <> basicCheck
                 Nothing -> Nothing -- Already checked this case
                 Just attrs -> if x `Set.member` attrs then Nothing
                                 else Just [[i|#{x} isn't a guaranteed attribute on #{a} in rule #{nt}|]])
-        <> mconcat (map (checkExp nt params locals) es)
+        <> foldMap (checkExp nt params locals) es
         <> checkExp nt params locals l
         <> checkExp nt params locals r
         <> checkExp nt params locals l0
@@ -131,8 +131,8 @@ validate externalRules (Grammar rules) = mconcat (map check rules) <> basicCheck
                             else Just [[i|Rule #{b} in rule #{nt} is undefined|]]
                 Just (n, _) -> if n == length es2 then Nothing
                                 else Just [[i|Arity mismatch when calling #{b} in rule #{nt}|]])
-        <> mconcat (map (checkExp nt params locals) es1)
-        <> mconcat (map (checkExp nt params locals) es2)
+        <> foldMap (checkExp nt params locals) es1
+        <> foldMap (checkExp nt params locals) es2
         <> checkExp nt params locals l
         <> checkExp nt params locals r
         <> checkExp nt params locals l0
@@ -147,7 +147,7 @@ validate externalRules (Grammar rules) = mconcat (map check rules) <> basicCheck
                             else Just [[i|Arity mismatch when calling #{a} in rule #{nt}|]])
         <> checkExp nt params locals s
         <> checkExp nt params locals e
-        <> mconcat (map (checkExp nt params' locals) es)
+        <> foldMap (checkExp nt params' locals) es
         <> checkExp nt params' locals l
         <> checkExp nt params' locals r
         <> checkTerms nt params locals ts
@@ -199,7 +199,7 @@ validate externalRules (Grammar rules) = mconcat (map check rules) <> basicCheck
     checkExp nt params locals (If b t e) =
         checkExp nt params locals b <> checkExp nt params locals t
             <> checkExp nt params locals e
-    checkExp nt params locals (Call _ es) = mconcat (map (checkExp nt params locals) es)
+    checkExp nt params locals (Call _ es) = foldMap (checkExp nt params locals) es
     checkExp nt params locals (Ref (Id x)) =
         if x `Set.member` params || x `Set.member` locals then Nothing
             else Just [[i|#{x} is not yet defined in rule #{nt}|]]
