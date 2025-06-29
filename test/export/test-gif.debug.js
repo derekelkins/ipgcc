@@ -54,64 +54,64 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Header;
-    let nt_LogicalScreen;
-    let nt_Blocks;
+    let nt_Header_0;
+    let nt_LogicalScreen_0;
+    let nt_Blocks_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // Header[0, EOI]
+    // Header@0[0, EOI]
     left = 0;
-    _ipg_failedTerm = { term: "Header[0, EOI]", left, right };
+    _ipg_failedTerm = { term: "Header@0[0, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Header = Header(input, begin + left, begin + right);
-    if (nt_Header === null) break _ipg_alt;
-    if (nt_Header._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Header._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Header._ipg_end);
+    nt_Header_0 = Header(input, begin + left, begin + right);
+    if (nt_Header_0 === null) break _ipg_alt;
+    if (nt_Header_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Header_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Header_0._ipg_end);
     }
-    nt_Header._ipg_end += left;
-    nt_Header._ipg_start += left;
-    left = nt_Header._ipg_start;
-    right = nt_Header._ipg_end;
+    nt_Header_0._ipg_end += left;
+    nt_Header_0._ipg_start += left;
+    left = nt_Header_0._ipg_start;
+    right = nt_Header_0._ipg_end;
 
-    // LogicalScreen[Header.END, EOI]
-    left = nt_Header._ipg_end;
-    _ipg_failedTerm = { term: "LogicalScreen[Header.END, EOI]", left, right };
+    // LogicalScreen@0[Header@0.END, EOI]
+    left = nt_Header_0._ipg_end;
+    _ipg_failedTerm = { term: "LogicalScreen@0[Header@0.END, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_LogicalScreen = LogicalScreen(input, begin + left, begin + right);
-    if (nt_LogicalScreen === null) break _ipg_alt;
-    if (nt_LogicalScreen._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_LogicalScreen._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_LogicalScreen._ipg_end);
+    nt_LogicalScreen_0 = LogicalScreen(input, begin + left, begin + right);
+    if (nt_LogicalScreen_0 === null) break _ipg_alt;
+    if (nt_LogicalScreen_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_LogicalScreen_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_LogicalScreen_0._ipg_end);
     }
-    nt_LogicalScreen._ipg_end += left;
-    nt_LogicalScreen._ipg_start += left;
-    left = nt_LogicalScreen._ipg_start;
-    right = nt_LogicalScreen._ipg_end;
+    nt_LogicalScreen_0._ipg_end += left;
+    nt_LogicalScreen_0._ipg_start += left;
+    left = nt_LogicalScreen_0._ipg_start;
+    right = nt_LogicalScreen_0._ipg_end;
 
-    // { logicalScreen = LogicalScreen.this }
-    self.logicalScreen = (({_ipg_start,_ipg_end,...o}) => o)(nt_LogicalScreen);
+    // { logicalScreen = LogicalScreen@0.this }
+    self.logicalScreen = (({_ipg_start,_ipg_end,...o}) => o)(nt_LogicalScreen_0);
 
-    // Blocks[LogicalScreen.END, EOI]
-    left = nt_LogicalScreen._ipg_end;
-    _ipg_failedTerm = { term: "Blocks[LogicalScreen.END, EOI]", left, right };
+    // Blocks@0[LogicalScreen@0.END, EOI]
+    left = nt_LogicalScreen_0._ipg_end;
+    _ipg_failedTerm = { term: "Blocks@0[LogicalScreen@0.END, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Blocks = Blocks(input, begin + left, begin + right);
-    if (nt_Blocks === null) break _ipg_alt;
-    if (nt_Blocks._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Blocks._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Blocks._ipg_end);
+    nt_Blocks_0 = Blocks(input, begin + left, begin + right);
+    if (nt_Blocks_0 === null) break _ipg_alt;
+    if (nt_Blocks_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Blocks_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Blocks_0._ipg_end);
     }
-    nt_Blocks._ipg_end += left;
-    nt_Blocks._ipg_start += left;
-    left = nt_Blocks._ipg_start;
-    right = nt_Blocks._ipg_end;
+    nt_Blocks_0._ipg_end += left;
+    nt_Blocks_0._ipg_start += left;
+    left = nt_Blocks_0._ipg_start;
+    right = nt_Blocks_0._ipg_end;
 
-    // { blocks = Blocks.values }
-    self.blocks = nt_Blocks.values;
+    // { blocks = Blocks@0.values }
+    self.blocks = nt_Blocks_0.values;
 
   _ipg_failTreeStack.pop();
     return self;
@@ -171,47 +171,47 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_LogicalScreenDescriptor;
-    let nt_MaybeColorTable;
+    let nt_LogicalScreenDescriptor_0;
+    let nt_MaybeColorTable_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // LogicalScreenDescriptor[0, EOI]
+    // LogicalScreenDescriptor@0[0, EOI]
     left = 0;
-    _ipg_failedTerm = { term: "LogicalScreenDescriptor[0, EOI]", left, right };
+    _ipg_failedTerm = { term: "LogicalScreenDescriptor@0[0, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_LogicalScreenDescriptor = LogicalScreenDescriptor(input, begin + left, begin + right);
-    if (nt_LogicalScreenDescriptor === null) break _ipg_alt;
-    if (nt_LogicalScreenDescriptor._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_LogicalScreenDescriptor._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_LogicalScreenDescriptor._ipg_end);
+    nt_LogicalScreenDescriptor_0 = LogicalScreenDescriptor(input, begin + left, begin + right);
+    if (nt_LogicalScreenDescriptor_0 === null) break _ipg_alt;
+    if (nt_LogicalScreenDescriptor_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_LogicalScreenDescriptor_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_LogicalScreenDescriptor_0._ipg_end);
     }
-    nt_LogicalScreenDescriptor._ipg_end += left;
-    nt_LogicalScreenDescriptor._ipg_start += left;
-    left = nt_LogicalScreenDescriptor._ipg_start;
-    right = nt_LogicalScreenDescriptor._ipg_end;
+    nt_LogicalScreenDescriptor_0._ipg_end += left;
+    nt_LogicalScreenDescriptor_0._ipg_start += left;
+    left = nt_LogicalScreenDescriptor_0._ipg_start;
+    right = nt_LogicalScreenDescriptor_0._ipg_end;
 
-    // { descriptor = LogicalScreenDescriptor.this }
-    self.descriptor = (({_ipg_start,_ipg_end,...o}) => o)(nt_LogicalScreenDescriptor);
+    // { descriptor = LogicalScreenDescriptor@0.this }
+    self.descriptor = (({_ipg_start,_ipg_end,...o}) => o)(nt_LogicalScreenDescriptor_0);
 
-    // MaybeColorTable(LogicalScreenDescriptor.hasGlobalColorTable)[LogicalScreenDescriptor.END, LogicalScreenDescriptor.END + 3 * LogicalScreenDescriptor.globalColorTableSize]
-    left = nt_LogicalScreenDescriptor._ipg_end;
-    _ipg_failedTerm = { term: "MaybeColorTable(LogicalScreenDescriptor.hasGlobalColorTable)[LogicalScreenDescriptor.END, LogicalScreenDescriptor.END + 3 * LogicalScreenDescriptor.globalColorTableSize]", left, right };
-    right = nt_LogicalScreenDescriptor._ipg_end + 3 * nt_LogicalScreenDescriptor.globalColorTableSize;
+    // MaybeColorTable@0(LogicalScreenDescriptor@0.hasGlobalColorTable)[LogicalScreenDescriptor@0.END, LogicalScreenDescriptor@0.END + 3 * LogicalScreenDescriptor@0.globalColorTableSize]
+    left = nt_LogicalScreenDescriptor_0._ipg_end;
+    _ipg_failedTerm = { term: "MaybeColorTable@0(LogicalScreenDescriptor@0.hasGlobalColorTable)[LogicalScreenDescriptor@0.END, LogicalScreenDescriptor@0.END + 3 * LogicalScreenDescriptor@0.globalColorTableSize]", left, right };
+    right = nt_LogicalScreenDescriptor_0._ipg_end + 3 * nt_LogicalScreenDescriptor_0.globalColorTableSize;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_MaybeColorTable = MaybeColorTable(input, begin + left, begin + right, nt_LogicalScreenDescriptor.hasGlobalColorTable);
-    if (nt_MaybeColorTable === null) break _ipg_alt;
-    if (nt_MaybeColorTable._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_MaybeColorTable._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_MaybeColorTable._ipg_end);
+    nt_MaybeColorTable_0 = MaybeColorTable(input, begin + left, begin + right, nt_LogicalScreenDescriptor_0.hasGlobalColorTable);
+    if (nt_MaybeColorTable_0 === null) break _ipg_alt;
+    if (nt_MaybeColorTable_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_MaybeColorTable_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_MaybeColorTable_0._ipg_end);
     }
-    nt_MaybeColorTable._ipg_end += left;
-    nt_MaybeColorTable._ipg_start += left;
-    left = nt_MaybeColorTable._ipg_start;
-    right = nt_MaybeColorTable._ipg_end;
+    nt_MaybeColorTable_0._ipg_end += left;
+    nt_MaybeColorTable_0._ipg_start += left;
+    left = nt_MaybeColorTable_0._ipg_start;
+    right = nt_MaybeColorTable_0._ipg_end;
 
-    // { globalColorTable = MaybeColorTable.table }
-    self.globalColorTable = nt_MaybeColorTable.table;
+    // { globalColorTable = MaybeColorTable@0.table }
+    self.globalColorTable = nt_MaybeColorTable_0.table;
 
   _ipg_failTreeStack.pop();
     return self;
@@ -236,69 +236,70 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_U16;
+    let nt_U16_0;
+    let nt_U16_1;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // U16[0, EOI]
+    // U16@0[0, EOI]
     left = 0;
-    _ipg_failedTerm = { term: "U16[0, EOI]", left, right };
+    _ipg_failedTerm = { term: "U16@0[0, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U16 = U16(input, begin + left, begin + right);
-    if (nt_U16 === null) break _ipg_alt;
-    if (nt_U16._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U16._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U16._ipg_end);
+    nt_U16_0 = U16(input, begin + left, begin + right);
+    if (nt_U16_0 === null) break _ipg_alt;
+    if (nt_U16_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U16_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U16_0._ipg_end);
     }
-    nt_U16._ipg_end += left;
-    nt_U16._ipg_start += left;
-    left = nt_U16._ipg_start;
-    right = nt_U16._ipg_end;
+    nt_U16_0._ipg_end += left;
+    nt_U16_0._ipg_start += left;
+    left = nt_U16_0._ipg_start;
+    right = nt_U16_0._ipg_end;
 
-    // { width = U16.value }
-    self.width = nt_U16.value;
+    // { width = U16@0.value }
+    self.width = nt_U16_0.value;
 
-    // U16[U16.END, EOI]
-    left = nt_U16._ipg_end;
-    _ipg_failedTerm = { term: "U16[U16.END, EOI]", left, right };
+    // U16@1[U16@0.END, EOI]
+    left = nt_U16_0._ipg_end;
+    _ipg_failedTerm = { term: "U16@1[U16@0.END, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U16 = U16(input, begin + left, begin + right);
-    if (nt_U16 === null) break _ipg_alt;
-    if (nt_U16._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U16._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U16._ipg_end);
+    nt_U16_1 = U16(input, begin + left, begin + right);
+    if (nt_U16_1 === null) break _ipg_alt;
+    if (nt_U16_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U16_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U16_1._ipg_end);
     }
-    nt_U16._ipg_end += left;
-    nt_U16._ipg_start += left;
-    left = nt_U16._ipg_start;
-    right = nt_U16._ipg_end;
+    nt_U16_1._ipg_end += left;
+    nt_U16_1._ipg_start += left;
+    left = nt_U16_1._ipg_start;
+    right = nt_U16_1._ipg_end;
 
-    // { height = U16.value }
-    self.height = nt_U16.value;
+    // { height = U16@1.value }
+    self.height = nt_U16_1.value;
 
-    // { packedFields = .[U16.END] }
-    left = nt_U16._ipg_end;
+    // { packedFields = .[U16@1.END] }
+    left = nt_U16_1._ipg_end;
     right = left + 1;
-    _ipg_failedTerm = { term: "{ packedFields = .[U16.END] }", left, right };
+    _ipg_failedTerm = { term: "{ packedFields = .[U16@1.END] }", left, right };
     if (left < 0 || right > EOI) break _ipg_alt;
     self.packedFields = input[begin + left];
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
 
-    // { backgroundColorIndex = .[U16.END + 1] }
-    left = nt_U16._ipg_end + 1;
+    // { backgroundColorIndex = .[U16@1.END + 1] }
+    left = nt_U16_1._ipg_end + 1;
     right = left + 1;
-    _ipg_failedTerm = { term: "{ backgroundColorIndex = .[U16.END + 1] }", left, right };
+    _ipg_failedTerm = { term: "{ backgroundColorIndex = .[U16@1.END + 1] }", left, right };
     if (left < 0 || right > EOI) break _ipg_alt;
     self.backgroundColorIndex = input[begin + left];
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
 
-    // { pixelAspectRation = .[U16.END + 2] }
-    left = nt_U16._ipg_end + 2;
+    // { pixelAspectRation = .[U16@1.END + 2] }
+    left = nt_U16_1._ipg_end + 2;
     right = left + 1;
-    _ipg_failedTerm = { term: "{ pixelAspectRation = .[U16.END + 2] }", left, right };
+    _ipg_failedTerm = { term: "{ pixelAspectRation = .[U16@1.END + 2] }", left, right };
     if (left < 0 || right > EOI) break _ipg_alt;
     self.pixelAspectRation = input[begin + left];
     self._ipg_start = Math.min(self._ipg_start, left);
@@ -353,27 +354,27 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_ColorTable;
+    let nt_ColorTable_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // ColorTable[0, EOI]
+    // ColorTable@0[0, EOI]
     left = 0;
-    _ipg_failedTerm = { term: "ColorTable[0, EOI]", left, right };
+    _ipg_failedTerm = { term: "ColorTable@0[0, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ColorTable = ColorTable(input, begin + left, begin + right);
-    if (nt_ColorTable === null) break _ipg_alt;
-    if (nt_ColorTable._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ColorTable._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ColorTable._ipg_end);
+    nt_ColorTable_0 = ColorTable(input, begin + left, begin + right);
+    if (nt_ColorTable_0 === null) break _ipg_alt;
+    if (nt_ColorTable_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ColorTable_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ColorTable_0._ipg_end);
     }
-    nt_ColorTable._ipg_end += left;
-    nt_ColorTable._ipg_start += left;
-    left = nt_ColorTable._ipg_start;
-    right = nt_ColorTable._ipg_end;
+    nt_ColorTable_0._ipg_end += left;
+    nt_ColorTable_0._ipg_start += left;
+    left = nt_ColorTable_0._ipg_start;
+    right = nt_ColorTable_0._ipg_end;
 
-    // { table = ColorTable.table }
-    self.table = nt_ColorTable.table;
+    // { table = ColorTable@0.table }
+    self.table = nt_ColorTable_0.table;
 
   _ipg_failTreeStack.pop();
     return self;
@@ -398,17 +399,17 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_RGB;
-    let seq_RGB; let seq_RGB_start = 0;
+    let nt_RGB_0;
+    let seq_RGB_0; let seq_RGB_0_start = 0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // for i = 0 to EOI / 3 do RGB[3 * i, 3 * i + 3]
-    _ipg_failedTerm = { term: "for i = 0 to EOI / 3 do RGB[3 * i, 3 * i + 3]" };
-    nt_RGB = { _ipg_end: right, _ipg_start: left };
-    seq_RGB_start = 0;
+    // for i = 0 to EOI / 3 do RGB@0[3 * i, 3 * i + 3]
+    _ipg_failedTerm = { term: "for i = 0 to EOI / 3 do RGB@0[3 * i, 3 * i + 3]" };
+    nt_RGB_0 = { _ipg_end: right, _ipg_start: left };
+    seq_RGB_0_start = 0;
     loopEnd = EOI / 3;
-    seq_RGB = new Array(loopEnd - seq_RGB_start);
-    for (self.i = seq_RGB_start; self.i < loopEnd; self.i++) {
+    seq_RGB_0 = new Array(loopEnd - seq_RGB_0_start);
+    for (self.i = seq_RGB_0_start; self.i < loopEnd; self.i++) {
       const left = 3 * self.i;
       const right = 3 * self.i + 3;
     _ipg_failedTerm.left = left; _ipg_failedTerm.right = right;
@@ -421,16 +422,16 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
       }
       tmp._ipg_end += left;
       tmp._ipg_start += left;
-      nt_RGB._ipg_end = tmp._ipg_end;
-      nt_RGB._ipg_start = tmp._ipg_start;
-      seq_RGB[self.i - seq_RGB_start] = tmp;
+      nt_RGB_0._ipg_end = tmp._ipg_end;
+      nt_RGB_0._ipg_start = tmp._ipg_start;
+      seq_RGB_0[self.i - seq_RGB_0_start] = tmp;
     }
     delete self.i;
-    left = nt_RGB._ipg_start;
-    right = nt_RGB._ipg_end;
+    left = nt_RGB_0._ipg_start;
+    right = nt_RGB_0._ipg_end;
 
-    // { table = RGB.these }
-    self.table = seq_RGB.map(({_ipg_start,_ipg_end,...o}) => o);
+    // { table = RGB@0.these }
+    self.table = seq_RGB_0.map(({_ipg_start,_ipg_end,...o}) => o);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -455,37 +456,37 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Block;
-    let nt_Trailer;
+    let nt_Block_0;
+    let nt_Trailer_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // repeat Block[Block.END, EOI].block starting on [0, EOI] until Trailer
-    _ipg_failedTerm = { term: "repeat Block[Block.END, EOI].block starting on [0, EOI] until Trailer" };
+    // repeat Block@0[Block@0.END, EOI].block starting on [0, EOI] until Trailer@0
+    _ipg_failedTerm = { term: "repeat Block@0[Block@0.END, EOI].block starting on [0, EOI] until Trailer@0" };
     left = 0;
     right = EOI;
     self.values = [];
     while (true) {
       if (left < 0 || right < left || right > EOI) break _ipg_alt;
-      nt_Trailer = Trailer(input, begin + left, begin + right);
-      if (nt_Trailer !== null) {
-        if (nt_Trailer._ipg_end !== 0) {
-          self._ipg_start = Math.min(self._ipg_start, left + nt_Trailer._ipg_start);
-          self._ipg_end = Math.max(self._ipg_end, left + nt_Trailer._ipg_end);
+      nt_Trailer_0 = Trailer(input, begin + left, begin + right);
+      if (nt_Trailer_0 !== null) {
+        if (nt_Trailer_0._ipg_end !== 0) {
+          self._ipg_start = Math.min(self._ipg_start, left + nt_Trailer_0._ipg_start);
+          self._ipg_end = Math.max(self._ipg_end, left + nt_Trailer_0._ipg_end);
         }
-        nt_Trailer._ipg_end += left;
-        nt_Trailer._ipg_start += left;
-        right = nt_Trailer._ipg_end;
+        nt_Trailer_0._ipg_end += left;
+        nt_Trailer_0._ipg_start += left;
+        right = nt_Trailer_0._ipg_end;
         break;
       }
-      nt_Block = Block(input, begin + left, begin + right);
-      if (nt_Block === null) break _ipg_alt;
-      if (nt_Block._ipg_end === 0) throw 'repeat of non-consuming rule: Block';
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Block._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Block._ipg_end);
-      nt_Block._ipg_end += left;
-      nt_Block._ipg_start += left;
-      self.values.push(nt_Block.block);
-      left = nt_Block._ipg_end;
+      nt_Block_0 = Block(input, begin + left, begin + right);
+      if (nt_Block_0 === null) break _ipg_alt;
+      if (nt_Block_0._ipg_end === 0) throw 'repeat of non-consuming rule: Block';
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Block_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Block_0._ipg_end);
+      nt_Block_0._ipg_end += left;
+      nt_Block_0._ipg_start += left;
+      self.values.push(nt_Block_0.block);
+      left = nt_Block_0._ipg_end;
       right = EOI;
     }
 
@@ -512,81 +513,81 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_GraphicBlock;
+    let nt_GraphicBlock_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // GraphicBlock[0, EOI]
+    // GraphicBlock@0[0, EOI]
     left = 0;
-    _ipg_failedTerm = { term: "GraphicBlock[0, EOI]", left, right };
+    _ipg_failedTerm = { term: "GraphicBlock@0[0, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_GraphicBlock = GraphicBlock(input, begin + left, begin + right);
-    if (nt_GraphicBlock === null) break _ipg_alt;
-    if (nt_GraphicBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_GraphicBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_GraphicBlock._ipg_end);
+    nt_GraphicBlock_0 = GraphicBlock(input, begin + left, begin + right);
+    if (nt_GraphicBlock_0 === null) break _ipg_alt;
+    if (nt_GraphicBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_GraphicBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_GraphicBlock_0._ipg_end);
     }
-    nt_GraphicBlock._ipg_end += left;
-    nt_GraphicBlock._ipg_start += left;
-    left = nt_GraphicBlock._ipg_start;
-    right = nt_GraphicBlock._ipg_end;
+    nt_GraphicBlock_0._ipg_end += left;
+    nt_GraphicBlock_0._ipg_start += left;
+    left = nt_GraphicBlock_0._ipg_start;
+    right = nt_GraphicBlock_0._ipg_end;
 
-    // { block = GraphicBlock.block }
-    self.block = nt_GraphicBlock.block;
+    // { block = GraphicBlock@0.block }
+    self.block = nt_GraphicBlock_0.block;
 
   _ipg_failTreeStack.pop();
     return self;
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_ApplicationExtension;
+    let nt_ApplicationExtension_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // ApplicationExtension[0, EOI]
+    // ApplicationExtension@0[0, EOI]
     left = 0;
-    _ipg_failedTerm = { term: "ApplicationExtension[0, EOI]", left, right };
+    _ipg_failedTerm = { term: "ApplicationExtension@0[0, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ApplicationExtension = ApplicationExtension(input, begin + left, begin + right);
-    if (nt_ApplicationExtension === null) break _ipg_alt;
-    if (nt_ApplicationExtension._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ApplicationExtension._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ApplicationExtension._ipg_end);
+    nt_ApplicationExtension_0 = ApplicationExtension(input, begin + left, begin + right);
+    if (nt_ApplicationExtension_0 === null) break _ipg_alt;
+    if (nt_ApplicationExtension_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ApplicationExtension_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ApplicationExtension_0._ipg_end);
     }
-    nt_ApplicationExtension._ipg_end += left;
-    nt_ApplicationExtension._ipg_start += left;
-    left = nt_ApplicationExtension._ipg_start;
-    right = nt_ApplicationExtension._ipg_end;
+    nt_ApplicationExtension_0._ipg_end += left;
+    nt_ApplicationExtension_0._ipg_start += left;
+    left = nt_ApplicationExtension_0._ipg_start;
+    right = nt_ApplicationExtension_0._ipg_end;
 
-    // { block = ApplicationExtension.this }
-    self.block = (({_ipg_start,_ipg_end,...o}) => o)(nt_ApplicationExtension);
+    // { block = ApplicationExtension@0.this }
+    self.block = (({_ipg_start,_ipg_end,...o}) => o)(nt_ApplicationExtension_0);
 
   _ipg_failTreeStack.pop();
     return self;
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_CommentExtension;
+    let nt_CommentExtension_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // CommentExtension[0, EOI]
+    // CommentExtension@0[0, EOI]
     left = 0;
-    _ipg_failedTerm = { term: "CommentExtension[0, EOI]", left, right };
+    _ipg_failedTerm = { term: "CommentExtension@0[0, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_CommentExtension = CommentExtension(input, begin + left, begin + right);
-    if (nt_CommentExtension === null) break _ipg_alt;
-    if (nt_CommentExtension._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_CommentExtension._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_CommentExtension._ipg_end);
+    nt_CommentExtension_0 = CommentExtension(input, begin + left, begin + right);
+    if (nt_CommentExtension_0 === null) break _ipg_alt;
+    if (nt_CommentExtension_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_CommentExtension_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_CommentExtension_0._ipg_end);
     }
-    nt_CommentExtension._ipg_end += left;
-    nt_CommentExtension._ipg_start += left;
-    left = nt_CommentExtension._ipg_start;
-    right = nt_CommentExtension._ipg_end;
+    nt_CommentExtension_0._ipg_end += left;
+    nt_CommentExtension_0._ipg_start += left;
+    left = nt_CommentExtension_0._ipg_start;
+    right = nt_CommentExtension_0._ipg_end;
 
-    // { block = CommentExtension.this }
-    self.block = (({_ipg_start,_ipg_end,...o}) => o)(nt_CommentExtension);
+    // { block = CommentExtension@0.this }
+    self.block = (({_ipg_start,_ipg_end,...o}) => o)(nt_CommentExtension_0);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -611,44 +612,44 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_MaybeGraphicControlExtension;
-    let nt_GraphicRenderingBlock;
+    let nt_MaybeGraphicControlExtension_0;
+    let nt_GraphicRenderingBlock_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // MaybeGraphicControlExtension[0, EOI]
+    // MaybeGraphicControlExtension@0[0, EOI]
     left = 0;
-    _ipg_failedTerm = { term: "MaybeGraphicControlExtension[0, EOI]", left, right };
+    _ipg_failedTerm = { term: "MaybeGraphicControlExtension@0[0, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_MaybeGraphicControlExtension = MaybeGraphicControlExtension(input, begin + left, begin + right);
-    if (nt_MaybeGraphicControlExtension === null) break _ipg_alt;
-    if (nt_MaybeGraphicControlExtension._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_MaybeGraphicControlExtension._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_MaybeGraphicControlExtension._ipg_end);
+    nt_MaybeGraphicControlExtension_0 = MaybeGraphicControlExtension(input, begin + left, begin + right);
+    if (nt_MaybeGraphicControlExtension_0 === null) break _ipg_alt;
+    if (nt_MaybeGraphicControlExtension_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_MaybeGraphicControlExtension_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_MaybeGraphicControlExtension_0._ipg_end);
     }
-    nt_MaybeGraphicControlExtension._ipg_end += left;
-    nt_MaybeGraphicControlExtension._ipg_start += left;
-    left = nt_MaybeGraphicControlExtension._ipg_start;
-    right = nt_MaybeGraphicControlExtension._ipg_end;
+    nt_MaybeGraphicControlExtension_0._ipg_end += left;
+    nt_MaybeGraphicControlExtension_0._ipg_start += left;
+    left = nt_MaybeGraphicControlExtension_0._ipg_start;
+    right = nt_MaybeGraphicControlExtension_0._ipg_end;
 
-    // GraphicRenderingBlock[MaybeGraphicControlExtension.END, EOI]
-    left = nt_MaybeGraphicControlExtension._ipg_end;
-    _ipg_failedTerm = { term: "GraphicRenderingBlock[MaybeGraphicControlExtension.END, EOI]", left, right };
+    // GraphicRenderingBlock@0[MaybeGraphicControlExtension@0.END, EOI]
+    left = nt_MaybeGraphicControlExtension_0._ipg_end;
+    _ipg_failedTerm = { term: "GraphicRenderingBlock@0[MaybeGraphicControlExtension@0.END, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_GraphicRenderingBlock = GraphicRenderingBlock(input, begin + left, begin + right);
-    if (nt_GraphicRenderingBlock === null) break _ipg_alt;
-    if (nt_GraphicRenderingBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_GraphicRenderingBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_GraphicRenderingBlock._ipg_end);
+    nt_GraphicRenderingBlock_0 = GraphicRenderingBlock(input, begin + left, begin + right);
+    if (nt_GraphicRenderingBlock_0 === null) break _ipg_alt;
+    if (nt_GraphicRenderingBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_GraphicRenderingBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_GraphicRenderingBlock_0._ipg_end);
     }
-    nt_GraphicRenderingBlock._ipg_end += left;
-    nt_GraphicRenderingBlock._ipg_start += left;
-    left = nt_GraphicRenderingBlock._ipg_start;
-    right = nt_GraphicRenderingBlock._ipg_end;
+    nt_GraphicRenderingBlock_0._ipg_end += left;
+    nt_GraphicRenderingBlock_0._ipg_start += left;
+    left = nt_GraphicRenderingBlock_0._ipg_start;
+    right = nt_GraphicRenderingBlock_0._ipg_end;
 
-    // { block = makeGraphicBlock(MaybeGraphicControlExtension.extension, GraphicRenderingBlock.block) }
-    self.block = makeGraphicBlock(nt_MaybeGraphicControlExtension.extension, nt_GraphicRenderingBlock.block);
+    // { block = makeGraphicBlock(MaybeGraphicControlExtension@0.extension, GraphicRenderingBlock@0.block) }
+    self.block = makeGraphicBlock(nt_MaybeGraphicControlExtension_0.extension, nt_GraphicRenderingBlock_0.block);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -673,8 +674,8 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_U16;
-    let nt_BlockTerminator;
+    let nt_U16_0;
+    let nt_BlockTerminator_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // "!\xf9"[0, 2]
@@ -715,49 +716,49 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     // { transparentColorFlag = packedFields & 1 }
     self.transparentColorFlag = self.packedFields & 1;
 
-    // U16[4, EOI]
+    // U16@0[4, EOI]
     left = 4;
-    _ipg_failedTerm = { term: "U16[4, EOI]", left, right };
+    _ipg_failedTerm = { term: "U16@0[4, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U16 = U16(input, begin + left, begin + right);
-    if (nt_U16 === null) break _ipg_alt;
-    if (nt_U16._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U16._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U16._ipg_end);
+    nt_U16_0 = U16(input, begin + left, begin + right);
+    if (nt_U16_0 === null) break _ipg_alt;
+    if (nt_U16_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U16_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U16_0._ipg_end);
     }
-    nt_U16._ipg_end += left;
-    nt_U16._ipg_start += left;
-    left = nt_U16._ipg_start;
-    right = nt_U16._ipg_end;
+    nt_U16_0._ipg_end += left;
+    nt_U16_0._ipg_start += left;
+    left = nt_U16_0._ipg_start;
+    right = nt_U16_0._ipg_end;
 
-    // { delayTime = U16.value }
-    self.delayTime = nt_U16.value;
+    // { delayTime = U16@0.value }
+    self.delayTime = nt_U16_0.value;
 
-    // { transparentColorIndex = .[U16.END] }
-    left = nt_U16._ipg_end;
+    // { transparentColorIndex = .[U16@0.END] }
+    left = nt_U16_0._ipg_end;
     right = left + 1;
-    _ipg_failedTerm = { term: "{ transparentColorIndex = .[U16.END] }", left, right };
+    _ipg_failedTerm = { term: "{ transparentColorIndex = .[U16@0.END] }", left, right };
     if (left < 0 || right > EOI) break _ipg_alt;
     self.transparentColorIndex = input[begin + left];
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
 
-    // BlockTerminator[U16.END + 1, EOI]
-    left = nt_U16._ipg_end + 1;
-    _ipg_failedTerm = { term: "BlockTerminator[U16.END + 1, EOI]", left, right };
+    // BlockTerminator@0[U16@0.END + 1, EOI]
+    left = nt_U16_0._ipg_end + 1;
+    _ipg_failedTerm = { term: "BlockTerminator@0[U16@0.END + 1, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_BlockTerminator = BlockTerminator(input, begin + left, begin + right);
-    if (nt_BlockTerminator === null) break _ipg_alt;
-    if (nt_BlockTerminator._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_BlockTerminator._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_BlockTerminator._ipg_end);
+    nt_BlockTerminator_0 = BlockTerminator(input, begin + left, begin + right);
+    if (nt_BlockTerminator_0 === null) break _ipg_alt;
+    if (nt_BlockTerminator_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_BlockTerminator_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_BlockTerminator_0._ipg_end);
     }
-    nt_BlockTerminator._ipg_end += left;
-    nt_BlockTerminator._ipg_start += left;
-    left = nt_BlockTerminator._ipg_start;
-    right = nt_BlockTerminator._ipg_end;
+    nt_BlockTerminator_0._ipg_end += left;
+    nt_BlockTerminator_0._ipg_start += left;
+    left = nt_BlockTerminator_0._ipg_start;
+    right = nt_BlockTerminator_0._ipg_end;
 
     // { extension = makeGraphicControlExtension(disposalMethod, userInputFlag, transparentColorFlag, delayTime, transparentColorIndex) }
     self.extension = makeGraphicControlExtension(self.disposalMethod, self.userInputFlag, self.transparentColorFlag, self.delayTime, self.transparentColorIndex);
@@ -795,54 +796,54 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_TableBasedImage;
+    let nt_TableBasedImage_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // TableBasedImage[0, EOI]
+    // TableBasedImage@0[0, EOI]
     left = 0;
-    _ipg_failedTerm = { term: "TableBasedImage[0, EOI]", left, right };
+    _ipg_failedTerm = { term: "TableBasedImage@0[0, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TableBasedImage = TableBasedImage(input, begin + left, begin + right);
-    if (nt_TableBasedImage === null) break _ipg_alt;
-    if (nt_TableBasedImage._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TableBasedImage._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TableBasedImage._ipg_end);
+    nt_TableBasedImage_0 = TableBasedImage(input, begin + left, begin + right);
+    if (nt_TableBasedImage_0 === null) break _ipg_alt;
+    if (nt_TableBasedImage_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TableBasedImage_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TableBasedImage_0._ipg_end);
     }
-    nt_TableBasedImage._ipg_end += left;
-    nt_TableBasedImage._ipg_start += left;
-    left = nt_TableBasedImage._ipg_start;
-    right = nt_TableBasedImage._ipg_end;
+    nt_TableBasedImage_0._ipg_end += left;
+    nt_TableBasedImage_0._ipg_start += left;
+    left = nt_TableBasedImage_0._ipg_start;
+    right = nt_TableBasedImage_0._ipg_end;
 
-    // { block = TableBasedImage.this }
-    self.block = (({_ipg_start,_ipg_end,...o}) => o)(nt_TableBasedImage);
+    // { block = TableBasedImage@0.this }
+    self.block = (({_ipg_start,_ipg_end,...o}) => o)(nt_TableBasedImage_0);
 
   _ipg_failTreeStack.pop();
     return self;
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_PlainTextExtension;
+    let nt_PlainTextExtension_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // PlainTextExtension[0, EOI]
+    // PlainTextExtension@0[0, EOI]
     left = 0;
-    _ipg_failedTerm = { term: "PlainTextExtension[0, EOI]", left, right };
+    _ipg_failedTerm = { term: "PlainTextExtension@0[0, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_PlainTextExtension = PlainTextExtension(input, begin + left, begin + right);
-    if (nt_PlainTextExtension === null) break _ipg_alt;
-    if (nt_PlainTextExtension._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_PlainTextExtension._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_PlainTextExtension._ipg_end);
+    nt_PlainTextExtension_0 = PlainTextExtension(input, begin + left, begin + right);
+    if (nt_PlainTextExtension_0 === null) break _ipg_alt;
+    if (nt_PlainTextExtension_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_PlainTextExtension_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_PlainTextExtension_0._ipg_end);
     }
-    nt_PlainTextExtension._ipg_end += left;
-    nt_PlainTextExtension._ipg_start += left;
-    left = nt_PlainTextExtension._ipg_start;
-    right = nt_PlainTextExtension._ipg_end;
+    nt_PlainTextExtension_0._ipg_end += left;
+    nt_PlainTextExtension_0._ipg_start += left;
+    left = nt_PlainTextExtension_0._ipg_start;
+    right = nt_PlainTextExtension_0._ipg_end;
 
-    // { block = PlainTextExtension.this }
-    self.block = (({_ipg_start,_ipg_end,...o}) => o)(nt_PlainTextExtension);
+    // { block = PlainTextExtension@0.this }
+    self.block = (({_ipg_start,_ipg_end,...o}) => o)(nt_PlainTextExtension_0);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -867,70 +868,70 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_ImageDescriptor;
-    let nt_MaybeColorTable;
-    let nt_ImageData;
+    let nt_ImageDescriptor_0;
+    let nt_MaybeColorTable_0;
+    let nt_ImageData_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // { type = "tableBasedImage" }
     self.type = "tableBasedImage";
 
-    // ImageDescriptor[0, EOI]
+    // ImageDescriptor@0[0, EOI]
     left = 0;
-    _ipg_failedTerm = { term: "ImageDescriptor[0, EOI]", left, right };
+    _ipg_failedTerm = { term: "ImageDescriptor@0[0, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ImageDescriptor = ImageDescriptor(input, begin + left, begin + right);
-    if (nt_ImageDescriptor === null) break _ipg_alt;
-    if (nt_ImageDescriptor._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ImageDescriptor._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ImageDescriptor._ipg_end);
+    nt_ImageDescriptor_0 = ImageDescriptor(input, begin + left, begin + right);
+    if (nt_ImageDescriptor_0 === null) break _ipg_alt;
+    if (nt_ImageDescriptor_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ImageDescriptor_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ImageDescriptor_0._ipg_end);
     }
-    nt_ImageDescriptor._ipg_end += left;
-    nt_ImageDescriptor._ipg_start += left;
-    left = nt_ImageDescriptor._ipg_start;
-    right = nt_ImageDescriptor._ipg_end;
+    nt_ImageDescriptor_0._ipg_end += left;
+    nt_ImageDescriptor_0._ipg_start += left;
+    left = nt_ImageDescriptor_0._ipg_start;
+    right = nt_ImageDescriptor_0._ipg_end;
 
-    // { descriptor = ImageDescriptor.this }
-    self.descriptor = (({_ipg_start,_ipg_end,...o}) => o)(nt_ImageDescriptor);
+    // { descriptor = ImageDescriptor@0.this }
+    self.descriptor = (({_ipg_start,_ipg_end,...o}) => o)(nt_ImageDescriptor_0);
 
-    // MaybeColorTable(ImageDescriptor.localColorTableFlag)[ImageDescriptor.END, ImageDescriptor.END + 3 * ImageDescriptor.localColorTableSize]
-    left = nt_ImageDescriptor._ipg_end;
-    _ipg_failedTerm = { term: "MaybeColorTable(ImageDescriptor.localColorTableFlag)[ImageDescriptor.END, ImageDescriptor.END + 3 * ImageDescriptor.localColorTableSize]", left, right };
-    right = nt_ImageDescriptor._ipg_end + 3 * nt_ImageDescriptor.localColorTableSize;
+    // MaybeColorTable@0(ImageDescriptor@0.localColorTableFlag)[ImageDescriptor@0.END, ImageDescriptor@0.END + 3 * ImageDescriptor@0.localColorTableSize]
+    left = nt_ImageDescriptor_0._ipg_end;
+    _ipg_failedTerm = { term: "MaybeColorTable@0(ImageDescriptor@0.localColorTableFlag)[ImageDescriptor@0.END, ImageDescriptor@0.END + 3 * ImageDescriptor@0.localColorTableSize]", left, right };
+    right = nt_ImageDescriptor_0._ipg_end + 3 * nt_ImageDescriptor_0.localColorTableSize;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_MaybeColorTable = MaybeColorTable(input, begin + left, begin + right, nt_ImageDescriptor.localColorTableFlag);
-    if (nt_MaybeColorTable === null) break _ipg_alt;
-    if (nt_MaybeColorTable._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_MaybeColorTable._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_MaybeColorTable._ipg_end);
+    nt_MaybeColorTable_0 = MaybeColorTable(input, begin + left, begin + right, nt_ImageDescriptor_0.localColorTableFlag);
+    if (nt_MaybeColorTable_0 === null) break _ipg_alt;
+    if (nt_MaybeColorTable_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_MaybeColorTable_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_MaybeColorTable_0._ipg_end);
     }
-    nt_MaybeColorTable._ipg_end += left;
-    nt_MaybeColorTable._ipg_start += left;
-    left = nt_MaybeColorTable._ipg_start;
-    right = nt_MaybeColorTable._ipg_end;
+    nt_MaybeColorTable_0._ipg_end += left;
+    nt_MaybeColorTable_0._ipg_start += left;
+    left = nt_MaybeColorTable_0._ipg_start;
+    right = nt_MaybeColorTable_0._ipg_end;
 
-    // { localColorTable = MaybeColorTable.table }
-    self.localColorTable = nt_MaybeColorTable.table;
+    // { localColorTable = MaybeColorTable@0.table }
+    self.localColorTable = nt_MaybeColorTable_0.table;
 
-    // ImageData[MaybeColorTable.END, EOI]
-    left = nt_MaybeColorTable._ipg_end;
-    _ipg_failedTerm = { term: "ImageData[MaybeColorTable.END, EOI]", left, right };
+    // ImageData@0[MaybeColorTable@0.END, EOI]
+    left = nt_MaybeColorTable_0._ipg_end;
+    _ipg_failedTerm = { term: "ImageData@0[MaybeColorTable@0.END, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ImageData = ImageData(input, begin + left, begin + right);
-    if (nt_ImageData === null) break _ipg_alt;
-    if (nt_ImageData._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ImageData._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ImageData._ipg_end);
+    nt_ImageData_0 = ImageData(input, begin + left, begin + right);
+    if (nt_ImageData_0 === null) break _ipg_alt;
+    if (nt_ImageData_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ImageData_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ImageData_0._ipg_end);
     }
-    nt_ImageData._ipg_end += left;
-    nt_ImageData._ipg_start += left;
-    left = nt_ImageData._ipg_start;
-    right = nt_ImageData._ipg_end;
+    nt_ImageData_0._ipg_end += left;
+    nt_ImageData_0._ipg_start += left;
+    left = nt_ImageData_0._ipg_start;
+    right = nt_ImageData_0._ipg_end;
 
-    // { data = ImageData.this }
-    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_ImageData);
+    // { data = ImageData@0.this }
+    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_ImageData_0);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -955,7 +956,10 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_U16;
+    let nt_U16_0;
+    let nt_U16_1;
+    let nt_U16_2;
+    let nt_U16_3;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // ","[0, 1]
@@ -968,86 +972,86 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
 
-    // U16[1, EOI]
+    // U16@0[1, EOI]
     left = 1;
-    _ipg_failedTerm = { term: "U16[1, EOI]", left, right };
+    _ipg_failedTerm = { term: "U16@0[1, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U16 = U16(input, begin + left, begin + right);
-    if (nt_U16 === null) break _ipg_alt;
-    if (nt_U16._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U16._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U16._ipg_end);
+    nt_U16_0 = U16(input, begin + left, begin + right);
+    if (nt_U16_0 === null) break _ipg_alt;
+    if (nt_U16_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U16_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U16_0._ipg_end);
     }
-    nt_U16._ipg_end += left;
-    nt_U16._ipg_start += left;
-    left = nt_U16._ipg_start;
-    right = nt_U16._ipg_end;
+    nt_U16_0._ipg_end += left;
+    nt_U16_0._ipg_start += left;
+    left = nt_U16_0._ipg_start;
+    right = nt_U16_0._ipg_end;
 
-    // { imageLeftPosition = U16.value }
-    self.imageLeftPosition = nt_U16.value;
+    // { imageLeftPosition = U16@0.value }
+    self.imageLeftPosition = nt_U16_0.value;
 
-    // U16[U16.END, EOI]
-    left = nt_U16._ipg_end;
-    _ipg_failedTerm = { term: "U16[U16.END, EOI]", left, right };
+    // U16@1[U16@0.END, EOI]
+    left = nt_U16_0._ipg_end;
+    _ipg_failedTerm = { term: "U16@1[U16@0.END, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U16 = U16(input, begin + left, begin + right);
-    if (nt_U16 === null) break _ipg_alt;
-    if (nt_U16._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U16._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U16._ipg_end);
+    nt_U16_1 = U16(input, begin + left, begin + right);
+    if (nt_U16_1 === null) break _ipg_alt;
+    if (nt_U16_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U16_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U16_1._ipg_end);
     }
-    nt_U16._ipg_end += left;
-    nt_U16._ipg_start += left;
-    left = nt_U16._ipg_start;
-    right = nt_U16._ipg_end;
+    nt_U16_1._ipg_end += left;
+    nt_U16_1._ipg_start += left;
+    left = nt_U16_1._ipg_start;
+    right = nt_U16_1._ipg_end;
 
-    // { imageTopPosition = U16.value }
-    self.imageTopPosition = nt_U16.value;
+    // { imageTopPosition = U16@1.value }
+    self.imageTopPosition = nt_U16_1.value;
 
-    // U16[U16.END, EOI]
-    left = nt_U16._ipg_end;
-    _ipg_failedTerm = { term: "U16[U16.END, EOI]", left, right };
+    // U16@2[U16@1.END, EOI]
+    left = nt_U16_1._ipg_end;
+    _ipg_failedTerm = { term: "U16@2[U16@1.END, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U16 = U16(input, begin + left, begin + right);
-    if (nt_U16 === null) break _ipg_alt;
-    if (nt_U16._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U16._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U16._ipg_end);
+    nt_U16_2 = U16(input, begin + left, begin + right);
+    if (nt_U16_2 === null) break _ipg_alt;
+    if (nt_U16_2._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U16_2._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U16_2._ipg_end);
     }
-    nt_U16._ipg_end += left;
-    nt_U16._ipg_start += left;
-    left = nt_U16._ipg_start;
-    right = nt_U16._ipg_end;
+    nt_U16_2._ipg_end += left;
+    nt_U16_2._ipg_start += left;
+    left = nt_U16_2._ipg_start;
+    right = nt_U16_2._ipg_end;
 
-    // { imageWidth = U16.value }
-    self.imageWidth = nt_U16.value;
+    // { imageWidth = U16@2.value }
+    self.imageWidth = nt_U16_2.value;
 
-    // U16[U16.END, EOI]
-    left = nt_U16._ipg_end;
-    _ipg_failedTerm = { term: "U16[U16.END, EOI]", left, right };
+    // U16@3[U16@2.END, EOI]
+    left = nt_U16_2._ipg_end;
+    _ipg_failedTerm = { term: "U16@3[U16@2.END, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U16 = U16(input, begin + left, begin + right);
-    if (nt_U16 === null) break _ipg_alt;
-    if (nt_U16._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U16._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U16._ipg_end);
+    nt_U16_3 = U16(input, begin + left, begin + right);
+    if (nt_U16_3 === null) break _ipg_alt;
+    if (nt_U16_3._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U16_3._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U16_3._ipg_end);
     }
-    nt_U16._ipg_end += left;
-    nt_U16._ipg_start += left;
-    left = nt_U16._ipg_start;
-    right = nt_U16._ipg_end;
+    nt_U16_3._ipg_end += left;
+    nt_U16_3._ipg_start += left;
+    left = nt_U16_3._ipg_start;
+    right = nt_U16_3._ipg_end;
 
-    // { imageHeight = U16.value }
-    self.imageHeight = nt_U16.value;
+    // { imageHeight = U16@3.value }
+    self.imageHeight = nt_U16_3.value;
 
-    // { packedFields = .[U16.END] }
-    left = nt_U16._ipg_end;
+    // { packedFields = .[U16@3.END] }
+    left = nt_U16_3._ipg_end;
     right = left + 1;
-    _ipg_failedTerm = { term: "{ packedFields = .[U16.END] }", left, right };
+    _ipg_failedTerm = { term: "{ packedFields = .[U16@3.END] }", left, right };
     if (left < 0 || right > EOI) break _ipg_alt;
     self.packedFields = input[begin + left];
     self._ipg_start = Math.min(self._ipg_start, left);
@@ -1088,7 +1092,7 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Subblocks;
+    let nt_Subblocks_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // { lzwMinimumCodeSize = .[0] }
@@ -1100,24 +1104,24 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
 
-    // Subblocks[1, EOI]
+    // Subblocks@0[1, EOI]
     left = 1;
-    _ipg_failedTerm = { term: "Subblocks[1, EOI]", left, right };
+    _ipg_failedTerm = { term: "Subblocks@0[1, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Subblocks = Subblocks(input, begin + left, begin + right);
-    if (nt_Subblocks === null) break _ipg_alt;
-    if (nt_Subblocks._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Subblocks._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Subblocks._ipg_end);
+    nt_Subblocks_0 = Subblocks(input, begin + left, begin + right);
+    if (nt_Subblocks_0 === null) break _ipg_alt;
+    if (nt_Subblocks_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Subblocks_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Subblocks_0._ipg_end);
     }
-    nt_Subblocks._ipg_end += left;
-    nt_Subblocks._ipg_start += left;
-    left = nt_Subblocks._ipg_start;
-    right = nt_Subblocks._ipg_end;
+    nt_Subblocks_0._ipg_end += left;
+    nt_Subblocks_0._ipg_start += left;
+    left = nt_Subblocks_0._ipg_start;
+    right = nt_Subblocks_0._ipg_end;
 
-    // { imageData = concat(Subblocks.values) }
-    self.imageData = concat(nt_Subblocks.values);
+    // { imageData = concat(Subblocks@0.values) }
+    self.imageData = concat(nt_Subblocks_0.values);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -1142,8 +1146,11 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_U16;
-    let nt_Subblocks;
+    let nt_U16_0;
+    let nt_U16_1;
+    let nt_U16_2;
+    let nt_U16_3;
+    let nt_Subblocks_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // "!\x01"[0, 2]
@@ -1169,136 +1176,136 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     // { type = "plainTextExtension" }
     self.type = "plainTextExtension";
 
-    // U16[3, EOI]
+    // U16@0[3, EOI]
     left = 3;
-    _ipg_failedTerm = { term: "U16[3, EOI]", left, right };
+    _ipg_failedTerm = { term: "U16@0[3, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U16 = U16(input, begin + left, begin + right);
-    if (nt_U16 === null) break _ipg_alt;
-    if (nt_U16._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U16._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U16._ipg_end);
+    nt_U16_0 = U16(input, begin + left, begin + right);
+    if (nt_U16_0 === null) break _ipg_alt;
+    if (nt_U16_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U16_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U16_0._ipg_end);
     }
-    nt_U16._ipg_end += left;
-    nt_U16._ipg_start += left;
-    left = nt_U16._ipg_start;
-    right = nt_U16._ipg_end;
+    nt_U16_0._ipg_end += left;
+    nt_U16_0._ipg_start += left;
+    left = nt_U16_0._ipg_start;
+    right = nt_U16_0._ipg_end;
 
-    // { textGridLeftPosition = U16.value }
-    self.textGridLeftPosition = nt_U16.value;
+    // { textGridLeftPosition = U16@0.value }
+    self.textGridLeftPosition = nt_U16_0.value;
 
-    // U16[U16.END, EOI]
-    left = nt_U16._ipg_end;
-    _ipg_failedTerm = { term: "U16[U16.END, EOI]", left, right };
+    // U16@1[U16@0.END, EOI]
+    left = nt_U16_0._ipg_end;
+    _ipg_failedTerm = { term: "U16@1[U16@0.END, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U16 = U16(input, begin + left, begin + right);
-    if (nt_U16 === null) break _ipg_alt;
-    if (nt_U16._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U16._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U16._ipg_end);
+    nt_U16_1 = U16(input, begin + left, begin + right);
+    if (nt_U16_1 === null) break _ipg_alt;
+    if (nt_U16_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U16_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U16_1._ipg_end);
     }
-    nt_U16._ipg_end += left;
-    nt_U16._ipg_start += left;
-    left = nt_U16._ipg_start;
-    right = nt_U16._ipg_end;
+    nt_U16_1._ipg_end += left;
+    nt_U16_1._ipg_start += left;
+    left = nt_U16_1._ipg_start;
+    right = nt_U16_1._ipg_end;
 
-    // { textGridTopPosition = U16.value }
-    self.textGridTopPosition = nt_U16.value;
+    // { textGridTopPosition = U16@1.value }
+    self.textGridTopPosition = nt_U16_1.value;
 
-    // U16[U16.END, EOI]
-    left = nt_U16._ipg_end;
-    _ipg_failedTerm = { term: "U16[U16.END, EOI]", left, right };
+    // U16@2[U16@1.END, EOI]
+    left = nt_U16_1._ipg_end;
+    _ipg_failedTerm = { term: "U16@2[U16@1.END, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U16 = U16(input, begin + left, begin + right);
-    if (nt_U16 === null) break _ipg_alt;
-    if (nt_U16._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U16._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U16._ipg_end);
+    nt_U16_2 = U16(input, begin + left, begin + right);
+    if (nt_U16_2 === null) break _ipg_alt;
+    if (nt_U16_2._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U16_2._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U16_2._ipg_end);
     }
-    nt_U16._ipg_end += left;
-    nt_U16._ipg_start += left;
-    left = nt_U16._ipg_start;
-    right = nt_U16._ipg_end;
+    nt_U16_2._ipg_end += left;
+    nt_U16_2._ipg_start += left;
+    left = nt_U16_2._ipg_start;
+    right = nt_U16_2._ipg_end;
 
-    // { textGridWidth = U16.value }
-    self.textGridWidth = nt_U16.value;
+    // { textGridWidth = U16@2.value }
+    self.textGridWidth = nt_U16_2.value;
 
-    // U16[U16.END, EOI]
-    left = nt_U16._ipg_end;
-    _ipg_failedTerm = { term: "U16[U16.END, EOI]", left, right };
+    // U16@3[U16@2.END, EOI]
+    left = nt_U16_2._ipg_end;
+    _ipg_failedTerm = { term: "U16@3[U16@2.END, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U16 = U16(input, begin + left, begin + right);
-    if (nt_U16 === null) break _ipg_alt;
-    if (nt_U16._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U16._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U16._ipg_end);
+    nt_U16_3 = U16(input, begin + left, begin + right);
+    if (nt_U16_3 === null) break _ipg_alt;
+    if (nt_U16_3._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U16_3._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U16_3._ipg_end);
     }
-    nt_U16._ipg_end += left;
-    nt_U16._ipg_start += left;
-    left = nt_U16._ipg_start;
-    right = nt_U16._ipg_end;
+    nt_U16_3._ipg_end += left;
+    nt_U16_3._ipg_start += left;
+    left = nt_U16_3._ipg_start;
+    right = nt_U16_3._ipg_end;
 
-    // { textGridHeight = U16.value }
-    self.textGridHeight = nt_U16.value;
+    // { textGridHeight = U16@3.value }
+    self.textGridHeight = nt_U16_3.value;
 
-    // { characterCellWidth = .[U16.END] }
-    left = nt_U16._ipg_end;
+    // { characterCellWidth = .[U16@3.END] }
+    left = nt_U16_3._ipg_end;
     right = left + 1;
-    _ipg_failedTerm = { term: "{ characterCellWidth = .[U16.END] }", left, right };
+    _ipg_failedTerm = { term: "{ characterCellWidth = .[U16@3.END] }", left, right };
     if (left < 0 || right > EOI) break _ipg_alt;
     self.characterCellWidth = input[begin + left];
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
 
-    // { characterCellHeight = .[U16.END + 1] }
-    left = nt_U16._ipg_end + 1;
+    // { characterCellHeight = .[U16@3.END + 1] }
+    left = nt_U16_3._ipg_end + 1;
     right = left + 1;
-    _ipg_failedTerm = { term: "{ characterCellHeight = .[U16.END + 1] }", left, right };
+    _ipg_failedTerm = { term: "{ characterCellHeight = .[U16@3.END + 1] }", left, right };
     if (left < 0 || right > EOI) break _ipg_alt;
     self.characterCellHeight = input[begin + left];
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
 
-    // { textForegroundColorIndex = .[U16.END + 2] }
-    left = nt_U16._ipg_end + 2;
+    // { textForegroundColorIndex = .[U16@3.END + 2] }
+    left = nt_U16_3._ipg_end + 2;
     right = left + 1;
-    _ipg_failedTerm = { term: "{ textForegroundColorIndex = .[U16.END + 2] }", left, right };
+    _ipg_failedTerm = { term: "{ textForegroundColorIndex = .[U16@3.END + 2] }", left, right };
     if (left < 0 || right > EOI) break _ipg_alt;
     self.textForegroundColorIndex = input[begin + left];
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
 
-    // { textBackgroundColorIndex = .[U16.END + 3] }
-    left = nt_U16._ipg_end + 3;
+    // { textBackgroundColorIndex = .[U16@3.END + 3] }
+    left = nt_U16_3._ipg_end + 3;
     right = left + 1;
-    _ipg_failedTerm = { term: "{ textBackgroundColorIndex = .[U16.END + 3] }", left, right };
+    _ipg_failedTerm = { term: "{ textBackgroundColorIndex = .[U16@3.END + 3] }", left, right };
     if (left < 0 || right > EOI) break _ipg_alt;
     self.textBackgroundColorIndex = input[begin + left];
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
 
-    // Subblocks[U16.END + 4, EOI]
-    left = nt_U16._ipg_end + 4;
-    _ipg_failedTerm = { term: "Subblocks[U16.END + 4, EOI]", left, right };
+    // Subblocks@0[U16@3.END + 4, EOI]
+    left = nt_U16_3._ipg_end + 4;
+    _ipg_failedTerm = { term: "Subblocks@0[U16@3.END + 4, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Subblocks = Subblocks(input, begin + left, begin + right);
-    if (nt_Subblocks === null) break _ipg_alt;
-    if (nt_Subblocks._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Subblocks._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Subblocks._ipg_end);
+    nt_Subblocks_0 = Subblocks(input, begin + left, begin + right);
+    if (nt_Subblocks_0 === null) break _ipg_alt;
+    if (nt_Subblocks_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Subblocks_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Subblocks_0._ipg_end);
     }
-    nt_Subblocks._ipg_end += left;
-    nt_Subblocks._ipg_start += left;
-    left = nt_Subblocks._ipg_start;
-    right = nt_Subblocks._ipg_end;
+    nt_Subblocks_0._ipg_end += left;
+    nt_Subblocks_0._ipg_start += left;
+    left = nt_Subblocks_0._ipg_start;
+    right = nt_Subblocks_0._ipg_end;
 
-    // { plainTextData = concat(Subblocks.values) }
-    self.plainTextData = concat(nt_Subblocks.values);
+    // { plainTextData = concat(Subblocks@0.values) }
+    self.plainTextData = concat(nt_Subblocks_0.values);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -1359,8 +1366,9 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_B;
-    let nt_Subblocks;
+    let nt_B_0;
+    let nt_B_1;
+    let nt_Subblocks_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // "!\xff"[0, 2]
@@ -1386,62 +1394,62 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     // { type = "applicationExtension" }
     self.type = "applicationExtension";
 
-    // B(8)[3, EOI]
+    // B@0(8)[3, EOI]
     left = 3;
-    _ipg_failedTerm = { term: "B(8)[3, EOI]", left, right };
+    _ipg_failedTerm = { term: "B@0(8)[3, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_B = B(input, begin + left, begin + right, 8);
-    if (nt_B === null) break _ipg_alt;
-    if (nt_B._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_B._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_B._ipg_end);
+    nt_B_0 = B(input, begin + left, begin + right, 8);
+    if (nt_B_0 === null) break _ipg_alt;
+    if (nt_B_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_B_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_B_0._ipg_end);
     }
-    nt_B._ipg_end += left;
-    nt_B._ipg_start += left;
-    left = nt_B._ipg_start;
-    right = nt_B._ipg_end;
+    nt_B_0._ipg_end += left;
+    nt_B_0._ipg_start += left;
+    left = nt_B_0._ipg_start;
+    right = nt_B_0._ipg_end;
 
-    // { applicationIdentifier = decodeAscii(B.value) }
-    self.applicationIdentifier = decodeAscii(nt_B.value);
+    // { applicationIdentifier = decodeAscii(B@0.value) }
+    self.applicationIdentifier = decodeAscii(nt_B_0.value);
 
-    // B(3)[B.END, EOI]
-    left = nt_B._ipg_end;
-    _ipg_failedTerm = { term: "B(3)[B.END, EOI]", left, right };
+    // B@1(3)[B@0.END, EOI]
+    left = nt_B_0._ipg_end;
+    _ipg_failedTerm = { term: "B@1(3)[B@0.END, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_B = B(input, begin + left, begin + right, 3);
-    if (nt_B === null) break _ipg_alt;
-    if (nt_B._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_B._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_B._ipg_end);
+    nt_B_1 = B(input, begin + left, begin + right, 3);
+    if (nt_B_1 === null) break _ipg_alt;
+    if (nt_B_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_B_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_B_1._ipg_end);
     }
-    nt_B._ipg_end += left;
-    nt_B._ipg_start += left;
-    left = nt_B._ipg_start;
-    right = nt_B._ipg_end;
+    nt_B_1._ipg_end += left;
+    nt_B_1._ipg_start += left;
+    left = nt_B_1._ipg_start;
+    right = nt_B_1._ipg_end;
 
-    // { applicationAuthenticationCode = decodeAscii(B.value) }
-    self.applicationAuthenticationCode = decodeAscii(nt_B.value);
+    // { applicationAuthenticationCode = decodeAscii(B@1.value) }
+    self.applicationAuthenticationCode = decodeAscii(nt_B_1.value);
 
-    // Subblocks[B.END, EOI]
-    left = nt_B._ipg_end;
-    _ipg_failedTerm = { term: "Subblocks[B.END, EOI]", left, right };
+    // Subblocks@0[B@1.END, EOI]
+    left = nt_B_1._ipg_end;
+    _ipg_failedTerm = { term: "Subblocks@0[B@1.END, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Subblocks = Subblocks(input, begin + left, begin + right);
-    if (nt_Subblocks === null) break _ipg_alt;
-    if (nt_Subblocks._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Subblocks._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Subblocks._ipg_end);
+    nt_Subblocks_0 = Subblocks(input, begin + left, begin + right);
+    if (nt_Subblocks_0 === null) break _ipg_alt;
+    if (nt_Subblocks_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Subblocks_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Subblocks_0._ipg_end);
     }
-    nt_Subblocks._ipg_end += left;
-    nt_Subblocks._ipg_start += left;
-    left = nt_Subblocks._ipg_start;
-    right = nt_Subblocks._ipg_end;
+    nt_Subblocks_0._ipg_end += left;
+    nt_Subblocks_0._ipg_start += left;
+    left = nt_Subblocks_0._ipg_start;
+    right = nt_Subblocks_0._ipg_end;
 
-    // { applicationData = concat(Subblocks.values) }
-    self.applicationData = concat(nt_Subblocks.values);
+    // { applicationData = concat(Subblocks@0.values) }
+    self.applicationData = concat(nt_Subblocks_0.values);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -1466,7 +1474,7 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Subblocks;
+    let nt_Subblocks_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // "!\xfe"[0, 2]
@@ -1482,24 +1490,24 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     // { type = "commentExtension" }
     self.type = "commentExtension";
 
-    // Subblocks[2, EOI]
+    // Subblocks@0[2, EOI]
     left = 2;
-    _ipg_failedTerm = { term: "Subblocks[2, EOI]", left, right };
+    _ipg_failedTerm = { term: "Subblocks@0[2, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Subblocks = Subblocks(input, begin + left, begin + right);
-    if (nt_Subblocks === null) break _ipg_alt;
-    if (nt_Subblocks._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Subblocks._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Subblocks._ipg_end);
+    nt_Subblocks_0 = Subblocks(input, begin + left, begin + right);
+    if (nt_Subblocks_0 === null) break _ipg_alt;
+    if (nt_Subblocks_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Subblocks_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Subblocks_0._ipg_end);
     }
-    nt_Subblocks._ipg_end += left;
-    nt_Subblocks._ipg_start += left;
-    left = nt_Subblocks._ipg_start;
-    right = nt_Subblocks._ipg_end;
+    nt_Subblocks_0._ipg_end += left;
+    nt_Subblocks_0._ipg_start += left;
+    left = nt_Subblocks_0._ipg_start;
+    right = nt_Subblocks_0._ipg_end;
 
-    // { commentData = decodeAscii(concat(Subblocks.values)) }
-    self.commentData = decodeAscii(concat(nt_Subblocks.values));
+    // { commentData = decodeAscii(concat(Subblocks@0.values)) }
+    self.commentData = decodeAscii(concat(nt_Subblocks_0.values));
 
   _ipg_failTreeStack.pop();
     return self;
@@ -1524,37 +1532,37 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Subblock;
-    let nt_BlockTerminator;
+    let nt_Subblock_0;
+    let nt_BlockTerminator_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // repeat Subblock[Subblock.END, EOI].data starting on [0, EOI] until BlockTerminator
-    _ipg_failedTerm = { term: "repeat Subblock[Subblock.END, EOI].data starting on [0, EOI] until BlockTerminator" };
+    // repeat Subblock@0[Subblock@0.END, EOI].data starting on [0, EOI] until BlockTerminator@0
+    _ipg_failedTerm = { term: "repeat Subblock@0[Subblock@0.END, EOI].data starting on [0, EOI] until BlockTerminator@0" };
     left = 0;
     right = EOI;
     self.values = [];
     while (true) {
       if (left < 0 || right < left || right > EOI) break _ipg_alt;
-      nt_BlockTerminator = BlockTerminator(input, begin + left, begin + right);
-      if (nt_BlockTerminator !== null) {
-        if (nt_BlockTerminator._ipg_end !== 0) {
-          self._ipg_start = Math.min(self._ipg_start, left + nt_BlockTerminator._ipg_start);
-          self._ipg_end = Math.max(self._ipg_end, left + nt_BlockTerminator._ipg_end);
+      nt_BlockTerminator_0 = BlockTerminator(input, begin + left, begin + right);
+      if (nt_BlockTerminator_0 !== null) {
+        if (nt_BlockTerminator_0._ipg_end !== 0) {
+          self._ipg_start = Math.min(self._ipg_start, left + nt_BlockTerminator_0._ipg_start);
+          self._ipg_end = Math.max(self._ipg_end, left + nt_BlockTerminator_0._ipg_end);
         }
-        nt_BlockTerminator._ipg_end += left;
-        nt_BlockTerminator._ipg_start += left;
-        right = nt_BlockTerminator._ipg_end;
+        nt_BlockTerminator_0._ipg_end += left;
+        nt_BlockTerminator_0._ipg_start += left;
+        right = nt_BlockTerminator_0._ipg_end;
         break;
       }
-      nt_Subblock = Subblock(input, begin + left, begin + right);
-      if (nt_Subblock === null) break _ipg_alt;
-      if (nt_Subblock._ipg_end === 0) throw 'repeat of non-consuming rule: Subblock';
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Subblock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Subblock._ipg_end);
-      nt_Subblock._ipg_end += left;
-      nt_Subblock._ipg_start += left;
-      self.values.push(nt_Subblock.data);
-      left = nt_Subblock._ipg_end;
+      nt_Subblock_0 = Subblock(input, begin + left, begin + right);
+      if (nt_Subblock_0 === null) break _ipg_alt;
+      if (nt_Subblock_0._ipg_end === 0) throw 'repeat of non-consuming rule: Subblock';
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Subblock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Subblock_0._ipg_end);
+      nt_Subblock_0._ipg_end += left;
+      nt_Subblock_0._ipg_start += left;
+      self.values.push(nt_Subblock_0.data);
+      left = nt_Subblock_0._ipg_end;
       right = EOI;
     }
 

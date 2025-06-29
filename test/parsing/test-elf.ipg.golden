@@ -1,30 +1,30 @@
 ELF
-  -> H[0, 128]
-     for i = 0 to H.e_shnum do SH[H.e_shoff + i * H.e_shentsize, H.e_shoff + (i + 1) * H.e_shentsize]
-     for i = 1 to H.e_shnum do Sec(SH(i).sh_type)[SH(i).sh_offset, SH(i).sh_offset + SH(i).sh_size]
-     { header = H.this }
-     { section_headers = SH.these }
-     { sections = projectSections(Sec.these) };
+  -> H@0[0, 128]
+     for i = 0 to H@0.e_shnum do SH@0[H@0.e_shoff + i * H@0.e_shentsize, H@0.e_shoff + (i + 1) * H@0.e_shentsize]
+     for i = 1 to H@0.e_shnum do Sec@0(SH@0(i).sh_type)[SH@0(i).sh_offset, SH@0(i).sh_offset + SH@0(i).sh_size]
+     { header = H@0.this }
+     { section_headers = SH@0.these }
+     { sections = projectSections(Sec@0.these) };
 
 Sec(sh_type)
   -> ?[ sh_type == 6 ]
-     DynSec[0, EOI]
-     { section = DynSec.section }
+     DynSec@0[0, EOI]
+     { section = DynSec@0.section }
    / ?[ sh_type == 3 ]
-     StrSec[0, EOI]
-     { section = StrSec.section }
+     StrSec@0[0, EOI]
+     { section = StrSec@0.section }
    / ?[ sh_type == 11 || sh_type == 2 ]
-     DynSymSec[0, EOI]
-     { section = DynSymSec.section }
+     DynSymSec@0[0, EOI]
+     { section = DynSymSec@0.section }
    / ?[ sh_type == 7 ]
-     NoteSec[0, EOI]
-     { section = NoteSec.section }
+     NoteSec@0[0, EOI]
+     { section = NoteSec@0.section }
    / ?[ sh_type == 9 ]
-     RelSec[0, EOI]
-     { section = RelSec.section }
+     RelSec@0[0, EOI]
+     { section = RelSec@0.section }
    / ?[ sh_type == 4 ]
-     RelAddEndSec[0, EOI]
-     { section = RelAddEndSec.section }
+     RelAddEndSec@0[0, EOI]
+     { section = RelAddEndSec@0.section }
    / ?[ sh_type == 8 ]
      { section = empty() }
    / { section = *[0, EOI] };
@@ -54,103 +54,103 @@ H
      { ei_version = .[6] }
      { abi = .[7] }
      { abi_version = .[8] }
-     U16[16, 18]
-     { e_type = U16.value }
-     U16[U16.END, EOI]
-     { e_machine = U16.value }
-     U32[U16.END, EOI]
-     { e_version = U32.value }
-     U64[U32.END, EOI]
-     { e_entry = U64.value }
-     U64[U64.END, EOI]
-     { e_phoff = U64.value }
-     U64[U64.END, EOI]
-     { e_shoff = U64.value }
-     U32[U64.END, EOI]
-     { e_flags = U32.value }
-     U16[U32.END, EOI]
-     { e_ehsize = U16.value }
-     U16[U16.END, EOI]
-     { e_phentsize = U16.value }
-     U16[U16.END, EOI]
-     { e_phnum = U16.value }
-     U16[U16.END, EOI]
-     { e_shentsize = U16.value }
-     U16[U16.END, EOI]
-     { e_shnum = U16.value }
-     U16[U16.END, EOI]
-     { e_shstrndx = U16.value };
+     U16@0[16, 18]
+     { e_type = U16@0.value }
+     U16@1[U16@0.END, EOI]
+     { e_machine = U16@1.value }
+     U32@0[U16@1.END, EOI]
+     { e_version = U32@0.value }
+     U64@0[U32@0.END, EOI]
+     { e_entry = U64@0.value }
+     U64@1[U64@0.END, EOI]
+     { e_phoff = U64@1.value }
+     U64@2[U64@1.END, EOI]
+     { e_shoff = U64@2.value }
+     U32@1[U64@2.END, EOI]
+     { e_flags = U32@1.value }
+     U16@2[U32@1.END, EOI]
+     { e_ehsize = U16@2.value }
+     U16@3[U16@2.END, EOI]
+     { e_phentsize = U16@3.value }
+     U16@4[U16@3.END, EOI]
+     { e_phnum = U16@4.value }
+     U16@5[U16@4.END, EOI]
+     { e_shentsize = U16@5.value }
+     U16@6[U16@5.END, EOI]
+     { e_shnum = U16@6.value }
+     U16@7[U16@6.END, EOI]
+     { e_shstrndx = U16@7.value };
 
 SH
-  -> U32[0, EOI]
-     { sh_name = U32.value }
-     U32[U32.END, EOI]
-     { sh_type = U32.value }
-     U64[U32.END, EOI]
-     { sh_flags = U64.value }
-     U64[U64.END, EOI]
-     { sh_addr = U64.value }
-     U64[U64.END, EOI]
-     { sh_offset = U64.value }
-     U64[U64.END, EOI]
-     { sh_size = U64.value }
-     U32[U64.END, EOI]
-     { sh_link = U32.value }
-     U32[U32.END, EOI]
-     { sh_info = U32.value }
-     U32[U32.END, EOI]
-     { sh_addralign = U32.value }
-     U64[U32.END, EOI]
-     { sh_entsize = U64.value };
+  -> U32@0[0, EOI]
+     { sh_name = U32@0.value }
+     U32@1[U32@0.END, EOI]
+     { sh_type = U32@1.value }
+     U64@0[U32@1.END, EOI]
+     { sh_flags = U64@0.value }
+     U64@1[U64@0.END, EOI]
+     { sh_addr = U64@1.value }
+     U64@2[U64@1.END, EOI]
+     { sh_offset = U64@2.value }
+     U64@3[U64@2.END, EOI]
+     { sh_size = U64@3.value }
+     U32@2[U64@3.END, EOI]
+     { sh_link = U32@2.value }
+     U32@3[U32@2.END, EOI]
+     { sh_info = U32@3.value }
+     U32@4[U32@3.END, EOI]
+     { sh_addralign = U32@4.value }
+     U64@4[U32@4.END, EOI]
+     { sh_entsize = U64@4.value };
 
 DynSec
-  -> for i = 0 to EOI / 16 do DynSecEntry[16 * i, 16 * (i + 1)]
-     { section = DynSecEntry.these };
+  -> for i = 0 to EOI / 16 do DynSecEntry@0[16 * i, 16 * (i + 1)]
+     { section = DynSecEntry@0.these };
 
 DynSecEntry
-  -> U64[0, EOI]
-     { tag = U64.value }
-     U64[U64.END, EOI]
-     { value_or_ptr = U64.value };
+  -> U64@0[0, EOI]
+     { tag = U64@0.value }
+     U64@1[U64@0.END, EOI]
+     { value_or_ptr = U64@1.value };
 
 StrSec
-  -> repeat Str[Str.END, EOI].string starting on [0, EOI]
+  -> repeat Str@0[Str@0.END, EOI].string starting on [0, EOI]
      { section = values };
 
 Str
-  -> repeat U8[U8.END, EOI].value starting on [0, EOI] until NUL_BYTE
+  -> repeat U8@0[U8@0.END, EOI].value starting on [0, EOI] until NUL_BYTE@0
      { string = decodeAscii(values) };
 
 DynSymSec
-  -> for i = 0 to EOI / 24 do DynSymSecEntry[24 * i, 24 * (i + 1)]
-     { section = DynSymSecEntry.these };
+  -> for i = 0 to EOI / 24 do DynSymSecEntry@0[24 * i, 24 * (i + 1)]
+     { section = DynSymSecEntry@0.these };
 
 DynSymSecEntry
-  -> U32[0, EOI]
-     { sh_name = U32.value }
-     { st_info = .[U32.END] }
-     { st_other = .[U32.END + 1] }
-     U16[U32.END + 2, EOI]
-     { st_shndx = U16.value }
-     U64[U16.END, EOI]
-     { st_value = U64.value }
-     U64[U64.END, EOI]
-     { st_size = U64.value };
+  -> U32@0[0, EOI]
+     { sh_name = U32@0.value }
+     { st_info = .[U32@0.END] }
+     { st_other = .[U32@0.END + 1] }
+     U16@0[U32@0.END + 2, EOI]
+     { st_shndx = U16@0.value }
+     U64@0[U16@0.END, EOI]
+     { st_value = U64@0.value }
+     U64@1[U64@0.END, EOI]
+     { st_size = U64@1.value };
 
 NoteSec
-  -> repeat NoteSecEntry[NoteSecEntry.END, EOI].entry starting on [0, EOI]
+  -> repeat NoteSecEntry@0[NoteSecEntry@0.END, EOI].entry starting on [0, EOI]
      { section = values };
 
 NoteSecEntry
-  -> U32[0, EOI]
-     { len_name = U32.value }
-     U32[U32.END, EOI]
-     { len_descriptor = U32.value }
-     U32[U32.END, EOI]
-     { type = U32.value }
-     Name[U32.END, U32.END + len_name]
-     Descriptor[Name.END + (-len_name & 3), Name.END + (-len_name & 3) + len_descriptor]
-     { entry = makeEntry(Name.value, Descriptor.value, type) };
+  -> U32@0[0, EOI]
+     { len_name = U32@0.value }
+     U32@1[U32@0.END, EOI]
+     { len_descriptor = U32@1.value }
+     U32@2[U32@1.END, EOI]
+     { type = U32@2.value }
+     Name@0[U32@2.END, U32@2.END + len_name]
+     Descriptor@0[Name@0.END + (-len_name & 3), Name@0.END + (-len_name & 3) + len_descriptor]
+     { entry = makeEntry(Name@0.value, Descriptor@0.value, type) };
 
 Name
   -> { value = *[0, EOI - 1] }
@@ -160,23 +160,23 @@ Descriptor
   -> { value = *[0, EOI] };
 
 RelAddEndSec
-  -> for i = 0 to EOI / 24 do RelAddEndSecEntry[24 * i, 24 * (i + 1)]
-     { section = RelAddEndSecEntry.these };
+  -> for i = 0 to EOI / 24 do RelAddEndSecEntry@0[24 * i, 24 * (i + 1)]
+     { section = RelAddEndSecEntry@0.these };
 
 RelAddEndSecEntry
-  -> U64[0, EOI]
-     { offset = U64.value }
-     U64[U64.END, EOI]
-     { info = U64.value }
-     U64[U64.END, EOI]
-     { addend = U64.value };
+  -> U64@0[0, EOI]
+     { offset = U64@0.value }
+     U64@1[U64@0.END, EOI]
+     { info = U64@1.value }
+     U64@2[U64@1.END, EOI]
+     { addend = U64@2.value };
 
 RelSec
-  -> for i = 0 to EOI / 16 do RelSecEntry[16 * i, 16 * (i + 1)]
-     { section = RelSecEntry.these };
+  -> for i = 0 to EOI / 16 do RelSecEntry@0[16 * i, 16 * (i + 1)]
+     { section = RelSecEntry@0.these };
 
 RelSecEntry
-  -> U64[0, EOI]
-     { offset = U64.value }
-     U64[U64.END, EOI]
-     { info = U64.value };
+  -> U64@0[0, EOI]
+     { offset = U64@0.value }
+     U64@1[U64@0.END, EOI]
+     { info = U64@1.value };

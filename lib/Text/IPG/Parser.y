@@ -1,6 +1,6 @@
 {
 module Text.IPG.Parser (
-    IdType, Exp', Grammar', Rule', Alternative', Term', Ref',
+    IdType, NT, Exp', Grammar', Rule', Alternative', Term', Ref',
     parseIPG, parse, parseWithStartPos,
 ) where
 import qualified Data.ByteString as BS -- bytestring
@@ -45,6 +45,7 @@ import Text.IPG.Lexer (
     double  { TokenDouble $$ }
     string  { TokenString $$ }
     name    { TokenName $$ }
+    nt      { TokenNonTerminal $$ }
     '?['    { TokenGuard }
     '?'     { TokenQuestion }
     ':'     { TokenColon }
@@ -172,21 +173,25 @@ Terms :: { [Term'] }
     : Term { [$1] }
     | Terms Term { $2 : $1 }
 
+NT :: { NT }
+   : name { ($1, -1) }
+   | nt { $1 }
+
 Term :: { Term' }
-    : name ArgList { NonTerminal0 $1 $2 }
-    | name ArgList '[' Exp ']' { NonTerminal1 $1 $2 $4 }
-    | name ArgList '[' Exp ',' Exp ']' { NonTerminal2 $1 $2 $4 $6 }
+    : NT ArgList { NonTerminal0 $1 $2 }
+    | NT ArgList '[' Exp ']' { NonTerminal1 $1 $2 $4 }
+    | NT ArgList '[' Exp ',' Exp ']' { NonTerminal2 $1 $2 $4 $6 }
     | string { Terminal0 $1 }
     | string '[' Exp ']' { Terminal1 $1 $3 }
     | string '[' Exp ',' Exp ']' { Terminal2 $1 $3 $5 }
     | '{' name '=' AssignTail '}' { makeAssign $2 $4 }
     | '?[' Exp ']' { Guard $2 }
-    | for name '=' Exp to Exp do name ArgList '[' Exp ',' Exp ']' { Array $2 $4 $6 $8 $9 $11 $13 }
-    | repeat name ArgList '.' name MaybeStartingOn UntilTail
+    | for name '=' Exp to Exp do NT ArgList '[' Exp ',' Exp ']' { Array $2 $4 $6 $8 $9 $11 $13 }
+    | repeat NT ArgList '.' name MaybeStartingOn UntilTail
         { case $7 of Just (n, es) -> RepeatUntil0 $2 $3 $5 $6 n es; _ -> Repeat0 $2 $3 $5 $6 }
-    | repeat name ArgList '[' Exp ']' '.' name MaybeStartingOn UntilTail
+    | repeat NT ArgList '[' Exp ']' '.' name MaybeStartingOn UntilTail
         { case $10 of Just (n, es) -> RepeatUntil1 $2 $3 $5 $8 $9 n es; _ -> Repeat1 $2 $3 $5 $8 $9 }
-    | repeat name ArgList '[' Exp ',' Exp ']' '.' name MaybeStartingOn UntilTail
+    | repeat NT ArgList '[' Exp ',' Exp ']' '.' name MaybeStartingOn UntilTail
         { case $12 of Just (n, es) -> RepeatUntil2 $2 $3 $5 $7 $10 $11 n es; _ -> Repeat2 $2 $3 $5 $7 $10 $11 }
 
 MaybeStartingOn :: { StartingOn' }
@@ -194,8 +199,8 @@ MaybeStartingOn :: { StartingOn' }
     | starting on '[' Exp ',' Exp ']' { StartingOn2 $4 $6 }
     | {- empty -} { StartingOn0 }
 
-UntilTail :: { Maybe (IdType, [Exp']) }
-    : until name ArgList { Just ($2, $3) }
+UntilTail :: { Maybe (NT, [Exp']) }
+    : until NT ArgList { Just ($2, $3) }
     | {- empty -} { Nothing }
 
 ArgList :: { [Exp'] }
@@ -241,10 +246,14 @@ Exp :: { Exp' }
     | Exp '[' Exp ']' { At $1 $3 }
     | '(' Exp ')' { $2 }
     | EOI { Ref EOI }
+    | nt '.' START { makeExp $1 Start' }
+    | nt '.' END { makeExp $1 End' }
+    | nt '.' name { makeExp $1 (Attr' $3) }
+    | nt '(' Exp ')' '.'name { makeExp $1 (Index' $3 $6) }
     | NameExp { $1 }
 
 NameExp :: { Exp' }
-    : name NameExpTail { makeExp $1 $2 }
+    : name NameExpTail { makeExp ($1, -1) $2 }
 
 NameExpTail :: { NameExpTail }
     : {- empty -} { Id' }
@@ -265,6 +274,7 @@ Args :: { [Exp'] }
 
 {
 type IdType = BS.ByteString
+type NT = (IdType, Int)
 type Exp' = Exp IdType IdType IdType
 type Grammar' = Grammar IdType IdType IdType Exp'
 type Rule' = Rule IdType IdType IdType Exp'
@@ -281,13 +291,13 @@ data NameExpTail
     | Call' [Exp']          -- name '(' Args ')'            { Call $1 (reverse $3) }
     | Id'                   -- name                         { Ref (Id $1) }
 
-makeExp :: IdType -> NameExpTail -> Exp'
+makeExp :: NT -> NameExpTail -> Exp'
 makeExp t Start' = Ref (Start t)
 makeExp t End' = Ref (End t)
 makeExp t (Attr' i) = Ref (Attr t i)
 makeExp t (Index' e i) = Ref (Index t e i)
-makeExp t (Call' es) = Call t es
-makeExp t Id' = Ref (Id t)
+makeExp (t, -1) (Call' es) = Call t es
+makeExp (t, -1) Id' = Ref (Id t)
 
 data AssignTail
     = Any0'

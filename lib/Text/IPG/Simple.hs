@@ -7,7 +7,7 @@ import qualified Data.Set as Set -- containers
 import qualified Data.Map as Map -- containers
 
 import Text.IPG.Check ( validate )
-import Text.IPG.Core as Core
+import qualified Text.IPG.Core as Core
 import Text.IPG.Full ( ExpHelpers(..), toCore )
 import qualified Text.IPG.GenericExp as E
 import qualified Text.IPG.Interpreter as I
@@ -22,7 +22,8 @@ helper = ExpHelpers {
     len = E.Int . fromIntegral . BS.length,
     add = E.Add,
     num = E.Int . fromIntegral,
-    ref = E.Ref
+    ref = E.Ref,
+    mapRef = E.mapRef
   }  
 
 parseFile

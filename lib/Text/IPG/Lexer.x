@@ -89,6 +89,8 @@ tokens :-
 <0>    "-"     { token $ \_ _ -> TokenSub }
 <0>    "*"     { token $ \_ _ -> TokenMul }
 <0>    "/"     { token $ \_ _ -> TokenDiv }
+<0>    [_ $alpha] [_ $alpha $digit]* "@" $digit+
+               { token $ \inp len -> tokenNonTerminal (LBS.toStrict (current inp len)) }
 <0>    [_ $alpha] [_ $alpha $digit]*
                { token $ \inp len -> TokenName (LBS.toStrict (current inp len)) }
 <0>    \" ($stringchar#[\"\\]|\\[0abfnrtv\\\"']|\\x$hex$hex)* \"
@@ -113,6 +115,7 @@ data Token
     | TokenInt !Integer
     | TokenDouble !Double
     | TokenString BS.ByteString
+    | TokenNonTerminal (BS.ByteString, Int)
     | TokenName BS.ByteString
     | TokenGuard
     | TokenQuestion
@@ -150,6 +153,11 @@ data Token
     | TokenMul
     | TokenDiv
   deriving ( Eq, Show )
+
+tokenNonTerminal :: BS.ByteString -> Token
+tokenNonTerminal s = TokenNonTerminal (name, idx)
+    where (name, idxString) = CBS.break ('@' /=) s 
+          idx = case I.readDecimal (BS.tail idxString) of Just (n, _) -> fromIntegral n
 
 readInteger :: LBS.ByteString -> Integer
 readInteger bs = case I.readDecimal (LBS.toStrict bs) of Just (n, _) -> n

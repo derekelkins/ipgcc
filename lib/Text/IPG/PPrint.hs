@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Text.IPG.PPrint (
     pprint, pprintRule, pprintExpr, pprintAlternative, pprintTerm, pprintRef, pprintMetaTag,
-    pprint', pprintRule', pprintAlternative', pprintTerm', pprintRef',
+    pprint', pprintRule', pprintAlternative', pprintTerm', pprintRef', pprintNT,
     hexyString, outParen
 ) where
 import qualified Data.ByteString as BS -- bytestring
@@ -30,6 +30,10 @@ hexyString s = "\"" <> mconcat (map go (BS.unpack s)) <> "\""
 
 pprintMetaTag :: MetaTag -> Out
 pprintMetaTag INSTRUMENT = "%instrument"
+
+pprintNT :: (T, Int) -> Out
+pprintNT (nt, -1) = Builder.byteString nt -- This case shouldn't really happen.
+pprintNT (nt, n) = Builder.byteString nt <> "@" <> Builder.intDec n
 
 pprint :: Grammar T T T (Exp T T T) -> Out
 pprint = pprint' (pprintExpr 0)
@@ -69,35 +73,35 @@ pprintInterval ppExp l r = "[" <> ppExp l <> ", " <> ppExp r <> "]"
 
 pprintTerm' :: (e -> Out) -> Term T T T e -> Out
 pprintTerm' ppExp (NonTerminal nt es l r) =
-    Builder.byteString nt <> pprintArgList ppExp es <> pprintInterval ppExp l r
+    pprintNT nt <> pprintArgList ppExp es <> pprintInterval ppExp l r
 pprintTerm' ppExp (Terminal t l r) = hexyString t <> pprintInterval ppExp l r
 pprintTerm' ppExp (x := e) = "{ " <> Builder.byteString x <> " = " <> ppExp e <> " }"
 pprintTerm' ppExp (Guard e) = "?[ " <> ppExp e <> " ]"
 pprintTerm' ppExp (Array j s e nt es l r) =
     "for " <> Builder.byteString j <> " = " <> ppExp s <> " to " <> ppExp e <> " do "
- <> Builder.byteString nt <> pprintArgList ppExp es <> pprintInterval ppExp l r
+ <> pprintNT nt <> pprintArgList ppExp es <> pprintInterval ppExp l r
 pprintTerm' ppExp (Any x e) = "{ " <> Builder.byteString x <> " = .[" <> ppExp e <> "] }"
 pprintTerm' ppExp (Slice x l r) =
     "{ " <> Builder.byteString x <> " = *" <> pprintInterval ppExp l r <> " }"
 pprintTerm' ppExp (Repeat nt es l r x l0 r0) =
-    "repeat " <> Builder.byteString nt <> pprintArgList ppExp es <> pprintInterval ppExp l r
+    "repeat " <> pprintNT nt <> pprintArgList ppExp es <> pprintInterval ppExp l r
  <> "." <> Builder.byteString x <> " starting on " <> pprintInterval ppExp l0 r0
 pprintTerm' ppExp (RepeatUntil nt1 es1 l r x l0 r0 nt2 es2) =
-    "repeat " <> Builder.byteString nt1 <> pprintArgList ppExp es1 <> pprintInterval ppExp l r
+    "repeat " <> pprintNT nt1 <> pprintArgList ppExp es1 <> pprintInterval ppExp l r
  <> "." <> Builder.byteString x <> " starting on " <> pprintInterval ppExp l0 r0
- <> " until " <> Builder.byteString nt2 <> pprintArgList ppExp es2
+ <> " until " <> pprintNT nt2 <> pprintArgList ppExp es2
     
 pprintRef :: Ref T T (Exp T T T) -> Out
 pprintRef = pprintRef' (pprintExpr 0)
 
 pprintRef' :: (e -> Out) -> Ref T T e -> Out
 pprintRef' _ (Id x) = Builder.byteString x
-pprintRef' _ (Attr nt x) = Builder.byteString nt <> "." <> Builder.byteString x
+pprintRef' _ (Attr nt x) = pprintNT nt <> "." <> Builder.byteString x
 pprintRef' ppExp (Index nt e x) =
-    Builder.byteString nt <> "(" <> ppExp e <> ")." <> Builder.byteString x
+    pprintNT nt <> "(" <> ppExp e <> ")." <> Builder.byteString x
 pprintRef' _ EOI = "EOI"
-pprintRef' _ (Start nt) = Builder.byteString nt <> ".START"
-pprintRef' _ (End nt) = Builder.byteString nt <> ".END"
+pprintRef' _ (Start nt) = pprintNT nt <> ".START"
+pprintRef' _ (End nt) = pprintNT nt <> ".END"
 
 pprintExpr :: Int -> Exp T T T -> Out
 pprintExpr _ (Int n) = Builder.integerDec n

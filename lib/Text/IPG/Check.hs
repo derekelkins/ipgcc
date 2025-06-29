@@ -28,9 +28,12 @@ validate externalRules (Grammar rules) = mconcat (map check rules) <> basicCheck
   where
     possibleAttributes' =
         Map.fromList (map (\(Rule _ nt _ alts) -> (nt, Set.unions (map attrInAlt alts))) rules)
+    guaranteedAttributes' =
+        Map.fromList (map (\(Rule _ nt _ alts) ->
+                            (nt, foldr1 Set.intersection (map attrInAlt alts))) rules)
     -- TODO: "these" should only be added after an Array term
     specialAttrs = Set.fromList ["these", "this"]
-    possibleAttributes = fmap (Set.union specialAttrs) possibleAttributes'
+    guaranteedAttributes = fmap (Set.union specialAttrs) guaranteedAttributes'
     parameters =
         Map.fromList (map (\(Rule _ nt args _) -> (nt, (length args, Set.fromList args))) rules)
     attrInAlt (Alternative terms) = Set.unions (map attrInTerm terms)
@@ -66,7 +69,7 @@ validate externalRules (Grammar rules) = mconcat (map check rules) <> basicCheck
         mconcat (map (\(Alternative ts) -> checkTerms nt (Set.fromList params) Set.empty ts) alts)
     checkTerms :: T -> Set.Set T -> Set.Set T -> [Term'] -> Maybe [T]
     checkTerms _ _ _ [] = Nothing
-    checkTerms nt params locals (NonTerminal a es l r:ts) =
+    checkTerms nt params locals (NonTerminal (a, _) es l r:ts) =
         (case Map.lookup a parameters of
             Nothing -> if a `Set.member` externalRules then Nothing
                         else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
@@ -96,16 +99,16 @@ validate externalRules (Grammar rules) = mconcat (map check rules) <> basicCheck
     checkTerms nt params locals (Guard e:ts) =
             checkExp nt params locals e
         <> checkTerms nt params locals ts
-    checkTerms nt params locals (Repeat a es l r x l0 r0:ts) =
+    checkTerms nt params locals (Repeat (a, _) es l r x l0 r0:ts) =
         (case Map.lookup a parameters of
             Nothing -> if a `Set.member` externalRules then Nothing
                         else Just [[i|Rule #{a} in rule {nt} is undefined|]]
             Just (n, _) -> if n == length es then Nothing
                             else Just [[i|Arity mismatch when calling #{a} in rule #{nt}|]])
-        <> (case Map.lookup a possibleAttributes of
+        <> (case Map.lookup a guaranteedAttributes of
                 Nothing -> Nothing -- Already checked this case
                 Just attrs -> if x `Set.member` attrs then Nothing
-                                else Just [[i|#{x} isn't an attribute on #{a} in rule #{nt}|]])
+                                else Just [[i|#{x} isn't a guaranteed attribute on #{a} in rule #{nt}|]])
         <> mconcat (map (checkExp nt params locals) es)
         <> checkExp nt params locals l
         <> checkExp nt params locals r
@@ -113,16 +116,16 @@ validate externalRules (Grammar rules) = mconcat (map check rules) <> basicCheck
         <> checkExp nt params locals r0
         <> checkTerms nt params locals' ts
       where locals' = Set.insert "values" locals
-    checkTerms nt params locals (RepeatUntil a es1 l r x l0 r0 b es2:ts) =
+    checkTerms nt params locals (RepeatUntil (a, _) es1 l r x l0 r0 (b, _) es2:ts) =
         (case Map.lookup a parameters of
             Nothing -> if a `Set.member` externalRules then Nothing
                         else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
             Just (n, _) -> if n == length es1 then Nothing
                             else Just [[i|Arity mismatch when calling #{a} in rule #{nt}|]])
-        <> (case Map.lookup a possibleAttributes of
+        <> (case Map.lookup a guaranteedAttributes of
                 Nothing -> Nothing -- Already checked this case
                 Just attrs -> if x `Set.member` attrs then Nothing
-                                else Just [[i|#{x} isn't an attribute on #{a} in rule #{nt}|]])
+                                else Just [[i|#{x} isn't a guaranteed attribute on #{a} in rule #{nt}|]])
         <> (case Map.lookup b parameters of
                 Nothing -> if b `Set.member` externalRules then Nothing
                             else Just [[i|Rule #{b} in rule #{nt} is undefined|]]
@@ -136,7 +139,7 @@ validate externalRules (Grammar rules) = mconcat (map check rules) <> basicCheck
         <> checkExp nt params locals r0
         <> checkTerms nt params locals' ts
       where locals' = Set.insert "values" locals
-    checkTerms nt params locals (Array x s e a es l r:ts) =
+    checkTerms nt params locals (Array x s e (a, _) es l r:ts) =
         (case Map.lookup a parameters of
             Nothing -> if a `Set.member` externalRules then Nothing
                         else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
@@ -200,23 +203,23 @@ validate externalRules (Grammar rules) = mconcat (map check rules) <> basicCheck
     checkExp nt params locals (Ref (Id x)) =
         if x `Set.member` params || x `Set.member` locals then Nothing
             else Just [[i|#{x} is not yet defined in rule #{nt}|]]
-    checkExp nt _ _ (Ref (Attr a x)) =
-        case Map.lookup a possibleAttributes of
+    checkExp nt _ _ (Ref (Attr (a, _) x)) =
+        case Map.lookup a guaranteedAttributes of
             Nothing -> if a `Set.member` externalRules then Nothing
                         else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
             Just attrs -> if x `Set.member` attrs then Nothing
-                            else Just [[i|#{x} isn't an attribute on #{a} in rule #{nt}|]]
-    checkExp nt params locals (Ref (Index a e x)) =
-        (case Map.lookup a possibleAttributes of
+                            else Just [[i|#{x} isn't a guaranteed attribute on #{a} in rule #{nt}|]]
+    checkExp nt params locals (Ref (Index (a, _) e x)) =
+        (case Map.lookup a guaranteedAttributes of
             Nothing -> if a `Set.member` externalRules then Nothing
                         else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
             Just attrs -> if x `Set.member` attrs then Nothing
-                            else Just [[i|#{x} isn't an attribute on #{a} in rule #{nt}|]])
+                            else Just [[i|#{x} isn't a guaranteed attribute on #{a} in rule #{nt}|]])
         <> checkExp nt params locals e
-    checkExp nt _ _ (Ref (Start a)) =
+    checkExp nt _ _ (Ref (Start (a, _))) =
         if a `Map.member` parameters || a `Set.member` externalRules then Nothing
             else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
-    checkExp nt _ _ (Ref (End a)) =
+    checkExp nt _ _ (Ref (End (a, _))) =
         if a `Map.member` parameters || a `Set.member` externalRules then Nothing
             else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
     checkExp _ _ _ _ = Nothing

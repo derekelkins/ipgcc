@@ -150,42 +150,42 @@ function RM6(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_HeaderV6;
-    let nt_Blocks;
+    let nt_HeaderV6_0;
+    let nt_Blocks_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // HeaderV6[0, EOI]
+    // HeaderV6@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_HeaderV6 = HeaderV6(input, begin + left, begin + right);
-    if (nt_HeaderV6 === null) break _ipg_alt;
-    if (nt_HeaderV6._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_HeaderV6._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_HeaderV6._ipg_end);
+    nt_HeaderV6_0 = HeaderV6(input, begin + left, begin + right);
+    if (nt_HeaderV6_0 === null) break _ipg_alt;
+    if (nt_HeaderV6_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_HeaderV6_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_HeaderV6_0._ipg_end);
     }
-    nt_HeaderV6._ipg_end += left;
-    nt_HeaderV6._ipg_start += left;
-    left = nt_HeaderV6._ipg_start;
-    right = nt_HeaderV6._ipg_end;
+    nt_HeaderV6_0._ipg_end += left;
+    nt_HeaderV6_0._ipg_start += left;
+    left = nt_HeaderV6_0._ipg_start;
+    right = nt_HeaderV6_0._ipg_end;
 
-    // Blocks[HeaderV6.END, EOI]
-    left = nt_HeaderV6._ipg_end;
+    // Blocks@0[HeaderV6@0.END, EOI]
+    left = nt_HeaderV6_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Blocks = Blocks(input, begin + left, begin + right);
-    if (nt_Blocks === null) break _ipg_alt;
-    if (nt_Blocks._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Blocks._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Blocks._ipg_end);
+    nt_Blocks_0 = Blocks(input, begin + left, begin + right);
+    if (nt_Blocks_0 === null) break _ipg_alt;
+    if (nt_Blocks_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Blocks_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Blocks_0._ipg_end);
     }
-    nt_Blocks._ipg_end += left;
-    nt_Blocks._ipg_start += left;
-    left = nt_Blocks._ipg_start;
-    right = nt_Blocks._ipg_end;
+    nt_Blocks_0._ipg_end += left;
+    nt_Blocks_0._ipg_start += left;
+    left = nt_Blocks_0._ipg_start;
+    right = nt_Blocks_0._ipg_end;
 
-    // { blocks = Blocks.values }
-    self.blocks = nt_Blocks.values;
+    // { blocks = Blocks@0.values }
+    self.blocks = nt_Blocks_0.values;
 
     return self;
   }
@@ -222,34 +222,34 @@ function Blocks(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_FullBlock;
+    let nt_FullBlock_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // repeat FullBlock[FullBlock.END, EOI].block starting on [0, EOI]
+    // repeat FullBlock@0[FullBlock@0.END, EOI].block starting on [0, EOI]
     self.values = [];
     left = 0;
     right = EOI;
-    nt_FullBlock = FullBlock(input, begin + left, begin + right);
-    if (nt_FullBlock !== null) {
-      if (nt_FullBlock._ipg_end === 0) throw 'repeat of non-consuming rule: FullBlock';
-      self._ipg_start = Math.min(self._ipg_start, left + nt_FullBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_FullBlock._ipg_end);
-      nt_FullBlock._ipg_end += left;
-      nt_FullBlock._ipg_start += left;
-      left = nt_FullBlock._ipg_end;
+    nt_FullBlock_0 = FullBlock(input, begin + left, begin + right);
+    if (nt_FullBlock_0 !== null) {
+      if (nt_FullBlock_0._ipg_end === 0) throw 'repeat of non-consuming rule: FullBlock';
+      self._ipg_start = Math.min(self._ipg_start, left + nt_FullBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_FullBlock_0._ipg_end);
+      nt_FullBlock_0._ipg_end += left;
+      nt_FullBlock_0._ipg_start += left;
+      left = nt_FullBlock_0._ipg_end;
       right = EOI;
-      self.values.push(nt_FullBlock.block);
+      self.values.push(nt_FullBlock_0.block);
 
       while (left >= 0 && left <= right && right <= EOI) {
-        nt_FullBlock = FullBlock(input, begin + left, begin + right);
-        if (nt_FullBlock === null) break;
-        if (nt_FullBlock._ipg_end === 0) throw 'repeat of non-consuming rule: FullBlock';
-        self._ipg_start = Math.min(self._ipg_start, left + nt_FullBlock._ipg_start);
-        self._ipg_end = Math.max(self._ipg_end, left + nt_FullBlock._ipg_end);
-        nt_FullBlock._ipg_end += left;
-        nt_FullBlock._ipg_start += left;
-        self.values.push(nt_FullBlock.block);
-        left = nt_FullBlock._ipg_end;
+        nt_FullBlock_0 = FullBlock(input, begin + left, begin + right);
+        if (nt_FullBlock_0 === null) break;
+        if (nt_FullBlock_0._ipg_end === 0) throw 'repeat of non-consuming rule: FullBlock';
+        self._ipg_start = Math.min(self._ipg_start, left + nt_FullBlock_0._ipg_start);
+        self._ipg_end = Math.max(self._ipg_end, left + nt_FullBlock_0._ipg_end);
+        nt_FullBlock_0._ipg_end += left;
+        nt_FullBlock_0._ipg_start += left;
+        self.values.push(nt_FullBlock_0.block);
+        left = nt_FullBlock_0._ipg_end;
         right = EOI;
       }
     }
@@ -266,58 +266,58 @@ function FullBlock(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_MainBlockInfo;
-    let nt_Block;
-    let nt_Bytes;
+    let nt_MainBlockInfo_0;
+    let nt_Block_0;
+    let nt_Bytes_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // MainBlockInfo[0, EOI]
+    // MainBlockInfo@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_MainBlockInfo = MainBlockInfo(input, begin + left, begin + right);
-    if (nt_MainBlockInfo === null) break _ipg_alt;
-    if (nt_MainBlockInfo._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_MainBlockInfo._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_MainBlockInfo._ipg_end);
+    nt_MainBlockInfo_0 = MainBlockInfo(input, begin + left, begin + right);
+    if (nt_MainBlockInfo_0 === null) break _ipg_alt;
+    if (nt_MainBlockInfo_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_MainBlockInfo_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_MainBlockInfo_0._ipg_end);
     }
-    nt_MainBlockInfo._ipg_end += left;
-    nt_MainBlockInfo._ipg_start += left;
-    left = nt_MainBlockInfo._ipg_start;
-    right = nt_MainBlockInfo._ipg_end;
+    nt_MainBlockInfo_0._ipg_end += left;
+    nt_MainBlockInfo_0._ipg_start += left;
+    left = nt_MainBlockInfo_0._ipg_start;
+    right = nt_MainBlockInfo_0._ipg_end;
 
-    // Block(MainBlockInfo.blockType, MainBlockInfo.currentVersion)[MainBlockInfo.END, MainBlockInfo.END + MainBlockInfo.length]
-    left = nt_MainBlockInfo._ipg_end;
-    right = nt_MainBlockInfo._ipg_end + nt_MainBlockInfo.length;
+    // Block@0(MainBlockInfo@0.blockType, MainBlockInfo@0.currentVersion)[MainBlockInfo@0.END, MainBlockInfo@0.END + MainBlockInfo@0.length]
+    left = nt_MainBlockInfo_0._ipg_end;
+    right = nt_MainBlockInfo_0._ipg_end + nt_MainBlockInfo_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Block = Block(input, begin + left, begin + right, nt_MainBlockInfo.blockType, nt_MainBlockInfo.currentVersion);
-    if (nt_Block === null) break _ipg_alt;
-    if (nt_Block._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Block._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Block._ipg_end);
+    nt_Block_0 = Block(input, begin + left, begin + right, nt_MainBlockInfo_0.blockType, nt_MainBlockInfo_0.currentVersion);
+    if (nt_Block_0 === null) break _ipg_alt;
+    if (nt_Block_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Block_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Block_0._ipg_end);
     }
-    nt_Block._ipg_end += left;
-    nt_Block._ipg_start += left;
-    left = nt_Block._ipg_start;
-    right = nt_Block._ipg_end;
+    nt_Block_0._ipg_end += left;
+    nt_Block_0._ipg_start += left;
+    left = nt_Block_0._ipg_start;
+    right = nt_Block_0._ipg_end;
 
-    // Bytes[Block.END, MainBlockInfo.END + MainBlockInfo.length]
-    left = nt_Block._ipg_end;
-    right = nt_MainBlockInfo._ipg_end + nt_MainBlockInfo.length;
+    // Bytes@0[Block@0.END, MainBlockInfo@0.END + MainBlockInfo@0.length]
+    left = nt_Block_0._ipg_end;
+    right = nt_MainBlockInfo_0._ipg_end + nt_MainBlockInfo_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Bytes = Bytes(input, begin + left, begin + right);
-    if (nt_Bytes === null) break _ipg_alt;
-    if (nt_Bytes._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Bytes._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Bytes._ipg_end);
+    nt_Bytes_0 = Bytes(input, begin + left, begin + right);
+    if (nt_Bytes_0 === null) break _ipg_alt;
+    if (nt_Bytes_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Bytes_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Bytes_0._ipg_end);
     }
-    nt_Bytes._ipg_end += left;
-    nt_Bytes._ipg_start += left;
-    left = nt_Bytes._ipg_start;
-    right = nt_Bytes._ipg_end;
+    nt_Bytes_0._ipg_end += left;
+    nt_Bytes_0._ipg_start += left;
+    left = nt_Bytes_0._ipg_start;
+    right = nt_Bytes_0._ipg_end;
 
-    // { block = makeBlock(MainBlockInfo.this, Block.data, Bytes.value) }
-    self.block = makeBlock((({_ipg_start,_ipg_end,...o}) => o)(nt_MainBlockInfo), nt_Block.data, nt_Bytes.value);
+    // { block = makeBlock(MainBlockInfo@0.this, Block@0.data, Bytes@0.value) }
+    self.block = makeBlock((({_ipg_start,_ipg_end,...o}) => o)(nt_MainBlockInfo_0), nt_Block_0.data, nt_Bytes_0.value);
 
     return self;
   }
@@ -331,48 +331,48 @@ function MainBlockInfo(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_U32;
-    let nt_U8;
+    let nt_U32_0;
+    let nt_U8_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // U32[0, EOI]
+    // U32@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U32 = U32(input, begin + left, begin + right);
-    if (nt_U32 === null) break _ipg_alt;
-    if (nt_U32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U32._ipg_end);
+    nt_U32_0 = U32(input, begin + left, begin + right);
+    if (nt_U32_0 === null) break _ipg_alt;
+    if (nt_U32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U32_0._ipg_end);
     }
-    nt_U32._ipg_end += left;
-    nt_U32._ipg_start += left;
-    left = nt_U32._ipg_start;
-    right = nt_U32._ipg_end;
+    nt_U32_0._ipg_end += left;
+    nt_U32_0._ipg_start += left;
+    left = nt_U32_0._ipg_start;
+    right = nt_U32_0._ipg_end;
 
-    // { length = U32.value }
-    self.length = nt_U32.value;
+    // { length = U32@0.value }
+    self.length = nt_U32_0.value;
 
-    // U8[U32.END, EOI]
-    left = nt_U32._ipg_end;
+    // U8@0[U32@0.END, EOI]
+    left = nt_U32_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U8 = U8(input, begin + left, begin + right);
-    if (nt_U8 === null) break _ipg_alt;
-    if (nt_U8._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U8._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U8._ipg_end);
+    nt_U8_0 = U8(input, begin + left, begin + right);
+    if (nt_U8_0 === null) break _ipg_alt;
+    if (nt_U8_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U8_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U8_0._ipg_end);
     }
-    nt_U8._ipg_end += left;
-    nt_U8._ipg_start += left;
-    left = nt_U8._ipg_start;
-    right = nt_U8._ipg_end;
+    nt_U8_0._ipg_end += left;
+    nt_U8_0._ipg_start += left;
+    left = nt_U8_0._ipg_start;
+    right = nt_U8_0._ipg_end;
 
-    // ?[ check(U8.value == 0, "unknown value is non-zero") ]
-    if (!check(nt_U8.value == 0, "unknown value is non-zero")) break _ipg_alt;
+    // ?[ check(U8@0.value == 0, "unknown value is non-zero") ]
+    if (!check(nt_U8_0.value == 0, "unknown value is non-zero")) break _ipg_alt;
 
-    // { minVersion = .[U8.END] }
-    left = nt_U8._ipg_end;
+    // { minVersion = .[U8@0.END] }
+    left = nt_U8_0._ipg_end;
     right = left + 1;
     if (left < 0 || right > EOI) break _ipg_alt;
     self.minVersion = input[begin + left];
@@ -382,8 +382,8 @@ function MainBlockInfo(input, begin = 0, end = input.length) {
     // ?[ check(minVersion >= 0, "minVersion < 0") ]
     if (!check(self.minVersion >= 0, "minVersion < 0")) break _ipg_alt;
 
-    // { currentVersion = .[U8.END + 1] }
-    left = nt_U8._ipg_end + 1;
+    // { currentVersion = .[U8@0.END + 1] }
+    left = nt_U8_0._ipg_end + 1;
     right = left + 1;
     if (left < 0 || right > EOI) break _ipg_alt;
     self.currentVersion = input[begin + left];
@@ -393,8 +393,8 @@ function MainBlockInfo(input, begin = 0, end = input.length) {
     // ?[ check(currentVersion >= 0 && minVersion <= currentVersion, "currentVersion not between 0 and minVersion") ]
     if (!check(self.currentVersion >= 0 && self.minVersion <= self.currentVersion, "currentVersion not between 0 and minVersion")) break _ipg_alt;
 
-    // { blockType = .[U8.END + 2] }
-    left = nt_U8._ipg_end + 2;
+    // { blockType = .[U8@0.END + 2] }
+    left = nt_U8_0._ipg_end + 2;
     right = left + 1;
     if (left < 0 || right > EOI) break _ipg_alt;
     self.blockType = input[begin + left];
@@ -413,362 +413,362 @@ function Block(input, begin = 0, end = input.length, a_blockType, a_version) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_MigrationInfoBlock;
+    let nt_MigrationInfoBlock_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // ?[ blockType == 0 ]
     if (!(a_blockType == 0)) break _ipg_alt;
 
-    // MigrationInfoBlock[0, EOI]
+    // MigrationInfoBlock@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_MigrationInfoBlock = MigrationInfoBlock(input, begin + left, begin + right);
-    if (nt_MigrationInfoBlock === null) break _ipg_alt;
-    if (nt_MigrationInfoBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_MigrationInfoBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_MigrationInfoBlock._ipg_end);
+    nt_MigrationInfoBlock_0 = MigrationInfoBlock(input, begin + left, begin + right);
+    if (nt_MigrationInfoBlock_0 === null) break _ipg_alt;
+    if (nt_MigrationInfoBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_MigrationInfoBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_MigrationInfoBlock_0._ipg_end);
     }
-    nt_MigrationInfoBlock._ipg_end += left;
-    nt_MigrationInfoBlock._ipg_start += left;
-    left = nt_MigrationInfoBlock._ipg_start;
-    right = nt_MigrationInfoBlock._ipg_end;
+    nt_MigrationInfoBlock_0._ipg_end += left;
+    nt_MigrationInfoBlock_0._ipg_start += left;
+    left = nt_MigrationInfoBlock_0._ipg_start;
+    right = nt_MigrationInfoBlock_0._ipg_end;
 
-    // { data = MigrationInfoBlock.this }
-    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_MigrationInfoBlock);
+    // { data = MigrationInfoBlock@0.this }
+    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_MigrationInfoBlock_0);
 
     return self;
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SceneTreeBlock;
+    let nt_SceneTreeBlock_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // ?[ blockType == 1 ]
     if (!(a_blockType == 1)) break _ipg_alt;
 
-    // SceneTreeBlock[0, EOI]
+    // SceneTreeBlock@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SceneTreeBlock = SceneTreeBlock(input, begin + left, begin + right);
-    if (nt_SceneTreeBlock === null) break _ipg_alt;
-    if (nt_SceneTreeBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneTreeBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneTreeBlock._ipg_end);
+    nt_SceneTreeBlock_0 = SceneTreeBlock(input, begin + left, begin + right);
+    if (nt_SceneTreeBlock_0 === null) break _ipg_alt;
+    if (nt_SceneTreeBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneTreeBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneTreeBlock_0._ipg_end);
     }
-    nt_SceneTreeBlock._ipg_end += left;
-    nt_SceneTreeBlock._ipg_start += left;
-    left = nt_SceneTreeBlock._ipg_start;
-    right = nt_SceneTreeBlock._ipg_end;
+    nt_SceneTreeBlock_0._ipg_end += left;
+    nt_SceneTreeBlock_0._ipg_start += left;
+    left = nt_SceneTreeBlock_0._ipg_start;
+    right = nt_SceneTreeBlock_0._ipg_end;
 
-    // { data = SceneTreeBlock.this }
-    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_SceneTreeBlock);
+    // { data = SceneTreeBlock@0.this }
+    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_SceneTreeBlock_0);
 
     return self;
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_TreeNodeBlock;
+    let nt_TreeNodeBlock_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // ?[ blockType == 2 ]
     if (!(a_blockType == 2)) break _ipg_alt;
 
-    // TreeNodeBlock[0, EOI]
+    // TreeNodeBlock@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TreeNodeBlock = TreeNodeBlock(input, begin + left, begin + right);
-    if (nt_TreeNodeBlock === null) break _ipg_alt;
-    if (nt_TreeNodeBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TreeNodeBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TreeNodeBlock._ipg_end);
+    nt_TreeNodeBlock_0 = TreeNodeBlock(input, begin + left, begin + right);
+    if (nt_TreeNodeBlock_0 === null) break _ipg_alt;
+    if (nt_TreeNodeBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TreeNodeBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TreeNodeBlock_0._ipg_end);
     }
-    nt_TreeNodeBlock._ipg_end += left;
-    nt_TreeNodeBlock._ipg_start += left;
-    left = nt_TreeNodeBlock._ipg_start;
-    right = nt_TreeNodeBlock._ipg_end;
+    nt_TreeNodeBlock_0._ipg_end += left;
+    nt_TreeNodeBlock_0._ipg_start += left;
+    left = nt_TreeNodeBlock_0._ipg_start;
+    right = nt_TreeNodeBlock_0._ipg_end;
 
-    // { data = TreeNodeBlock.this }
-    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_TreeNodeBlock);
+    // { data = TreeNodeBlock@0.this }
+    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_TreeNodeBlock_0);
 
     return self;
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SceneGlyphItemBlock;
+    let nt_SceneGlyphItemBlock_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // ?[ blockType == 3 ]
     if (!(a_blockType == 3)) break _ipg_alt;
 
-    // SceneGlyphItemBlock[0, EOI]
+    // SceneGlyphItemBlock@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SceneGlyphItemBlock = SceneGlyphItemBlock(input, begin + left, begin + right);
-    if (nt_SceneGlyphItemBlock === null) break _ipg_alt;
-    if (nt_SceneGlyphItemBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneGlyphItemBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneGlyphItemBlock._ipg_end);
+    nt_SceneGlyphItemBlock_0 = SceneGlyphItemBlock(input, begin + left, begin + right);
+    if (nt_SceneGlyphItemBlock_0 === null) break _ipg_alt;
+    if (nt_SceneGlyphItemBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneGlyphItemBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneGlyphItemBlock_0._ipg_end);
     }
-    nt_SceneGlyphItemBlock._ipg_end += left;
-    nt_SceneGlyphItemBlock._ipg_start += left;
-    left = nt_SceneGlyphItemBlock._ipg_start;
-    right = nt_SceneGlyphItemBlock._ipg_end;
+    nt_SceneGlyphItemBlock_0._ipg_end += left;
+    nt_SceneGlyphItemBlock_0._ipg_start += left;
+    left = nt_SceneGlyphItemBlock_0._ipg_start;
+    right = nt_SceneGlyphItemBlock_0._ipg_end;
 
-    // { data = SceneGlyphItemBlock.this }
-    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_SceneGlyphItemBlock);
+    // { data = SceneGlyphItemBlock@0.this }
+    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_SceneGlyphItemBlock_0);
 
     return self;
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SceneGroupItemBlock;
+    let nt_SceneGroupItemBlock_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // ?[ blockType == 4 ]
     if (!(a_blockType == 4)) break _ipg_alt;
 
-    // SceneGroupItemBlock[0, EOI]
+    // SceneGroupItemBlock@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SceneGroupItemBlock = SceneGroupItemBlock(input, begin + left, begin + right);
-    if (nt_SceneGroupItemBlock === null) break _ipg_alt;
-    if (nt_SceneGroupItemBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneGroupItemBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneGroupItemBlock._ipg_end);
+    nt_SceneGroupItemBlock_0 = SceneGroupItemBlock(input, begin + left, begin + right);
+    if (nt_SceneGroupItemBlock_0 === null) break _ipg_alt;
+    if (nt_SceneGroupItemBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneGroupItemBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneGroupItemBlock_0._ipg_end);
     }
-    nt_SceneGroupItemBlock._ipg_end += left;
-    nt_SceneGroupItemBlock._ipg_start += left;
-    left = nt_SceneGroupItemBlock._ipg_start;
-    right = nt_SceneGroupItemBlock._ipg_end;
+    nt_SceneGroupItemBlock_0._ipg_end += left;
+    nt_SceneGroupItemBlock_0._ipg_start += left;
+    left = nt_SceneGroupItemBlock_0._ipg_start;
+    right = nt_SceneGroupItemBlock_0._ipg_end;
 
-    // { data = SceneGroupItemBlock.this }
-    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_SceneGroupItemBlock);
+    // { data = SceneGroupItemBlock@0.this }
+    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_SceneGroupItemBlock_0);
 
     return self;
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SceneLineItemBlock;
+    let nt_SceneLineItemBlock_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // ?[ blockType == 5 ]
     if (!(a_blockType == 5)) break _ipg_alt;
 
-    // SceneLineItemBlock(version)[0, EOI]
+    // SceneLineItemBlock@0(version)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SceneLineItemBlock = SceneLineItemBlock(input, begin + left, begin + right, a_version);
-    if (nt_SceneLineItemBlock === null) break _ipg_alt;
-    if (nt_SceneLineItemBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneLineItemBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneLineItemBlock._ipg_end);
+    nt_SceneLineItemBlock_0 = SceneLineItemBlock(input, begin + left, begin + right, a_version);
+    if (nt_SceneLineItemBlock_0 === null) break _ipg_alt;
+    if (nt_SceneLineItemBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneLineItemBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneLineItemBlock_0._ipg_end);
     }
-    nt_SceneLineItemBlock._ipg_end += left;
-    nt_SceneLineItemBlock._ipg_start += left;
-    left = nt_SceneLineItemBlock._ipg_start;
-    right = nt_SceneLineItemBlock._ipg_end;
+    nt_SceneLineItemBlock_0._ipg_end += left;
+    nt_SceneLineItemBlock_0._ipg_start += left;
+    left = nt_SceneLineItemBlock_0._ipg_start;
+    right = nt_SceneLineItemBlock_0._ipg_end;
 
-    // { data = SceneLineItemBlock.this }
-    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_SceneLineItemBlock);
+    // { data = SceneLineItemBlock@0.this }
+    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_SceneLineItemBlock_0);
 
     return self;
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SceneTextItemBlock;
+    let nt_SceneTextItemBlock_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // ?[ blockType == 6 ]
     if (!(a_blockType == 6)) break _ipg_alt;
 
-    // SceneTextItemBlock[0, EOI]
+    // SceneTextItemBlock@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SceneTextItemBlock = SceneTextItemBlock(input, begin + left, begin + right);
-    if (nt_SceneTextItemBlock === null) break _ipg_alt;
-    if (nt_SceneTextItemBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneTextItemBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneTextItemBlock._ipg_end);
+    nt_SceneTextItemBlock_0 = SceneTextItemBlock(input, begin + left, begin + right);
+    if (nt_SceneTextItemBlock_0 === null) break _ipg_alt;
+    if (nt_SceneTextItemBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneTextItemBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneTextItemBlock_0._ipg_end);
     }
-    nt_SceneTextItemBlock._ipg_end += left;
-    nt_SceneTextItemBlock._ipg_start += left;
-    left = nt_SceneTextItemBlock._ipg_start;
-    right = nt_SceneTextItemBlock._ipg_end;
+    nt_SceneTextItemBlock_0._ipg_end += left;
+    nt_SceneTextItemBlock_0._ipg_start += left;
+    left = nt_SceneTextItemBlock_0._ipg_start;
+    right = nt_SceneTextItemBlock_0._ipg_end;
 
-    // { data = SceneTextItemBlock.this }
-    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_SceneTextItemBlock);
+    // { data = SceneTextItemBlock@0.this }
+    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_SceneTextItemBlock_0);
 
     return self;
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_RootTextBlock;
+    let nt_RootTextBlock_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // ?[ blockType == 7 ]
     if (!(a_blockType == 7)) break _ipg_alt;
 
-    // RootTextBlock[0, EOI]
+    // RootTextBlock@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_RootTextBlock = RootTextBlock(input, begin + left, begin + right);
-    if (nt_RootTextBlock === null) break _ipg_alt;
-    if (nt_RootTextBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_RootTextBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_RootTextBlock._ipg_end);
+    nt_RootTextBlock_0 = RootTextBlock(input, begin + left, begin + right);
+    if (nt_RootTextBlock_0 === null) break _ipg_alt;
+    if (nt_RootTextBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_RootTextBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_RootTextBlock_0._ipg_end);
     }
-    nt_RootTextBlock._ipg_end += left;
-    nt_RootTextBlock._ipg_start += left;
-    left = nt_RootTextBlock._ipg_start;
-    right = nt_RootTextBlock._ipg_end;
+    nt_RootTextBlock_0._ipg_end += left;
+    nt_RootTextBlock_0._ipg_start += left;
+    left = nt_RootTextBlock_0._ipg_start;
+    right = nt_RootTextBlock_0._ipg_end;
 
-    // { data = RootTextBlock.this }
-    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_RootTextBlock);
+    // { data = RootTextBlock@0.this }
+    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_RootTextBlock_0);
 
     return self;
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SceneTombstoneItemBlock;
+    let nt_SceneTombstoneItemBlock_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // ?[ blockType == 8 ]
     if (!(a_blockType == 8)) break _ipg_alt;
 
-    // SceneTombstoneItemBlock[0, EOI]
+    // SceneTombstoneItemBlock@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SceneTombstoneItemBlock = SceneTombstoneItemBlock(input, begin + left, begin + right);
-    if (nt_SceneTombstoneItemBlock === null) break _ipg_alt;
-    if (nt_SceneTombstoneItemBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneTombstoneItemBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneTombstoneItemBlock._ipg_end);
+    nt_SceneTombstoneItemBlock_0 = SceneTombstoneItemBlock(input, begin + left, begin + right);
+    if (nt_SceneTombstoneItemBlock_0 === null) break _ipg_alt;
+    if (nt_SceneTombstoneItemBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneTombstoneItemBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneTombstoneItemBlock_0._ipg_end);
     }
-    nt_SceneTombstoneItemBlock._ipg_end += left;
-    nt_SceneTombstoneItemBlock._ipg_start += left;
-    left = nt_SceneTombstoneItemBlock._ipg_start;
-    right = nt_SceneTombstoneItemBlock._ipg_end;
+    nt_SceneTombstoneItemBlock_0._ipg_end += left;
+    nt_SceneTombstoneItemBlock_0._ipg_start += left;
+    left = nt_SceneTombstoneItemBlock_0._ipg_start;
+    right = nt_SceneTombstoneItemBlock_0._ipg_end;
 
-    // { data = SceneTombstoneItemBlock.this }
-    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_SceneTombstoneItemBlock);
+    // { data = SceneTombstoneItemBlock@0.this }
+    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_SceneTombstoneItemBlock_0);
 
     return self;
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_AuthorIdsBlock;
+    let nt_AuthorIdsBlock_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // ?[ blockType == 9 ]
     if (!(a_blockType == 9)) break _ipg_alt;
 
-    // AuthorIdsBlock[0, EOI]
+    // AuthorIdsBlock@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_AuthorIdsBlock = AuthorIdsBlock(input, begin + left, begin + right);
-    if (nt_AuthorIdsBlock === null) break _ipg_alt;
-    if (nt_AuthorIdsBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_AuthorIdsBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_AuthorIdsBlock._ipg_end);
+    nt_AuthorIdsBlock_0 = AuthorIdsBlock(input, begin + left, begin + right);
+    if (nt_AuthorIdsBlock_0 === null) break _ipg_alt;
+    if (nt_AuthorIdsBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_AuthorIdsBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_AuthorIdsBlock_0._ipg_end);
     }
-    nt_AuthorIdsBlock._ipg_end += left;
-    nt_AuthorIdsBlock._ipg_start += left;
-    left = nt_AuthorIdsBlock._ipg_start;
-    right = nt_AuthorIdsBlock._ipg_end;
+    nt_AuthorIdsBlock_0._ipg_end += left;
+    nt_AuthorIdsBlock_0._ipg_start += left;
+    left = nt_AuthorIdsBlock_0._ipg_start;
+    right = nt_AuthorIdsBlock_0._ipg_end;
 
-    // { data = AuthorIdsBlock.this }
-    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_AuthorIdsBlock);
+    // { data = AuthorIdsBlock@0.this }
+    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_AuthorIdsBlock_0);
 
     return self;
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_PageInfoBlock;
+    let nt_PageInfoBlock_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // ?[ blockType == 10 ]
     if (!(a_blockType == 10)) break _ipg_alt;
 
-    // PageInfoBlock[0, EOI]
+    // PageInfoBlock@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_PageInfoBlock = PageInfoBlock(input, begin + left, begin + right);
-    if (nt_PageInfoBlock === null) break _ipg_alt;
-    if (nt_PageInfoBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_PageInfoBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_PageInfoBlock._ipg_end);
+    nt_PageInfoBlock_0 = PageInfoBlock(input, begin + left, begin + right);
+    if (nt_PageInfoBlock_0 === null) break _ipg_alt;
+    if (nt_PageInfoBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_PageInfoBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_PageInfoBlock_0._ipg_end);
     }
-    nt_PageInfoBlock._ipg_end += left;
-    nt_PageInfoBlock._ipg_start += left;
-    left = nt_PageInfoBlock._ipg_start;
-    right = nt_PageInfoBlock._ipg_end;
+    nt_PageInfoBlock_0._ipg_end += left;
+    nt_PageInfoBlock_0._ipg_start += left;
+    left = nt_PageInfoBlock_0._ipg_start;
+    right = nt_PageInfoBlock_0._ipg_end;
 
-    // { data = PageInfoBlock.this }
-    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_PageInfoBlock);
+    // { data = PageInfoBlock@0.this }
+    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_PageInfoBlock_0);
 
     return self;
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SceneInfo;
+    let nt_SceneInfo_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // ?[ blockType == 13 ]
     if (!(a_blockType == 13)) break _ipg_alt;
 
-    // SceneInfo[0, EOI]
+    // SceneInfo@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SceneInfo = SceneInfo(input, begin + left, begin + right);
-    if (nt_SceneInfo === null) break _ipg_alt;
-    if (nt_SceneInfo._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneInfo._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneInfo._ipg_end);
+    nt_SceneInfo_0 = SceneInfo(input, begin + left, begin + right);
+    if (nt_SceneInfo_0 === null) break _ipg_alt;
+    if (nt_SceneInfo_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneInfo_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneInfo_0._ipg_end);
     }
-    nt_SceneInfo._ipg_end += left;
-    nt_SceneInfo._ipg_start += left;
-    left = nt_SceneInfo._ipg_start;
-    right = nt_SceneInfo._ipg_end;
+    nt_SceneInfo_0._ipg_end += left;
+    nt_SceneInfo_0._ipg_start += left;
+    left = nt_SceneInfo_0._ipg_start;
+    right = nt_SceneInfo_0._ipg_end;
 
-    // { data = SceneInfo.this }
-    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_SceneInfo);
+    // { data = SceneInfo@0.this }
+    self.data = (({_ipg_start,_ipg_end,...o}) => o)(nt_SceneInfo_0);
 
     return self;
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_UnknownBlock;
+    let nt_UnknownBlock_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // UnknownBlock[0, EOI]
+    // UnknownBlock@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_UnknownBlock = UnknownBlock(input, begin + left, begin + right);
-    if (nt_UnknownBlock === null) break _ipg_alt;
-    if (nt_UnknownBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_UnknownBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_UnknownBlock._ipg_end);
+    nt_UnknownBlock_0 = UnknownBlock(input, begin + left, begin + right);
+    if (nt_UnknownBlock_0 === null) break _ipg_alt;
+    if (nt_UnknownBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_UnknownBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_UnknownBlock_0._ipg_end);
     }
-    nt_UnknownBlock._ipg_end += left;
-    nt_UnknownBlock._ipg_start += left;
-    left = nt_UnknownBlock._ipg_start;
-    right = nt_UnknownBlock._ipg_end;
+    nt_UnknownBlock_0._ipg_end += left;
+    nt_UnknownBlock_0._ipg_start += left;
+    left = nt_UnknownBlock_0._ipg_start;
+    right = nt_UnknownBlock_0._ipg_end;
 
-    // { data = UnknownBlock.data }
-    self.data = nt_UnknownBlock.data;
+    // { data = UnknownBlock@0.data }
+    self.data = nt_UnknownBlock_0.data;
 
     return self;
   }
@@ -782,33 +782,33 @@ function AuthorIdsBlock(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_VarUInt;
-    let nt_AuthorId;
-    let seq_AuthorId; let seq_AuthorId_start = 0;
+    let nt_VarUInt_0;
+    let nt_AuthorId_0;
+    let seq_AuthorId_0; let seq_AuthorId_0_start = 0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // VarUInt[0, EOI]
+    // VarUInt@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_VarUInt = VarUInt(input, begin + left, begin + right);
-    if (nt_VarUInt === null) break _ipg_alt;
-    if (nt_VarUInt._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt._ipg_end);
+    nt_VarUInt_0 = VarUInt(input, begin + left, begin + right);
+    if (nt_VarUInt_0 === null) break _ipg_alt;
+    if (nt_VarUInt_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt_0._ipg_end);
     }
-    nt_VarUInt._ipg_end += left;
-    nt_VarUInt._ipg_start += left;
-    left = nt_VarUInt._ipg_start;
-    right = nt_VarUInt._ipg_end;
+    nt_VarUInt_0._ipg_end += left;
+    nt_VarUInt_0._ipg_start += left;
+    left = nt_VarUInt_0._ipg_start;
+    right = nt_VarUInt_0._ipg_end;
 
-    // for i = 0 to VarUInt.value do AuthorId[AuthorId.END, EOI]
-    nt_AuthorId = { _ipg_end: right, _ipg_start: left };
-    seq_AuthorId_start = 0;
-    loopEnd = nt_VarUInt.value;
-    seq_AuthorId = new Array(loopEnd - seq_AuthorId_start);
-    for (self.i = seq_AuthorId_start; self.i < loopEnd; self.i++) {
-      const left = nt_AuthorId._ipg_end;
+    // for i = 0 to VarUInt@0.value do AuthorId@0[AuthorId@0.END, EOI]
+    nt_AuthorId_0 = { _ipg_end: right, _ipg_start: left };
+    seq_AuthorId_0_start = 0;
+    loopEnd = nt_VarUInt_0.value;
+    seq_AuthorId_0 = new Array(loopEnd - seq_AuthorId_0_start);
+    for (self.i = seq_AuthorId_0_start; self.i < loopEnd; self.i++) {
+      const left = nt_AuthorId_0._ipg_end;
       const right = EOI;
       if (left < 0 || right < left || right > EOI) break _ipg_alt;
       const tmp = AuthorId(input, begin + left, begin + right);
@@ -819,16 +819,16 @@ function AuthorIdsBlock(input, begin = 0, end = input.length) {
       }
       tmp._ipg_end += left;
       tmp._ipg_start += left;
-      nt_AuthorId._ipg_end = tmp._ipg_end;
-      nt_AuthorId._ipg_start = tmp._ipg_start;
-      seq_AuthorId[self.i - seq_AuthorId_start] = tmp;
+      nt_AuthorId_0._ipg_end = tmp._ipg_end;
+      nt_AuthorId_0._ipg_start = tmp._ipg_start;
+      seq_AuthorId_0[self.i - seq_AuthorId_0_start] = tmp;
     }
     delete self.i;
-    left = nt_AuthorId._ipg_start;
-    right = nt_AuthorId._ipg_end;
+    left = nt_AuthorId_0._ipg_start;
+    right = nt_AuthorId_0._ipg_end;
 
-    // { authorIds = AuthorId.these }
-    self.authorIds = seq_AuthorId.map(({_ipg_start,_ipg_end,...o}) => o);
+    // { authorIds = AuthorId@0.these }
+    self.authorIds = seq_AuthorId_0.map(({_ipg_start,_ipg_end,...o}) => o);
 
     return self;
   }
@@ -842,48 +842,48 @@ function AuthorId(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SubBlock;
-    let nt_VarUInt;
-    let nt_U16;
-    let nt_ExpectEmpty;
+    let nt_SubBlock_0;
+    let nt_VarUInt_0;
+    let nt_U16_0;
+    let nt_ExpectEmpty_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SubBlock(0)[0, EOI]
+    // SubBlock@0(0)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, 0);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_0 = SubBlock(input, begin + left, begin + right, 0);
+    if (nt_SubBlock_0 === null) break _ipg_alt;
+    if (nt_SubBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_0._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_0._ipg_end += left;
+    nt_SubBlock_0._ipg_start += left;
+    left = nt_SubBlock_0._ipg_start;
+    right = nt_SubBlock_0._ipg_end;
 
-    // VarUInt[SubBlock.END, SubBlock.END + SubBlock.length]
-    left = nt_SubBlock._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // VarUInt@0[SubBlock@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_SubBlock_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_VarUInt = VarUInt(input, begin + left, begin + right);
-    if (nt_VarUInt === null) break _ipg_alt;
-    if (nt_VarUInt._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt._ipg_end);
+    nt_VarUInt_0 = VarUInt(input, begin + left, begin + right);
+    if (nt_VarUInt_0 === null) break _ipg_alt;
+    if (nt_VarUInt_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt_0._ipg_end);
     }
-    nt_VarUInt._ipg_end += left;
-    nt_VarUInt._ipg_start += left;
-    left = nt_VarUInt._ipg_start;
-    right = nt_VarUInt._ipg_end;
+    nt_VarUInt_0._ipg_end += left;
+    nt_VarUInt_0._ipg_start += left;
+    left = nt_VarUInt_0._ipg_start;
+    right = nt_VarUInt_0._ipg_end;
 
-    // ?[ check(VarUInt.value == 16, "Expect UUID to have length 16") ]
-    if (!check(nt_VarUInt.value == 16, "Expect UUID to have length 16")) break _ipg_alt;
+    // ?[ check(VarUInt@0.value == 16, "Expect UUID to have length 16") ]
+    if (!check(nt_VarUInt_0.value == 16, "Expect UUID to have length 16")) break _ipg_alt;
 
-    // { uuid = *[VarUInt.END, VarUInt.END + VarUInt.value] }
-    left = nt_VarUInt._ipg_end;
-    right = nt_VarUInt._ipg_end + nt_VarUInt.value;
+    // { uuid = *[VarUInt@0.END, VarUInt@0.END + VarUInt@0.value] }
+    left = nt_VarUInt_0._ipg_end;
+    right = nt_VarUInt_0._ipg_end + nt_VarUInt_0.value;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     self.uuid = input.slice(begin + left, begin + right);
     if (left !== right) {
@@ -891,38 +891,38 @@ function AuthorId(input, begin = 0, end = input.length) {
       self._ipg_end = Math.max(self._ipg_end, right);
     }
 
-    // U16[VarUInt.END + VarUInt.value, SubBlock.END + SubBlock.length]
-    left = nt_VarUInt._ipg_end + nt_VarUInt.value;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // U16@0[VarUInt@0.END + VarUInt@0.value, SubBlock@0.END + SubBlock@0.length]
+    left = nt_VarUInt_0._ipg_end + nt_VarUInt_0.value;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U16 = U16(input, begin + left, begin + right);
-    if (nt_U16 === null) break _ipg_alt;
-    if (nt_U16._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U16._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U16._ipg_end);
+    nt_U16_0 = U16(input, begin + left, begin + right);
+    if (nt_U16_0 === null) break _ipg_alt;
+    if (nt_U16_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U16_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U16_0._ipg_end);
     }
-    nt_U16._ipg_end += left;
-    nt_U16._ipg_start += left;
-    left = nt_U16._ipg_start;
-    right = nt_U16._ipg_end;
+    nt_U16_0._ipg_end += left;
+    nt_U16_0._ipg_start += left;
+    left = nt_U16_0._ipg_start;
+    right = nt_U16_0._ipg_end;
 
-    // { authorId = U16.value }
-    self.authorId = nt_U16.value;
+    // { authorId = U16@0.value }
+    self.authorId = nt_U16_0.value;
 
-    // ExpectEmpty[U16.END, SubBlock.END + SubBlock.length]
-    left = nt_U16._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@0[U16@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_U16_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_0 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_0 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_0._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_0._ipg_end += left;
+    nt_ExpectEmpty_0._ipg_start += left;
+    left = nt_ExpectEmpty_0._ipg_start;
+    right = nt_ExpectEmpty_0._ipg_end;
 
     return self;
   }
@@ -936,64 +936,64 @@ function MigrationInfoBlock(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_TaggedId;
-    let nt_TaggedBool;
-    let nt_OptionalTaggedBool;
+    let nt_TaggedId_0;
+    let nt_TaggedBool_0;
+    let nt_OptionalTaggedBool_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // TaggedId(1)[0, EOI]
+    // TaggedId@0(1)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 1);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_0 = TaggedId(input, begin + left, begin + right, 1);
+    if (nt_TaggedId_0 === null) break _ipg_alt;
+    if (nt_TaggedId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_0._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_0._ipg_end += left;
+    nt_TaggedId_0._ipg_start += left;
+    left = nt_TaggedId_0._ipg_start;
+    right = nt_TaggedId_0._ipg_end;
 
-    // { migrationId = TaggedId.value }
-    self.migrationId = nt_TaggedId.value;
+    // { migrationId = TaggedId@0.value }
+    self.migrationId = nt_TaggedId_0.value;
 
-    // TaggedBool(2)[TaggedId.END, EOI]
-    left = nt_TaggedId._ipg_end;
+    // TaggedBool@0(2)[TaggedId@0.END, EOI]
+    left = nt_TaggedId_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedBool = TaggedBool(input, begin + left, begin + right, 2);
-    if (nt_TaggedBool === null) break _ipg_alt;
-    if (nt_TaggedBool._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedBool._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedBool._ipg_end);
+    nt_TaggedBool_0 = TaggedBool(input, begin + left, begin + right, 2);
+    if (nt_TaggedBool_0 === null) break _ipg_alt;
+    if (nt_TaggedBool_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedBool_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedBool_0._ipg_end);
     }
-    nt_TaggedBool._ipg_end += left;
-    nt_TaggedBool._ipg_start += left;
-    left = nt_TaggedBool._ipg_start;
-    right = nt_TaggedBool._ipg_end;
+    nt_TaggedBool_0._ipg_end += left;
+    nt_TaggedBool_0._ipg_start += left;
+    left = nt_TaggedBool_0._ipg_start;
+    right = nt_TaggedBool_0._ipg_end;
 
-    // { isDevice = TaggedBool.value }
-    self.isDevice = nt_TaggedBool.value;
+    // { isDevice = TaggedBool@0.value }
+    self.isDevice = nt_TaggedBool_0.value;
 
-    // OptionalTaggedBool(3)[TaggedBool.END, EOI]
-    left = nt_TaggedBool._ipg_end;
+    // OptionalTaggedBool@0(3)[TaggedBool@0.END, EOI]
+    left = nt_TaggedBool_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_OptionalTaggedBool = OptionalTaggedBool(input, begin + left, begin + right, 3);
-    if (nt_OptionalTaggedBool === null) break _ipg_alt;
-    if (nt_OptionalTaggedBool._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalTaggedBool._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalTaggedBool._ipg_end);
+    nt_OptionalTaggedBool_0 = OptionalTaggedBool(input, begin + left, begin + right, 3);
+    if (nt_OptionalTaggedBool_0 === null) break _ipg_alt;
+    if (nt_OptionalTaggedBool_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalTaggedBool_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalTaggedBool_0._ipg_end);
     }
-    nt_OptionalTaggedBool._ipg_end += left;
-    nt_OptionalTaggedBool._ipg_start += left;
-    left = nt_OptionalTaggedBool._ipg_start;
-    right = nt_OptionalTaggedBool._ipg_end;
+    nt_OptionalTaggedBool_0._ipg_end += left;
+    nt_OptionalTaggedBool_0._ipg_start += left;
+    left = nt_OptionalTaggedBool_0._ipg_start;
+    right = nt_OptionalTaggedBool_0._ipg_end;
 
-    // { unknown = OptionalTaggedBool.value }
-    self.unknown = nt_OptionalTaggedBool.value;
+    // { unknown = OptionalTaggedBool@0.value }
+    self.unknown = nt_OptionalTaggedBool_0.value;
 
     return self;
   }
@@ -1007,139 +1007,140 @@ function TreeNodeBlock(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_TaggedId;
-    let nt_LWWString;
-    let nt_LWWBool;
-    let nt_OptionalLWWID;
-    let nt_OptionalLWWU8;
-    let nt_OptionalLWWFloat32;
+    let nt_TaggedId_0;
+    let nt_LWWString_0;
+    let nt_LWWBool_0;
+    let nt_OptionalLWWID_0;
+    let nt_OptionalLWWU8_0;
+    let nt_OptionalLWWFloat32_0;
+    let nt_OptionalLWWFloat32_1;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // TaggedId(1)[0, EOI]
+    // TaggedId@0(1)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 1);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_0 = TaggedId(input, begin + left, begin + right, 1);
+    if (nt_TaggedId_0 === null) break _ipg_alt;
+    if (nt_TaggedId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_0._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_0._ipg_end += left;
+    nt_TaggedId_0._ipg_start += left;
+    left = nt_TaggedId_0._ipg_start;
+    right = nt_TaggedId_0._ipg_end;
 
-    // { nodeId = TaggedId.value }
-    self.nodeId = nt_TaggedId.value;
+    // { nodeId = TaggedId@0.value }
+    self.nodeId = nt_TaggedId_0.value;
 
-    // LWWString(2)[TaggedId.END, EOI]
-    left = nt_TaggedId._ipg_end;
+    // LWWString@0(2)[TaggedId@0.END, EOI]
+    left = nt_TaggedId_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_LWWString = LWWString(input, begin + left, begin + right, 2);
-    if (nt_LWWString === null) break _ipg_alt;
-    if (nt_LWWString._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_LWWString._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_LWWString._ipg_end);
+    nt_LWWString_0 = LWWString(input, begin + left, begin + right, 2);
+    if (nt_LWWString_0 === null) break _ipg_alt;
+    if (nt_LWWString_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_LWWString_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_LWWString_0._ipg_end);
     }
-    nt_LWWString._ipg_end += left;
-    nt_LWWString._ipg_start += left;
-    left = nt_LWWString._ipg_start;
-    right = nt_LWWString._ipg_end;
+    nt_LWWString_0._ipg_end += left;
+    nt_LWWString_0._ipg_start += left;
+    left = nt_LWWString_0._ipg_start;
+    right = nt_LWWString_0._ipg_end;
 
-    // { label = LWWString.value }
-    self.label = nt_LWWString.value;
+    // { label = LWWString@0.value }
+    self.label = nt_LWWString_0.value;
 
-    // LWWBool(3)[LWWString.END, EOI]
-    left = nt_LWWString._ipg_end;
+    // LWWBool@0(3)[LWWString@0.END, EOI]
+    left = nt_LWWString_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_LWWBool = LWWBool(input, begin + left, begin + right, 3);
-    if (nt_LWWBool === null) break _ipg_alt;
-    if (nt_LWWBool._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_LWWBool._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_LWWBool._ipg_end);
+    nt_LWWBool_0 = LWWBool(input, begin + left, begin + right, 3);
+    if (nt_LWWBool_0 === null) break _ipg_alt;
+    if (nt_LWWBool_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_LWWBool_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_LWWBool_0._ipg_end);
     }
-    nt_LWWBool._ipg_end += left;
-    nt_LWWBool._ipg_start += left;
-    left = nt_LWWBool._ipg_start;
-    right = nt_LWWBool._ipg_end;
+    nt_LWWBool_0._ipg_end += left;
+    nt_LWWBool_0._ipg_start += left;
+    left = nt_LWWBool_0._ipg_start;
+    right = nt_LWWBool_0._ipg_end;
 
-    // { visible = LWWBool.value }
-    self.visible = nt_LWWBool.value;
+    // { visible = LWWBool@0.value }
+    self.visible = nt_LWWBool_0.value;
 
-    // OptionalLWWID(7)[LWWBool.END, EOI]
-    left = nt_LWWBool._ipg_end;
+    // OptionalLWWID@0(7)[LWWBool@0.END, EOI]
+    left = nt_LWWBool_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_OptionalLWWID = OptionalLWWID(input, begin + left, begin + right, 7);
-    if (nt_OptionalLWWID === null) break _ipg_alt;
-    if (nt_OptionalLWWID._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalLWWID._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalLWWID._ipg_end);
+    nt_OptionalLWWID_0 = OptionalLWWID(input, begin + left, begin + right, 7);
+    if (nt_OptionalLWWID_0 === null) break _ipg_alt;
+    if (nt_OptionalLWWID_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalLWWID_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalLWWID_0._ipg_end);
     }
-    nt_OptionalLWWID._ipg_end += left;
-    nt_OptionalLWWID._ipg_start += left;
-    left = nt_OptionalLWWID._ipg_start;
-    right = nt_OptionalLWWID._ipg_end;
+    nt_OptionalLWWID_0._ipg_end += left;
+    nt_OptionalLWWID_0._ipg_start += left;
+    left = nt_OptionalLWWID_0._ipg_start;
+    right = nt_OptionalLWWID_0._ipg_end;
 
-    // { anchorId = OptionalLWWID.value }
-    self.anchorId = nt_OptionalLWWID.value;
+    // { anchorId = OptionalLWWID@0.value }
+    self.anchorId = nt_OptionalLWWID_0.value;
 
-    // OptionalLWWU8(8)[OptionalLWWID.END, EOI]
-    left = nt_OptionalLWWID._ipg_end;
+    // OptionalLWWU8@0(8)[OptionalLWWID@0.END, EOI]
+    left = nt_OptionalLWWID_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_OptionalLWWU8 = OptionalLWWU8(input, begin + left, begin + right, 8);
-    if (nt_OptionalLWWU8 === null) break _ipg_alt;
-    if (nt_OptionalLWWU8._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalLWWU8._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalLWWU8._ipg_end);
+    nt_OptionalLWWU8_0 = OptionalLWWU8(input, begin + left, begin + right, 8);
+    if (nt_OptionalLWWU8_0 === null) break _ipg_alt;
+    if (nt_OptionalLWWU8_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalLWWU8_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalLWWU8_0._ipg_end);
     }
-    nt_OptionalLWWU8._ipg_end += left;
-    nt_OptionalLWWU8._ipg_start += left;
-    left = nt_OptionalLWWU8._ipg_start;
-    right = nt_OptionalLWWU8._ipg_end;
+    nt_OptionalLWWU8_0._ipg_end += left;
+    nt_OptionalLWWU8_0._ipg_start += left;
+    left = nt_OptionalLWWU8_0._ipg_start;
+    right = nt_OptionalLWWU8_0._ipg_end;
 
-    // { anchorType = OptionalLWWU8.value }
-    self.anchorType = nt_OptionalLWWU8.value;
+    // { anchorType = OptionalLWWU8@0.value }
+    self.anchorType = nt_OptionalLWWU8_0.value;
 
-    // OptionalLWWFloat32(9)[OptionalLWWU8.END, EOI]
-    left = nt_OptionalLWWU8._ipg_end;
+    // OptionalLWWFloat32@0(9)[OptionalLWWU8@0.END, EOI]
+    left = nt_OptionalLWWU8_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_OptionalLWWFloat32 = OptionalLWWFloat32(input, begin + left, begin + right, 9);
-    if (nt_OptionalLWWFloat32 === null) break _ipg_alt;
-    if (nt_OptionalLWWFloat32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalLWWFloat32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalLWWFloat32._ipg_end);
+    nt_OptionalLWWFloat32_0 = OptionalLWWFloat32(input, begin + left, begin + right, 9);
+    if (nt_OptionalLWWFloat32_0 === null) break _ipg_alt;
+    if (nt_OptionalLWWFloat32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalLWWFloat32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalLWWFloat32_0._ipg_end);
     }
-    nt_OptionalLWWFloat32._ipg_end += left;
-    nt_OptionalLWWFloat32._ipg_start += left;
-    left = nt_OptionalLWWFloat32._ipg_start;
-    right = nt_OptionalLWWFloat32._ipg_end;
+    nt_OptionalLWWFloat32_0._ipg_end += left;
+    nt_OptionalLWWFloat32_0._ipg_start += left;
+    left = nt_OptionalLWWFloat32_0._ipg_start;
+    right = nt_OptionalLWWFloat32_0._ipg_end;
 
-    // { anchorThreshold = OptionalLWWFloat32.value }
-    self.anchorThreshold = nt_OptionalLWWFloat32.value;
+    // { anchorThreshold = OptionalLWWFloat32@0.value }
+    self.anchorThreshold = nt_OptionalLWWFloat32_0.value;
 
-    // OptionalLWWFloat32(10)[OptionalLWWFloat32.END, EOI]
-    left = nt_OptionalLWWFloat32._ipg_end;
+    // OptionalLWWFloat32@1(10)[OptionalLWWFloat32@0.END, EOI]
+    left = nt_OptionalLWWFloat32_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_OptionalLWWFloat32 = OptionalLWWFloat32(input, begin + left, begin + right, 10);
-    if (nt_OptionalLWWFloat32 === null) break _ipg_alt;
-    if (nt_OptionalLWWFloat32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalLWWFloat32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalLWWFloat32._ipg_end);
+    nt_OptionalLWWFloat32_1 = OptionalLWWFloat32(input, begin + left, begin + right, 10);
+    if (nt_OptionalLWWFloat32_1 === null) break _ipg_alt;
+    if (nt_OptionalLWWFloat32_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalLWWFloat32_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalLWWFloat32_1._ipg_end);
     }
-    nt_OptionalLWWFloat32._ipg_end += left;
-    nt_OptionalLWWFloat32._ipg_start += left;
-    left = nt_OptionalLWWFloat32._ipg_start;
-    right = nt_OptionalLWWFloat32._ipg_end;
+    nt_OptionalLWWFloat32_1._ipg_end += left;
+    nt_OptionalLWWFloat32_1._ipg_start += left;
+    left = nt_OptionalLWWFloat32_1._ipg_start;
+    right = nt_OptionalLWWFloat32_1._ipg_end;
 
-    // { anchorOriginX = OptionalLWWFloat32.value }
-    self.anchorOriginX = nt_OptionalLWWFloat32.value;
+    // { anchorOriginX = OptionalLWWFloat32@1.value }
+    self.anchorOriginX = nt_OptionalLWWFloat32_1.value;
 
     return self;
   }
@@ -1153,99 +1154,102 @@ function PageInfoBlock(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_TaggedU32;
-    let nt_OptionalU32;
+    let nt_TaggedU32_0;
+    let nt_TaggedU32_1;
+    let nt_TaggedU32_2;
+    let nt_TaggedU32_3;
+    let nt_OptionalU32_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // TaggedU32(1)[0, EOI]
+    // TaggedU32@0(1)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedU32 = TaggedU32(input, begin + left, begin + right, 1);
-    if (nt_TaggedU32 === null) break _ipg_alt;
-    if (nt_TaggedU32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32._ipg_end);
+    nt_TaggedU32_0 = TaggedU32(input, begin + left, begin + right, 1);
+    if (nt_TaggedU32_0 === null) break _ipg_alt;
+    if (nt_TaggedU32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32_0._ipg_end);
     }
-    nt_TaggedU32._ipg_end += left;
-    nt_TaggedU32._ipg_start += left;
-    left = nt_TaggedU32._ipg_start;
-    right = nt_TaggedU32._ipg_end;
+    nt_TaggedU32_0._ipg_end += left;
+    nt_TaggedU32_0._ipg_start += left;
+    left = nt_TaggedU32_0._ipg_start;
+    right = nt_TaggedU32_0._ipg_end;
 
-    // { loadsCount = TaggedU32.value }
-    self.loadsCount = nt_TaggedU32.value;
+    // { loadsCount = TaggedU32@0.value }
+    self.loadsCount = nt_TaggedU32_0.value;
 
-    // TaggedU32(2)[TaggedU32.END, EOI]
-    left = nt_TaggedU32._ipg_end;
+    // TaggedU32@1(2)[TaggedU32@0.END, EOI]
+    left = nt_TaggedU32_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedU32 = TaggedU32(input, begin + left, begin + right, 2);
-    if (nt_TaggedU32 === null) break _ipg_alt;
-    if (nt_TaggedU32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32._ipg_end);
+    nt_TaggedU32_1 = TaggedU32(input, begin + left, begin + right, 2);
+    if (nt_TaggedU32_1 === null) break _ipg_alt;
+    if (nt_TaggedU32_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32_1._ipg_end);
     }
-    nt_TaggedU32._ipg_end += left;
-    nt_TaggedU32._ipg_start += left;
-    left = nt_TaggedU32._ipg_start;
-    right = nt_TaggedU32._ipg_end;
+    nt_TaggedU32_1._ipg_end += left;
+    nt_TaggedU32_1._ipg_start += left;
+    left = nt_TaggedU32_1._ipg_start;
+    right = nt_TaggedU32_1._ipg_end;
 
-    // { mergesCount = TaggedU32.value }
-    self.mergesCount = nt_TaggedU32.value;
+    // { mergesCount = TaggedU32@1.value }
+    self.mergesCount = nt_TaggedU32_1.value;
 
-    // TaggedU32(3)[TaggedU32.END, EOI]
-    left = nt_TaggedU32._ipg_end;
+    // TaggedU32@2(3)[TaggedU32@1.END, EOI]
+    left = nt_TaggedU32_1._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedU32 = TaggedU32(input, begin + left, begin + right, 3);
-    if (nt_TaggedU32 === null) break _ipg_alt;
-    if (nt_TaggedU32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32._ipg_end);
+    nt_TaggedU32_2 = TaggedU32(input, begin + left, begin + right, 3);
+    if (nt_TaggedU32_2 === null) break _ipg_alt;
+    if (nt_TaggedU32_2._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32_2._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32_2._ipg_end);
     }
-    nt_TaggedU32._ipg_end += left;
-    nt_TaggedU32._ipg_start += left;
-    left = nt_TaggedU32._ipg_start;
-    right = nt_TaggedU32._ipg_end;
+    nt_TaggedU32_2._ipg_end += left;
+    nt_TaggedU32_2._ipg_start += left;
+    left = nt_TaggedU32_2._ipg_start;
+    right = nt_TaggedU32_2._ipg_end;
 
-    // { textCharsCount = TaggedU32.value }
-    self.textCharsCount = nt_TaggedU32.value;
+    // { textCharsCount = TaggedU32@2.value }
+    self.textCharsCount = nt_TaggedU32_2.value;
 
-    // TaggedU32(4)[TaggedU32.END, EOI]
-    left = nt_TaggedU32._ipg_end;
+    // TaggedU32@3(4)[TaggedU32@2.END, EOI]
+    left = nt_TaggedU32_2._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedU32 = TaggedU32(input, begin + left, begin + right, 4);
-    if (nt_TaggedU32 === null) break _ipg_alt;
-    if (nt_TaggedU32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32._ipg_end);
+    nt_TaggedU32_3 = TaggedU32(input, begin + left, begin + right, 4);
+    if (nt_TaggedU32_3 === null) break _ipg_alt;
+    if (nt_TaggedU32_3._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32_3._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32_3._ipg_end);
     }
-    nt_TaggedU32._ipg_end += left;
-    nt_TaggedU32._ipg_start += left;
-    left = nt_TaggedU32._ipg_start;
-    right = nt_TaggedU32._ipg_end;
+    nt_TaggedU32_3._ipg_end += left;
+    nt_TaggedU32_3._ipg_start += left;
+    left = nt_TaggedU32_3._ipg_start;
+    right = nt_TaggedU32_3._ipg_end;
 
-    // { textLinesCount = TaggedU32.value }
-    self.textLinesCount = nt_TaggedU32.value;
+    // { textLinesCount = TaggedU32@3.value }
+    self.textLinesCount = nt_TaggedU32_3.value;
 
-    // OptionalU32(5)[TaggedU32.END, EOI]
-    left = nt_TaggedU32._ipg_end;
+    // OptionalU32@0(5)[TaggedU32@3.END, EOI]
+    left = nt_TaggedU32_3._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_OptionalU32 = OptionalU32(input, begin + left, begin + right, 5);
-    if (nt_OptionalU32 === null) break _ipg_alt;
-    if (nt_OptionalU32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalU32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalU32._ipg_end);
+    nt_OptionalU32_0 = OptionalU32(input, begin + left, begin + right, 5);
+    if (nt_OptionalU32_0 === null) break _ipg_alt;
+    if (nt_OptionalU32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalU32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalU32_0._ipg_end);
     }
-    nt_OptionalU32._ipg_end += left;
-    nt_OptionalU32._ipg_start += left;
-    left = nt_OptionalU32._ipg_start;
-    right = nt_OptionalU32._ipg_end;
+    nt_OptionalU32_0._ipg_end += left;
+    nt_OptionalU32_0._ipg_start += left;
+    left = nt_OptionalU32_0._ipg_start;
+    right = nt_OptionalU32_0._ipg_end;
 
-    // { typeFolioUseCount = OptionalU32.value }
-    self.typeFolioUseCount = nt_OptionalU32.value;
+    // { typeFolioUseCount = OptionalU32@0.value }
+    self.typeFolioUseCount = nt_OptionalU32_0.value;
 
     return self;
   }
@@ -1259,113 +1263,115 @@ function SceneTreeBlock(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_TaggedId;
-    let nt_TaggedBool;
-    let nt_SubBlock;
-    let nt_ExpectEmpty;
+    let nt_TaggedId_0;
+    let nt_TaggedId_1;
+    let nt_TaggedBool_0;
+    let nt_SubBlock_0;
+    let nt_TaggedId_2;
+    let nt_ExpectEmpty_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // TaggedId(1)[0, EOI]
+    // TaggedId@0(1)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 1);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_0 = TaggedId(input, begin + left, begin + right, 1);
+    if (nt_TaggedId_0 === null) break _ipg_alt;
+    if (nt_TaggedId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_0._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_0._ipg_end += left;
+    nt_TaggedId_0._ipg_start += left;
+    left = nt_TaggedId_0._ipg_start;
+    right = nt_TaggedId_0._ipg_end;
 
-    // { treeId = TaggedId.value }
-    self.treeId = nt_TaggedId.value;
+    // { treeId = TaggedId@0.value }
+    self.treeId = nt_TaggedId_0.value;
 
-    // TaggedId(2)[TaggedId.END, EOI]
-    left = nt_TaggedId._ipg_end;
+    // TaggedId@1(2)[TaggedId@0.END, EOI]
+    left = nt_TaggedId_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 2);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_1 = TaggedId(input, begin + left, begin + right, 2);
+    if (nt_TaggedId_1 === null) break _ipg_alt;
+    if (nt_TaggedId_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_1._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_1._ipg_end += left;
+    nt_TaggedId_1._ipg_start += left;
+    left = nt_TaggedId_1._ipg_start;
+    right = nt_TaggedId_1._ipg_end;
 
-    // { nodeId = TaggedId.value }
-    self.nodeId = nt_TaggedId.value;
+    // { nodeId = TaggedId@1.value }
+    self.nodeId = nt_TaggedId_1.value;
 
-    // TaggedBool(3)[TaggedId.END, EOI]
-    left = nt_TaggedId._ipg_end;
+    // TaggedBool@0(3)[TaggedId@1.END, EOI]
+    left = nt_TaggedId_1._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedBool = TaggedBool(input, begin + left, begin + right, 3);
-    if (nt_TaggedBool === null) break _ipg_alt;
-    if (nt_TaggedBool._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedBool._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedBool._ipg_end);
+    nt_TaggedBool_0 = TaggedBool(input, begin + left, begin + right, 3);
+    if (nt_TaggedBool_0 === null) break _ipg_alt;
+    if (nt_TaggedBool_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedBool_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedBool_0._ipg_end);
     }
-    nt_TaggedBool._ipg_end += left;
-    nt_TaggedBool._ipg_start += left;
-    left = nt_TaggedBool._ipg_start;
-    right = nt_TaggedBool._ipg_end;
+    nt_TaggedBool_0._ipg_end += left;
+    nt_TaggedBool_0._ipg_start += left;
+    left = nt_TaggedBool_0._ipg_start;
+    right = nt_TaggedBool_0._ipg_end;
 
-    // { isUpdate = TaggedBool.value }
-    self.isUpdate = nt_TaggedBool.value;
+    // { isUpdate = TaggedBool@0.value }
+    self.isUpdate = nt_TaggedBool_0.value;
 
-    // SubBlock(4)[TaggedBool.END, EOI]
-    left = nt_TaggedBool._ipg_end;
+    // SubBlock@0(4)[TaggedBool@0.END, EOI]
+    left = nt_TaggedBool_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, 4);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_0 = SubBlock(input, begin + left, begin + right, 4);
+    if (nt_SubBlock_0 === null) break _ipg_alt;
+    if (nt_SubBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_0._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_0._ipg_end += left;
+    nt_SubBlock_0._ipg_start += left;
+    left = nt_SubBlock_0._ipg_start;
+    right = nt_SubBlock_0._ipg_end;
 
-    // TaggedId(1)[SubBlock.END, SubBlock.END + SubBlock.length]
-    left = nt_SubBlock._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // TaggedId@2(1)[SubBlock@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_SubBlock_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 1);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_2 = TaggedId(input, begin + left, begin + right, 1);
+    if (nt_TaggedId_2 === null) break _ipg_alt;
+    if (nt_TaggedId_2._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_2._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_2._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_2._ipg_end += left;
+    nt_TaggedId_2._ipg_start += left;
+    left = nt_TaggedId_2._ipg_start;
+    right = nt_TaggedId_2._ipg_end;
 
-    // { parentId = TaggedId.value }
-    self.parentId = nt_TaggedId.value;
+    // { parentId = TaggedId@2.value }
+    self.parentId = nt_TaggedId_2.value;
 
-    // ExpectEmpty[TaggedId.END, SubBlock.END + SubBlock.length]
-    left = nt_TaggedId._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@0[TaggedId@2.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_TaggedId_2._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_0 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_0 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_0._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_0._ipg_end += left;
+    nt_ExpectEmpty_0._ipg_start += left;
+    left = nt_ExpectEmpty_0._ipg_start;
+    right = nt_ExpectEmpty_0._ipg_end;
 
     return self;
   }
@@ -1379,82 +1385,83 @@ function SceneInfo(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_LWWID;
-    let nt_OptionalLWWBool;
-    let nt_OptionalIntPair;
+    let nt_LWWID_0;
+    let nt_OptionalLWWBool_0;
+    let nt_OptionalLWWBool_1;
+    let nt_OptionalIntPair_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // LWWID(1)[0, EOI]
+    // LWWID@0(1)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_LWWID = LWWID(input, begin + left, begin + right, 1);
-    if (nt_LWWID === null) break _ipg_alt;
-    if (nt_LWWID._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_LWWID._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_LWWID._ipg_end);
+    nt_LWWID_0 = LWWID(input, begin + left, begin + right, 1);
+    if (nt_LWWID_0 === null) break _ipg_alt;
+    if (nt_LWWID_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_LWWID_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_LWWID_0._ipg_end);
     }
-    nt_LWWID._ipg_end += left;
-    nt_LWWID._ipg_start += left;
-    left = nt_LWWID._ipg_start;
-    right = nt_LWWID._ipg_end;
+    nt_LWWID_0._ipg_end += left;
+    nt_LWWID_0._ipg_start += left;
+    left = nt_LWWID_0._ipg_start;
+    right = nt_LWWID_0._ipg_end;
 
-    // { currentLayer = LWWID.value }
-    self.currentLayer = nt_LWWID.value;
+    // { currentLayer = LWWID@0.value }
+    self.currentLayer = nt_LWWID_0.value;
 
-    // OptionalLWWBool(2)[LWWID.END, EOI]
-    left = nt_LWWID._ipg_end;
+    // OptionalLWWBool@0(2)[LWWID@0.END, EOI]
+    left = nt_LWWID_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_OptionalLWWBool = OptionalLWWBool(input, begin + left, begin + right, 2);
-    if (nt_OptionalLWWBool === null) break _ipg_alt;
-    if (nt_OptionalLWWBool._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalLWWBool._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalLWWBool._ipg_end);
+    nt_OptionalLWWBool_0 = OptionalLWWBool(input, begin + left, begin + right, 2);
+    if (nt_OptionalLWWBool_0 === null) break _ipg_alt;
+    if (nt_OptionalLWWBool_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalLWWBool_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalLWWBool_0._ipg_end);
     }
-    nt_OptionalLWWBool._ipg_end += left;
-    nt_OptionalLWWBool._ipg_start += left;
-    left = nt_OptionalLWWBool._ipg_start;
-    right = nt_OptionalLWWBool._ipg_end;
+    nt_OptionalLWWBool_0._ipg_end += left;
+    nt_OptionalLWWBool_0._ipg_start += left;
+    left = nt_OptionalLWWBool_0._ipg_start;
+    right = nt_OptionalLWWBool_0._ipg_end;
 
-    // { backgroundVisible = OptionalLWWBool.value }
-    self.backgroundVisible = nt_OptionalLWWBool.value;
+    // { backgroundVisible = OptionalLWWBool@0.value }
+    self.backgroundVisible = nt_OptionalLWWBool_0.value;
 
-    // OptionalLWWBool(3)[OptionalLWWBool.END, EOI]
-    left = nt_OptionalLWWBool._ipg_end;
+    // OptionalLWWBool@1(3)[OptionalLWWBool@0.END, EOI]
+    left = nt_OptionalLWWBool_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_OptionalLWWBool = OptionalLWWBool(input, begin + left, begin + right, 3);
-    if (nt_OptionalLWWBool === null) break _ipg_alt;
-    if (nt_OptionalLWWBool._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalLWWBool._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalLWWBool._ipg_end);
+    nt_OptionalLWWBool_1 = OptionalLWWBool(input, begin + left, begin + right, 3);
+    if (nt_OptionalLWWBool_1 === null) break _ipg_alt;
+    if (nt_OptionalLWWBool_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalLWWBool_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalLWWBool_1._ipg_end);
     }
-    nt_OptionalLWWBool._ipg_end += left;
-    nt_OptionalLWWBool._ipg_start += left;
-    left = nt_OptionalLWWBool._ipg_start;
-    right = nt_OptionalLWWBool._ipg_end;
+    nt_OptionalLWWBool_1._ipg_end += left;
+    nt_OptionalLWWBool_1._ipg_start += left;
+    left = nt_OptionalLWWBool_1._ipg_start;
+    right = nt_OptionalLWWBool_1._ipg_end;
 
-    // { rootDocumentVisible = OptionalLWWBool.value }
-    self.rootDocumentVisible = nt_OptionalLWWBool.value;
+    // { rootDocumentVisible = OptionalLWWBool@1.value }
+    self.rootDocumentVisible = nt_OptionalLWWBool_1.value;
 
-    // OptionalIntPair(4)[OptionalLWWBool.END, EOI]
-    left = nt_OptionalLWWBool._ipg_end;
+    // OptionalIntPair@0(4)[OptionalLWWBool@1.END, EOI]
+    left = nt_OptionalLWWBool_1._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_OptionalIntPair = OptionalIntPair(input, begin + left, begin + right, 4);
-    if (nt_OptionalIntPair === null) break _ipg_alt;
-    if (nt_OptionalIntPair._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalIntPair._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalIntPair._ipg_end);
+    nt_OptionalIntPair_0 = OptionalIntPair(input, begin + left, begin + right, 4);
+    if (nt_OptionalIntPair_0 === null) break _ipg_alt;
+    if (nt_OptionalIntPair_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalIntPair_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalIntPair_0._ipg_end);
     }
-    nt_OptionalIntPair._ipg_end += left;
-    nt_OptionalIntPair._ipg_start += left;
-    left = nt_OptionalIntPair._ipg_start;
-    right = nt_OptionalIntPair._ipg_end;
+    nt_OptionalIntPair_0._ipg_end += left;
+    nt_OptionalIntPair_0._ipg_start += left;
+    left = nt_OptionalIntPair_0._ipg_start;
+    right = nt_OptionalIntPair_0._ipg_end;
 
-    // { paperSize = OptionalIntPair.value }
-    self.paperSize = nt_OptionalIntPair.value;
+    // { paperSize = OptionalIntPair@0.value }
+    self.paperSize = nt_OptionalIntPair_0.value;
 
     return self;
   }
@@ -1468,99 +1475,102 @@ function SceneItemInfo(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_TaggedId;
-    let nt_TaggedU32;
+    let nt_TaggedId_0;
+    let nt_TaggedId_1;
+    let nt_TaggedId_2;
+    let nt_TaggedId_3;
+    let nt_TaggedU32_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // TaggedId(1)[0, EOI]
+    // TaggedId@0(1)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 1);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_0 = TaggedId(input, begin + left, begin + right, 1);
+    if (nt_TaggedId_0 === null) break _ipg_alt;
+    if (nt_TaggedId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_0._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_0._ipg_end += left;
+    nt_TaggedId_0._ipg_start += left;
+    left = nt_TaggedId_0._ipg_start;
+    right = nt_TaggedId_0._ipg_end;
 
-    // { parentId = TaggedId.value }
-    self.parentId = nt_TaggedId.value;
+    // { parentId = TaggedId@0.value }
+    self.parentId = nt_TaggedId_0.value;
 
-    // TaggedId(2)[TaggedId.END, EOI]
-    left = nt_TaggedId._ipg_end;
+    // TaggedId@1(2)[TaggedId@0.END, EOI]
+    left = nt_TaggedId_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 2);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_1 = TaggedId(input, begin + left, begin + right, 2);
+    if (nt_TaggedId_1 === null) break _ipg_alt;
+    if (nt_TaggedId_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_1._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_1._ipg_end += left;
+    nt_TaggedId_1._ipg_start += left;
+    left = nt_TaggedId_1._ipg_start;
+    right = nt_TaggedId_1._ipg_end;
 
-    // { itemId = TaggedId.value }
-    self.itemId = nt_TaggedId.value;
+    // { itemId = TaggedId@1.value }
+    self.itemId = nt_TaggedId_1.value;
 
-    // TaggedId(3)[TaggedId.END, EOI]
-    left = nt_TaggedId._ipg_end;
+    // TaggedId@2(3)[TaggedId@1.END, EOI]
+    left = nt_TaggedId_1._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 3);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_2 = TaggedId(input, begin + left, begin + right, 3);
+    if (nt_TaggedId_2 === null) break _ipg_alt;
+    if (nt_TaggedId_2._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_2._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_2._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_2._ipg_end += left;
+    nt_TaggedId_2._ipg_start += left;
+    left = nt_TaggedId_2._ipg_start;
+    right = nt_TaggedId_2._ipg_end;
 
-    // { leftId = TaggedId.value }
-    self.leftId = nt_TaggedId.value;
+    // { leftId = TaggedId@2.value }
+    self.leftId = nt_TaggedId_2.value;
 
-    // TaggedId(4)[TaggedId.END, EOI]
-    left = nt_TaggedId._ipg_end;
+    // TaggedId@3(4)[TaggedId@2.END, EOI]
+    left = nt_TaggedId_2._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 4);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_3 = TaggedId(input, begin + left, begin + right, 4);
+    if (nt_TaggedId_3 === null) break _ipg_alt;
+    if (nt_TaggedId_3._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_3._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_3._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_3._ipg_end += left;
+    nt_TaggedId_3._ipg_start += left;
+    left = nt_TaggedId_3._ipg_start;
+    right = nt_TaggedId_3._ipg_end;
 
-    // { rightId = TaggedId.value }
-    self.rightId = nt_TaggedId.value;
+    // { rightId = TaggedId@3.value }
+    self.rightId = nt_TaggedId_3.value;
 
-    // TaggedU32(5)[TaggedId.END, EOI]
-    left = nt_TaggedId._ipg_end;
+    // TaggedU32@0(5)[TaggedId@3.END, EOI]
+    left = nt_TaggedId_3._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedU32 = TaggedU32(input, begin + left, begin + right, 5);
-    if (nt_TaggedU32 === null) break _ipg_alt;
-    if (nt_TaggedU32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32._ipg_end);
+    nt_TaggedU32_0 = TaggedU32(input, begin + left, begin + right, 5);
+    if (nt_TaggedU32_0 === null) break _ipg_alt;
+    if (nt_TaggedU32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32_0._ipg_end);
     }
-    nt_TaggedU32._ipg_end += left;
-    nt_TaggedU32._ipg_start += left;
-    left = nt_TaggedU32._ipg_start;
-    right = nt_TaggedU32._ipg_end;
+    nt_TaggedU32_0._ipg_end += left;
+    nt_TaggedU32_0._ipg_start += left;
+    left = nt_TaggedU32_0._ipg_start;
+    right = nt_TaggedU32_0._ipg_end;
 
-    // { deletedLength = TaggedU32.value }
-    self.deletedLength = nt_TaggedU32.value;
+    // { deletedLength = TaggedU32@0.value }
+    self.deletedLength = nt_TaggedU32_0.value;
 
     return self;
   }
@@ -1574,26 +1584,26 @@ function SceneTombstoneItemBlock(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SceneItemInfo;
+    let nt_SceneItemInfo_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SceneItemInfo[0, EOI]
+    // SceneItemInfo@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SceneItemInfo = SceneItemInfo(input, begin + left, begin + right);
-    if (nt_SceneItemInfo === null) break _ipg_alt;
-    if (nt_SceneItemInfo._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneItemInfo._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneItemInfo._ipg_end);
+    nt_SceneItemInfo_0 = SceneItemInfo(input, begin + left, begin + right);
+    if (nt_SceneItemInfo_0 === null) break _ipg_alt;
+    if (nt_SceneItemInfo_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneItemInfo_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneItemInfo_0._ipg_end);
     }
-    nt_SceneItemInfo._ipg_end += left;
-    nt_SceneItemInfo._ipg_start += left;
-    left = nt_SceneItemInfo._ipg_start;
-    right = nt_SceneItemInfo._ipg_end;
+    nt_SceneItemInfo_0._ipg_end += left;
+    nt_SceneItemInfo_0._ipg_start += left;
+    left = nt_SceneItemInfo_0._ipg_start;
+    right = nt_SceneItemInfo_0._ipg_end;
 
-    // { item = makeCrdtSequenceItem(SceneItemInfo.this) }
-    self.item = makeCrdtSequenceItem((({_ipg_start,_ipg_end,...o}) => o)(nt_SceneItemInfo));
+    // { item = makeCrdtSequenceItem(SceneItemInfo@0.this) }
+    self.item = makeCrdtSequenceItem((({_ipg_start,_ipg_end,...o}) => o)(nt_SceneItemInfo_0));
 
     return self;
   }
@@ -1607,42 +1617,42 @@ function SceneGlyphItemBlock(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SceneItemInfo;
-    let nt_SceneGlyphItemBlockValue;
+    let nt_SceneItemInfo_0;
+    let nt_SceneGlyphItemBlockValue_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SceneItemInfo[0, EOI]
+    // SceneItemInfo@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SceneItemInfo = SceneItemInfo(input, begin + left, begin + right);
-    if (nt_SceneItemInfo === null) break _ipg_alt;
-    if (nt_SceneItemInfo._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneItemInfo._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneItemInfo._ipg_end);
+    nt_SceneItemInfo_0 = SceneItemInfo(input, begin + left, begin + right);
+    if (nt_SceneItemInfo_0 === null) break _ipg_alt;
+    if (nt_SceneItemInfo_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneItemInfo_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneItemInfo_0._ipg_end);
     }
-    nt_SceneItemInfo._ipg_end += left;
-    nt_SceneItemInfo._ipg_start += left;
-    left = nt_SceneItemInfo._ipg_start;
-    right = nt_SceneItemInfo._ipg_end;
+    nt_SceneItemInfo_0._ipg_end += left;
+    nt_SceneItemInfo_0._ipg_start += left;
+    left = nt_SceneItemInfo_0._ipg_start;
+    right = nt_SceneItemInfo_0._ipg_end;
 
-    // SceneGlyphItemBlockValue[SceneItemInfo.END, EOI]
-    left = nt_SceneItemInfo._ipg_end;
+    // SceneGlyphItemBlockValue@0[SceneItemInfo@0.END, EOI]
+    left = nt_SceneItemInfo_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SceneGlyphItemBlockValue = SceneGlyphItemBlockValue(input, begin + left, begin + right);
-    if (nt_SceneGlyphItemBlockValue === null) break _ipg_alt;
-    if (nt_SceneGlyphItemBlockValue._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneGlyphItemBlockValue._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneGlyphItemBlockValue._ipg_end);
+    nt_SceneGlyphItemBlockValue_0 = SceneGlyphItemBlockValue(input, begin + left, begin + right);
+    if (nt_SceneGlyphItemBlockValue_0 === null) break _ipg_alt;
+    if (nt_SceneGlyphItemBlockValue_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneGlyphItemBlockValue_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneGlyphItemBlockValue_0._ipg_end);
     }
-    nt_SceneGlyphItemBlockValue._ipg_end += left;
-    nt_SceneGlyphItemBlockValue._ipg_start += left;
-    left = nt_SceneGlyphItemBlockValue._ipg_start;
-    right = nt_SceneGlyphItemBlockValue._ipg_end;
+    nt_SceneGlyphItemBlockValue_0._ipg_end += left;
+    nt_SceneGlyphItemBlockValue_0._ipg_start += left;
+    left = nt_SceneGlyphItemBlockValue_0._ipg_start;
+    right = nt_SceneGlyphItemBlockValue_0._ipg_end;
 
-    // { item = makeCrdtSequenceItem(SceneItemInfo.this, SceneGlyphItemBlockValue.value) }
-    self.item = makeCrdtSequenceItem((({_ipg_start,_ipg_end,...o}) => o)(nt_SceneItemInfo), nt_SceneGlyphItemBlockValue.value);
+    // { item = makeCrdtSequenceItem(SceneItemInfo@0.this, SceneGlyphItemBlockValue@0.value) }
+    self.item = makeCrdtSequenceItem((({_ipg_start,_ipg_end,...o}) => o)(nt_SceneItemInfo_0), nt_SceneGlyphItemBlockValue_0.value);
 
     return self;
   }
@@ -1656,114 +1666,117 @@ function SceneGlyphItemBlockValue(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SubBlock;
-    let nt_OptionalU32;
-    let nt_TaggedU32;
-    let nt_String;
-    let nt_VarUInt;
-    let nt_Rectangle;
-    let nt_ExpectEmpty;
-    let seq_Rectangle; let seq_Rectangle_start = 0;
+    let nt_SubBlock_0;
+    let nt_OptionalU32_0;
+    let nt_OptionalU32_1;
+    let nt_TaggedU32_0;
+    let nt_String_0;
+    let nt_SubBlock_1;
+    let nt_VarUInt_0;
+    let nt_Rectangle_0;
+    let nt_ExpectEmpty_0;
+    let nt_ExpectEmpty_1;
+    let seq_Rectangle_0; let seq_Rectangle_0_start = 0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SubBlock(6)[0, EOI]
+    // SubBlock@0(6)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, 6);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_0 = SubBlock(input, begin + left, begin + right, 6);
+    if (nt_SubBlock_0 === null) break _ipg_alt;
+    if (nt_SubBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_0._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_0._ipg_end += left;
+    nt_SubBlock_0._ipg_start += left;
+    left = nt_SubBlock_0._ipg_start;
+    right = nt_SubBlock_0._ipg_end;
 
-    // { outerEnd = SubBlock.END + SubBlock.length }
-    self.outerEnd = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // { outerEnd = SubBlock@0.END + SubBlock@0.length }
+    self.outerEnd = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
 
-    // "\x01"[SubBlock.END, SubBlock.END + 1]
-    left = nt_SubBlock._ipg_end;
-    right = nt_SubBlock._ipg_end + 1;
+    // "\x01"[SubBlock@0.END, SubBlock@0.END + 1]
+    left = nt_SubBlock_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + 1;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x01")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
 
-    // OptionalU32(2)[SubBlock.END + 1, EOI]
-    left = nt_SubBlock._ipg_end + 1;
+    // OptionalU32@0(2)[SubBlock@0.END + 1, EOI]
+    left = nt_SubBlock_0._ipg_end + 1;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_OptionalU32 = OptionalU32(input, begin + left, begin + right, 2);
-    if (nt_OptionalU32 === null) break _ipg_alt;
-    if (nt_OptionalU32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalU32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalU32._ipg_end);
+    nt_OptionalU32_0 = OptionalU32(input, begin + left, begin + right, 2);
+    if (nt_OptionalU32_0 === null) break _ipg_alt;
+    if (nt_OptionalU32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalU32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalU32_0._ipg_end);
     }
-    nt_OptionalU32._ipg_end += left;
-    nt_OptionalU32._ipg_start += left;
-    left = nt_OptionalU32._ipg_start;
-    right = nt_OptionalU32._ipg_end;
+    nt_OptionalU32_0._ipg_end += left;
+    nt_OptionalU32_0._ipg_start += left;
+    left = nt_OptionalU32_0._ipg_start;
+    right = nt_OptionalU32_0._ipg_end;
 
-    // { optStart = OptionalU32.value }
-    self.optStart = nt_OptionalU32.value;
+    // { optStart = OptionalU32@0.value }
+    self.optStart = nt_OptionalU32_0.value;
 
-    // OptionalU32(3)[OptionalU32.END, EOI]
-    left = nt_OptionalU32._ipg_end;
+    // OptionalU32@1(3)[OptionalU32@0.END, EOI]
+    left = nt_OptionalU32_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_OptionalU32 = OptionalU32(input, begin + left, begin + right, 3);
-    if (nt_OptionalU32 === null) break _ipg_alt;
-    if (nt_OptionalU32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalU32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalU32._ipg_end);
+    nt_OptionalU32_1 = OptionalU32(input, begin + left, begin + right, 3);
+    if (nt_OptionalU32_1 === null) break _ipg_alt;
+    if (nt_OptionalU32_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalU32_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalU32_1._ipg_end);
     }
-    nt_OptionalU32._ipg_end += left;
-    nt_OptionalU32._ipg_start += left;
-    left = nt_OptionalU32._ipg_start;
-    right = nt_OptionalU32._ipg_end;
+    nt_OptionalU32_1._ipg_end += left;
+    nt_OptionalU32_1._ipg_start += left;
+    left = nt_OptionalU32_1._ipg_start;
+    right = nt_OptionalU32_1._ipg_end;
 
-    // { optLength = OptionalU32.value }
-    self.optLength = nt_OptionalU32.value;
+    // { optLength = OptionalU32@1.value }
+    self.optLength = nt_OptionalU32_1.value;
 
-    // TaggedU32(4)[OptionalU32.END, EOI]
-    left = nt_OptionalU32._ipg_end;
+    // TaggedU32@0(4)[OptionalU32@1.END, EOI]
+    left = nt_OptionalU32_1._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedU32 = TaggedU32(input, begin + left, begin + right, 4);
-    if (nt_TaggedU32 === null) break _ipg_alt;
-    if (nt_TaggedU32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32._ipg_end);
+    nt_TaggedU32_0 = TaggedU32(input, begin + left, begin + right, 4);
+    if (nt_TaggedU32_0 === null) break _ipg_alt;
+    if (nt_TaggedU32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32_0._ipg_end);
     }
-    nt_TaggedU32._ipg_end += left;
-    nt_TaggedU32._ipg_start += left;
-    left = nt_TaggedU32._ipg_start;
-    right = nt_TaggedU32._ipg_end;
+    nt_TaggedU32_0._ipg_end += left;
+    nt_TaggedU32_0._ipg_start += left;
+    left = nt_TaggedU32_0._ipg_start;
+    right = nt_TaggedU32_0._ipg_end;
 
-    // { colorId = TaggedU32.value }
-    self.colorId = nt_TaggedU32.value;
+    // { colorId = TaggedU32@0.value }
+    self.colorId = nt_TaggedU32_0.value;
 
-    // String(5)[TaggedU32.END, EOI]
-    left = nt_TaggedU32._ipg_end;
+    // String@0(5)[TaggedU32@0.END, EOI]
+    left = nt_TaggedU32_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_String = String(input, begin + left, begin + right, 5);
-    if (nt_String === null) break _ipg_alt;
-    if (nt_String._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_String._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_String._ipg_end);
+    nt_String_0 = String(input, begin + left, begin + right, 5);
+    if (nt_String_0 === null) break _ipg_alt;
+    if (nt_String_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_String_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_String_0._ipg_end);
     }
-    nt_String._ipg_end += left;
-    nt_String._ipg_start += left;
-    left = nt_String._ipg_start;
-    right = nt_String._ipg_end;
+    nt_String_0._ipg_end += left;
+    nt_String_0._ipg_start += left;
+    left = nt_String_0._ipg_start;
+    right = nt_String_0._ipg_end;
 
-    // { text = String.value }
-    self.text = nt_String.value;
+    // { text = String@0.value }
+    self.text = nt_String_0.value;
 
     // { start = optStart == getNull() ? 0 : optStart }
     self.start = self.optStart == getNull() ? 0 : self.optStart;
@@ -1771,44 +1784,44 @@ function SceneGlyphItemBlockValue(input, begin = 0, end = input.length) {
     // { length = optLength == getNull() ? getLength(text) : optLength }
     self.length = self.optLength == getNull() ? getLength(self.text) : self.optLength;
 
-    // SubBlock(6)[String.END, EOI]
-    left = nt_String._ipg_end;
+    // SubBlock@1(6)[String@0.END, EOI]
+    left = nt_String_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, 6);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_1 = SubBlock(input, begin + left, begin + right, 6);
+    if (nt_SubBlock_1 === null) break _ipg_alt;
+    if (nt_SubBlock_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_1._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_1._ipg_end += left;
+    nt_SubBlock_1._ipg_start += left;
+    left = nt_SubBlock_1._ipg_start;
+    right = nt_SubBlock_1._ipg_end;
 
-    // VarUInt[SubBlock.END + 1, SubBlock.END + SubBlock.length]
-    left = nt_SubBlock._ipg_end + 1;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // VarUInt@0[SubBlock@1.END + 1, SubBlock@1.END + SubBlock@1.length]
+    left = nt_SubBlock_1._ipg_end + 1;
+    right = nt_SubBlock_1._ipg_end + nt_SubBlock_1.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_VarUInt = VarUInt(input, begin + left, begin + right);
-    if (nt_VarUInt === null) break _ipg_alt;
-    if (nt_VarUInt._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt._ipg_end);
+    nt_VarUInt_0 = VarUInt(input, begin + left, begin + right);
+    if (nt_VarUInt_0 === null) break _ipg_alt;
+    if (nt_VarUInt_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt_0._ipg_end);
     }
-    nt_VarUInt._ipg_end += left;
-    nt_VarUInt._ipg_start += left;
-    left = nt_VarUInt._ipg_start;
-    right = nt_VarUInt._ipg_end;
+    nt_VarUInt_0._ipg_end += left;
+    nt_VarUInt_0._ipg_start += left;
+    left = nt_VarUInt_0._ipg_start;
+    right = nt_VarUInt_0._ipg_end;
 
-    // for i = 0 to VarUInt.value do Rectangle[VarUInt.END + 32 * i, SubBlock.END + SubBlock.length]
-    nt_Rectangle = { _ipg_end: right, _ipg_start: left };
-    seq_Rectangle_start = 0;
-    loopEnd = nt_VarUInt.value;
-    seq_Rectangle = new Array(loopEnd - seq_Rectangle_start);
-    for (self.i = seq_Rectangle_start; self.i < loopEnd; self.i++) {
-      const left = nt_VarUInt._ipg_end + 32 * self.i;
-      const right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // for i = 0 to VarUInt@0.value do Rectangle@0[VarUInt@0.END + 32 * i, SubBlock@1.END + SubBlock@1.length]
+    nt_Rectangle_0 = { _ipg_end: right, _ipg_start: left };
+    seq_Rectangle_0_start = 0;
+    loopEnd = nt_VarUInt_0.value;
+    seq_Rectangle_0 = new Array(loopEnd - seq_Rectangle_0_start);
+    for (self.i = seq_Rectangle_0_start; self.i < loopEnd; self.i++) {
+      const left = nt_VarUInt_0._ipg_end + 32 * self.i;
+      const right = nt_SubBlock_1._ipg_end + nt_SubBlock_1.length;
       if (left < 0 || right < left || right > EOI) break _ipg_alt;
       const tmp = Rectangle(input, begin + left, begin + right);
       if (tmp === null) break _ipg_alt;
@@ -1818,46 +1831,46 @@ function SceneGlyphItemBlockValue(input, begin = 0, end = input.length) {
       }
       tmp._ipg_end += left;
       tmp._ipg_start += left;
-      nt_Rectangle._ipg_end = tmp._ipg_end;
-      nt_Rectangle._ipg_start = tmp._ipg_start;
-      seq_Rectangle[self.i - seq_Rectangle_start] = tmp;
+      nt_Rectangle_0._ipg_end = tmp._ipg_end;
+      nt_Rectangle_0._ipg_start = tmp._ipg_start;
+      seq_Rectangle_0[self.i - seq_Rectangle_0_start] = tmp;
     }
     delete self.i;
-    left = nt_Rectangle._ipg_start;
-    right = nt_Rectangle._ipg_end;
+    left = nt_Rectangle_0._ipg_start;
+    right = nt_Rectangle_0._ipg_end;
 
-    // { rectangles = Rectangle.these }
-    self.rectangles = seq_Rectangle.map(({_ipg_start,_ipg_end,...o}) => o);
+    // { rectangles = Rectangle@0.these }
+    self.rectangles = seq_Rectangle_0.map(({_ipg_start,_ipg_end,...o}) => o);
 
-    // ExpectEmpty[Rectangle.END, SubBlock.END + SubBlock.length]
-    left = nt_Rectangle._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@0[Rectangle@0.END, SubBlock@1.END + SubBlock@1.length]
+    left = nt_Rectangle_0._ipg_end;
+    right = nt_SubBlock_1._ipg_end + nt_SubBlock_1.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_0 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_0 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_0._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_0._ipg_end += left;
+    nt_ExpectEmpty_0._ipg_start += left;
+    left = nt_ExpectEmpty_0._ipg_start;
+    right = nt_ExpectEmpty_0._ipg_end;
 
-    // ExpectEmpty[ExpectEmpty.END, outerEnd]
-    left = nt_ExpectEmpty._ipg_end;
+    // ExpectEmpty@1[ExpectEmpty@0.END, outerEnd]
+    left = nt_ExpectEmpty_0._ipg_end;
     right = self.outerEnd;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_1 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_1 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_1._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_1._ipg_end += left;
+    nt_ExpectEmpty_1._ipg_start += left;
+    left = nt_ExpectEmpty_1._ipg_start;
+    right = nt_ExpectEmpty_1._ipg_end;
 
     // { value = makeSceneGlyItemBlockValue(start, length, colorId, text, rectangles) }
     self.value = makeSceneGlyItemBlockValue(self.start, self.length, self.colorId, self.text, self.rectangles);
@@ -1883,80 +1896,83 @@ function Rectangle(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Float64;
+    let nt_Float64_0;
+    let nt_Float64_1;
+    let nt_Float64_2;
+    let nt_Float64_3;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // Float64[0, EOI]
+    // Float64@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Float64 = Float64(input, begin + left, begin + right);
-    if (nt_Float64 === null) break _ipg_alt;
-    if (nt_Float64._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Float64._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Float64._ipg_end);
+    nt_Float64_0 = Float64(input, begin + left, begin + right);
+    if (nt_Float64_0 === null) break _ipg_alt;
+    if (nt_Float64_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Float64_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Float64_0._ipg_end);
     }
-    nt_Float64._ipg_end += left;
-    nt_Float64._ipg_start += left;
-    left = nt_Float64._ipg_start;
-    right = nt_Float64._ipg_end;
+    nt_Float64_0._ipg_end += left;
+    nt_Float64_0._ipg_start += left;
+    left = nt_Float64_0._ipg_start;
+    right = nt_Float64_0._ipg_end;
 
-    // { x = Float64.value }
-    self.x = nt_Float64.value;
+    // { x = Float64@0.value }
+    self.x = nt_Float64_0.value;
 
-    // Float64[Float64.END, EOI]
-    left = nt_Float64._ipg_end;
+    // Float64@1[Float64@0.END, EOI]
+    left = nt_Float64_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Float64 = Float64(input, begin + left, begin + right);
-    if (nt_Float64 === null) break _ipg_alt;
-    if (nt_Float64._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Float64._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Float64._ipg_end);
+    nt_Float64_1 = Float64(input, begin + left, begin + right);
+    if (nt_Float64_1 === null) break _ipg_alt;
+    if (nt_Float64_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Float64_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Float64_1._ipg_end);
     }
-    nt_Float64._ipg_end += left;
-    nt_Float64._ipg_start += left;
-    left = nt_Float64._ipg_start;
-    right = nt_Float64._ipg_end;
+    nt_Float64_1._ipg_end += left;
+    nt_Float64_1._ipg_start += left;
+    left = nt_Float64_1._ipg_start;
+    right = nt_Float64_1._ipg_end;
 
-    // { y = Float64.value }
-    self.y = nt_Float64.value;
+    // { y = Float64@1.value }
+    self.y = nt_Float64_1.value;
 
-    // Float64[Float64.END, EOI]
-    left = nt_Float64._ipg_end;
+    // Float64@2[Float64@1.END, EOI]
+    left = nt_Float64_1._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Float64 = Float64(input, begin + left, begin + right);
-    if (nt_Float64 === null) break _ipg_alt;
-    if (nt_Float64._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Float64._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Float64._ipg_end);
+    nt_Float64_2 = Float64(input, begin + left, begin + right);
+    if (nt_Float64_2 === null) break _ipg_alt;
+    if (nt_Float64_2._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Float64_2._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Float64_2._ipg_end);
     }
-    nt_Float64._ipg_end += left;
-    nt_Float64._ipg_start += left;
-    left = nt_Float64._ipg_start;
-    right = nt_Float64._ipg_end;
+    nt_Float64_2._ipg_end += left;
+    nt_Float64_2._ipg_start += left;
+    left = nt_Float64_2._ipg_start;
+    right = nt_Float64_2._ipg_end;
 
-    // { width = Float64.value }
-    self.width = nt_Float64.value;
+    // { width = Float64@2.value }
+    self.width = nt_Float64_2.value;
 
-    // Float64[Float64.END, EOI]
-    left = nt_Float64._ipg_end;
+    // Float64@3[Float64@2.END, EOI]
+    left = nt_Float64_2._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Float64 = Float64(input, begin + left, begin + right);
-    if (nt_Float64 === null) break _ipg_alt;
-    if (nt_Float64._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Float64._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Float64._ipg_end);
+    nt_Float64_3 = Float64(input, begin + left, begin + right);
+    if (nt_Float64_3 === null) break _ipg_alt;
+    if (nt_Float64_3._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Float64_3._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Float64_3._ipg_end);
     }
-    nt_Float64._ipg_end += left;
-    nt_Float64._ipg_start += left;
-    left = nt_Float64._ipg_start;
-    right = nt_Float64._ipg_end;
+    nt_Float64_3._ipg_end += left;
+    nt_Float64_3._ipg_start += left;
+    left = nt_Float64_3._ipg_start;
+    right = nt_Float64_3._ipg_end;
 
-    // { height = Float64.value }
-    self.height = nt_Float64.value;
+    // { height = Float64@3.value }
+    self.height = nt_Float64_3.value;
 
     return self;
   }
@@ -1970,42 +1986,42 @@ function SceneGroupItemBlock(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SceneItemInfo;
-    let nt_SceneGroupItemBlockValue;
+    let nt_SceneItemInfo_0;
+    let nt_SceneGroupItemBlockValue_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SceneItemInfo[0, EOI]
+    // SceneItemInfo@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SceneItemInfo = SceneItemInfo(input, begin + left, begin + right);
-    if (nt_SceneItemInfo === null) break _ipg_alt;
-    if (nt_SceneItemInfo._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneItemInfo._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneItemInfo._ipg_end);
+    nt_SceneItemInfo_0 = SceneItemInfo(input, begin + left, begin + right);
+    if (nt_SceneItemInfo_0 === null) break _ipg_alt;
+    if (nt_SceneItemInfo_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneItemInfo_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneItemInfo_0._ipg_end);
     }
-    nt_SceneItemInfo._ipg_end += left;
-    nt_SceneItemInfo._ipg_start += left;
-    left = nt_SceneItemInfo._ipg_start;
-    right = nt_SceneItemInfo._ipg_end;
+    nt_SceneItemInfo_0._ipg_end += left;
+    nt_SceneItemInfo_0._ipg_start += left;
+    left = nt_SceneItemInfo_0._ipg_start;
+    right = nt_SceneItemInfo_0._ipg_end;
 
-    // SceneGroupItemBlockValue[SceneItemInfo.END, EOI]
-    left = nt_SceneItemInfo._ipg_end;
+    // SceneGroupItemBlockValue@0[SceneItemInfo@0.END, EOI]
+    left = nt_SceneItemInfo_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SceneGroupItemBlockValue = SceneGroupItemBlockValue(input, begin + left, begin + right);
-    if (nt_SceneGroupItemBlockValue === null) break _ipg_alt;
-    if (nt_SceneGroupItemBlockValue._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneGroupItemBlockValue._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneGroupItemBlockValue._ipg_end);
+    nt_SceneGroupItemBlockValue_0 = SceneGroupItemBlockValue(input, begin + left, begin + right);
+    if (nt_SceneGroupItemBlockValue_0 === null) break _ipg_alt;
+    if (nt_SceneGroupItemBlockValue_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneGroupItemBlockValue_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneGroupItemBlockValue_0._ipg_end);
     }
-    nt_SceneGroupItemBlockValue._ipg_end += left;
-    nt_SceneGroupItemBlockValue._ipg_start += left;
-    left = nt_SceneGroupItemBlockValue._ipg_start;
-    right = nt_SceneGroupItemBlockValue._ipg_end;
+    nt_SceneGroupItemBlockValue_0._ipg_end += left;
+    nt_SceneGroupItemBlockValue_0._ipg_start += left;
+    left = nt_SceneGroupItemBlockValue_0._ipg_start;
+    right = nt_SceneGroupItemBlockValue_0._ipg_end;
 
-    // { item = makeCrdtSequenceItem(SceneItemInfo.this, SceneGroupItemBlockValue.value) }
-    self.item = makeCrdtSequenceItem((({_ipg_start,_ipg_end,...o}) => o)(nt_SceneItemInfo), nt_SceneGroupItemBlockValue.value);
+    // { item = makeCrdtSequenceItem(SceneItemInfo@0.this, SceneGroupItemBlockValue@0.value) }
+    self.item = makeCrdtSequenceItem((({_ipg_start,_ipg_end,...o}) => o)(nt_SceneItemInfo_0), nt_SceneGroupItemBlockValue_0.value);
 
     return self;
   }
@@ -2019,67 +2035,67 @@ function SceneGroupItemBlockValue(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SubBlock;
-    let nt_TaggedId;
-    let nt_ExpectEmpty;
+    let nt_SubBlock_0;
+    let nt_TaggedId_0;
+    let nt_ExpectEmpty_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SubBlock(6)[0, EOI]
+    // SubBlock@0(6)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, 6);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_0 = SubBlock(input, begin + left, begin + right, 6);
+    if (nt_SubBlock_0 === null) break _ipg_alt;
+    if (nt_SubBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_0._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_0._ipg_end += left;
+    nt_SubBlock_0._ipg_start += left;
+    left = nt_SubBlock_0._ipg_start;
+    right = nt_SubBlock_0._ipg_end;
 
-    // "\x02"[SubBlock.END, SubBlock.END + 1]
-    left = nt_SubBlock._ipg_end;
-    right = nt_SubBlock._ipg_end + 1;
+    // "\x02"[SubBlock@0.END, SubBlock@0.END + 1]
+    left = nt_SubBlock_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + 1;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x02")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
 
-    // TaggedId(2)[SubBlock.END + 1, SubBlock.END + SubBlock.length]
-    left = nt_SubBlock._ipg_end + 1;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // TaggedId@0(2)[SubBlock@0.END + 1, SubBlock@0.END + SubBlock@0.length]
+    left = nt_SubBlock_0._ipg_end + 1;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 2);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_0 = TaggedId(input, begin + left, begin + right, 2);
+    if (nt_TaggedId_0 === null) break _ipg_alt;
+    if (nt_TaggedId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_0._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_0._ipg_end += left;
+    nt_TaggedId_0._ipg_start += left;
+    left = nt_TaggedId_0._ipg_start;
+    right = nt_TaggedId_0._ipg_end;
 
-    // { value = TaggedId.value }
-    self.value = nt_TaggedId.value;
+    // { value = TaggedId@0.value }
+    self.value = nt_TaggedId_0.value;
 
-    // ExpectEmpty[TaggedId.END, SubBlock.END + SubBlock.length]
-    left = nt_TaggedId._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@0[TaggedId@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_TaggedId_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_0 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_0 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_0._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_0._ipg_end += left;
+    nt_ExpectEmpty_0._ipg_start += left;
+    left = nt_ExpectEmpty_0._ipg_start;
+    right = nt_ExpectEmpty_0._ipg_end;
 
     return self;
   }
@@ -2102,42 +2118,42 @@ function SceneLineItemBlock(input, begin = 0, end = input.length, a_version) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SceneItemInfo;
-    let nt_SceneLineItemBlockValue;
+    let nt_SceneItemInfo_0;
+    let nt_SceneLineItemBlockValue_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SceneItemInfo[0, EOI]
+    // SceneItemInfo@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SceneItemInfo = SceneItemInfo(input, begin + left, begin + right);
-    if (nt_SceneItemInfo === null) break _ipg_alt;
-    if (nt_SceneItemInfo._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneItemInfo._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneItemInfo._ipg_end);
+    nt_SceneItemInfo_0 = SceneItemInfo(input, begin + left, begin + right);
+    if (nt_SceneItemInfo_0 === null) break _ipg_alt;
+    if (nt_SceneItemInfo_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneItemInfo_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneItemInfo_0._ipg_end);
     }
-    nt_SceneItemInfo._ipg_end += left;
-    nt_SceneItemInfo._ipg_start += left;
-    left = nt_SceneItemInfo._ipg_start;
-    right = nt_SceneItemInfo._ipg_end;
+    nt_SceneItemInfo_0._ipg_end += left;
+    nt_SceneItemInfo_0._ipg_start += left;
+    left = nt_SceneItemInfo_0._ipg_start;
+    right = nt_SceneItemInfo_0._ipg_end;
 
-    // SceneLineItemBlockValue(version)[SceneItemInfo.END, EOI]
-    left = nt_SceneItemInfo._ipg_end;
+    // SceneLineItemBlockValue@0(version)[SceneItemInfo@0.END, EOI]
+    left = nt_SceneItemInfo_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SceneLineItemBlockValue = SceneLineItemBlockValue(input, begin + left, begin + right, a_version);
-    if (nt_SceneLineItemBlockValue === null) break _ipg_alt;
-    if (nt_SceneLineItemBlockValue._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneLineItemBlockValue._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneLineItemBlockValue._ipg_end);
+    nt_SceneLineItemBlockValue_0 = SceneLineItemBlockValue(input, begin + left, begin + right, a_version);
+    if (nt_SceneLineItemBlockValue_0 === null) break _ipg_alt;
+    if (nt_SceneLineItemBlockValue_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneLineItemBlockValue_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneLineItemBlockValue_0._ipg_end);
     }
-    nt_SceneLineItemBlockValue._ipg_end += left;
-    nt_SceneLineItemBlockValue._ipg_start += left;
-    left = nt_SceneLineItemBlockValue._ipg_start;
-    right = nt_SceneLineItemBlockValue._ipg_end;
+    nt_SceneLineItemBlockValue_0._ipg_end += left;
+    nt_SceneLineItemBlockValue_0._ipg_start += left;
+    left = nt_SceneLineItemBlockValue_0._ipg_start;
+    right = nt_SceneLineItemBlockValue_0._ipg_end;
 
-    // { item = makeCrdtSequenceItem(SceneItemInfo.this, SceneLineItemBlockValue.value) }
-    self.item = makeCrdtSequenceItem((({_ipg_start,_ipg_end,...o}) => o)(nt_SceneItemInfo), nt_SceneLineItemBlockValue.value);
+    // { item = makeCrdtSequenceItem(SceneItemInfo@0.this, SceneLineItemBlockValue@0.value) }
+    self.item = makeCrdtSequenceItem((({_ipg_start,_ipg_end,...o}) => o)(nt_SceneItemInfo_0), nt_SceneLineItemBlockValue_0.value);
 
     return self;
   }
@@ -2151,145 +2167,148 @@ function SceneLineItemBlockValue(input, begin = 0, end = input.length, a_version
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SubBlock;
-    let nt_TaggedU32;
-    let nt_TaggedFloat64;
-    let nt_TaggedFloat32;
-    let nt_Point;
-    let nt_ExpectEmpty;
-    let nt_TaggedId;
-    let nt_OptionalTaggedId;
-    let seq_Point; let seq_Point_start = 0;
+    let nt_SubBlock_0;
+    let nt_TaggedU32_0;
+    let nt_TaggedU32_1;
+    let nt_TaggedFloat64_0;
+    let nt_TaggedFloat32_0;
+    let nt_SubBlock_1;
+    let nt_Point_0;
+    let nt_ExpectEmpty_0;
+    let nt_TaggedId_0;
+    let nt_OptionalTaggedId_0;
+    let nt_ExpectEmpty_1;
+    let seq_Point_0; let seq_Point_0_start = 0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SubBlock(6)[0, EOI]
+    // SubBlock@0(6)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, 6);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_0 = SubBlock(input, begin + left, begin + right, 6);
+    if (nt_SubBlock_0 === null) break _ipg_alt;
+    if (nt_SubBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_0._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_0._ipg_end += left;
+    nt_SubBlock_0._ipg_start += left;
+    left = nt_SubBlock_0._ipg_start;
+    right = nt_SubBlock_0._ipg_end;
 
-    // { outerEnd = SubBlock.END + SubBlock.length }
-    self.outerEnd = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // { outerEnd = SubBlock@0.END + SubBlock@0.length }
+    self.outerEnd = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
 
-    // "\x03"[SubBlock.END, SubBlock.END + 1]
-    left = nt_SubBlock._ipg_end;
-    right = nt_SubBlock._ipg_end + 1;
+    // "\x03"[SubBlock@0.END, SubBlock@0.END + 1]
+    left = nt_SubBlock_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + 1;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x03")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
 
-    // TaggedU32(1)[SubBlock.END + 1, outerEnd]
-    left = nt_SubBlock._ipg_end + 1;
+    // TaggedU32@0(1)[SubBlock@0.END + 1, outerEnd]
+    left = nt_SubBlock_0._ipg_end + 1;
     right = self.outerEnd;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedU32 = TaggedU32(input, begin + left, begin + right, 1);
-    if (nt_TaggedU32 === null) break _ipg_alt;
-    if (nt_TaggedU32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32._ipg_end);
+    nt_TaggedU32_0 = TaggedU32(input, begin + left, begin + right, 1);
+    if (nt_TaggedU32_0 === null) break _ipg_alt;
+    if (nt_TaggedU32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32_0._ipg_end);
     }
-    nt_TaggedU32._ipg_end += left;
-    nt_TaggedU32._ipg_start += left;
-    left = nt_TaggedU32._ipg_start;
-    right = nt_TaggedU32._ipg_end;
+    nt_TaggedU32_0._ipg_end += left;
+    nt_TaggedU32_0._ipg_start += left;
+    left = nt_TaggedU32_0._ipg_start;
+    right = nt_TaggedU32_0._ipg_end;
 
-    // { toolId = TaggedU32.value }
-    self.toolId = nt_TaggedU32.value;
+    // { toolId = TaggedU32@0.value }
+    self.toolId = nt_TaggedU32_0.value;
 
-    // TaggedU32(2)[TaggedU32.END, outerEnd]
-    left = nt_TaggedU32._ipg_end;
+    // TaggedU32@1(2)[TaggedU32@0.END, outerEnd]
+    left = nt_TaggedU32_0._ipg_end;
     right = self.outerEnd;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedU32 = TaggedU32(input, begin + left, begin + right, 2);
-    if (nt_TaggedU32 === null) break _ipg_alt;
-    if (nt_TaggedU32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32._ipg_end);
+    nt_TaggedU32_1 = TaggedU32(input, begin + left, begin + right, 2);
+    if (nt_TaggedU32_1 === null) break _ipg_alt;
+    if (nt_TaggedU32_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32_1._ipg_end);
     }
-    nt_TaggedU32._ipg_end += left;
-    nt_TaggedU32._ipg_start += left;
-    left = nt_TaggedU32._ipg_start;
-    right = nt_TaggedU32._ipg_end;
+    nt_TaggedU32_1._ipg_end += left;
+    nt_TaggedU32_1._ipg_start += left;
+    left = nt_TaggedU32_1._ipg_start;
+    right = nt_TaggedU32_1._ipg_end;
 
-    // { colorId = TaggedU32.value }
-    self.colorId = nt_TaggedU32.value;
+    // { colorId = TaggedU32@1.value }
+    self.colorId = nt_TaggedU32_1.value;
 
-    // TaggedFloat64(3)[TaggedU32.END, outerEnd]
-    left = nt_TaggedU32._ipg_end;
+    // TaggedFloat64@0(3)[TaggedU32@1.END, outerEnd]
+    left = nt_TaggedU32_1._ipg_end;
     right = self.outerEnd;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedFloat64 = TaggedFloat64(input, begin + left, begin + right, 3);
-    if (nt_TaggedFloat64 === null) break _ipg_alt;
-    if (nt_TaggedFloat64._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedFloat64._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedFloat64._ipg_end);
+    nt_TaggedFloat64_0 = TaggedFloat64(input, begin + left, begin + right, 3);
+    if (nt_TaggedFloat64_0 === null) break _ipg_alt;
+    if (nt_TaggedFloat64_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedFloat64_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedFloat64_0._ipg_end);
     }
-    nt_TaggedFloat64._ipg_end += left;
-    nt_TaggedFloat64._ipg_start += left;
-    left = nt_TaggedFloat64._ipg_start;
-    right = nt_TaggedFloat64._ipg_end;
+    nt_TaggedFloat64_0._ipg_end += left;
+    nt_TaggedFloat64_0._ipg_start += left;
+    left = nt_TaggedFloat64_0._ipg_start;
+    right = nt_TaggedFloat64_0._ipg_end;
 
-    // { thicknessScale = TaggedFloat64.value }
-    self.thicknessScale = nt_TaggedFloat64.value;
+    // { thicknessScale = TaggedFloat64@0.value }
+    self.thicknessScale = nt_TaggedFloat64_0.value;
 
-    // TaggedFloat32(4)[TaggedFloat64.END, outerEnd]
-    left = nt_TaggedFloat64._ipg_end;
+    // TaggedFloat32@0(4)[TaggedFloat64@0.END, outerEnd]
+    left = nt_TaggedFloat64_0._ipg_end;
     right = self.outerEnd;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedFloat32 = TaggedFloat32(input, begin + left, begin + right, 4);
-    if (nt_TaggedFloat32 === null) break _ipg_alt;
-    if (nt_TaggedFloat32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedFloat32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedFloat32._ipg_end);
+    nt_TaggedFloat32_0 = TaggedFloat32(input, begin + left, begin + right, 4);
+    if (nt_TaggedFloat32_0 === null) break _ipg_alt;
+    if (nt_TaggedFloat32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedFloat32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedFloat32_0._ipg_end);
     }
-    nt_TaggedFloat32._ipg_end += left;
-    nt_TaggedFloat32._ipg_start += left;
-    left = nt_TaggedFloat32._ipg_start;
-    right = nt_TaggedFloat32._ipg_end;
+    nt_TaggedFloat32_0._ipg_end += left;
+    nt_TaggedFloat32_0._ipg_start += left;
+    left = nt_TaggedFloat32_0._ipg_start;
+    right = nt_TaggedFloat32_0._ipg_end;
 
-    // { startLength = TaggedFloat32.value }
-    self.startLength = nt_TaggedFloat32.value;
+    // { startLength = TaggedFloat32@0.value }
+    self.startLength = nt_TaggedFloat32_0.value;
 
-    // SubBlock(5)[TaggedFloat32.END, outerEnd]
-    left = nt_TaggedFloat32._ipg_end;
+    // SubBlock@1(5)[TaggedFloat32@0.END, outerEnd]
+    left = nt_TaggedFloat32_0._ipg_end;
     right = self.outerEnd;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, 5);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_1 = SubBlock(input, begin + left, begin + right, 5);
+    if (nt_SubBlock_1 === null) break _ipg_alt;
+    if (nt_SubBlock_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_1._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_1._ipg_end += left;
+    nt_SubBlock_1._ipg_start += left;
+    left = nt_SubBlock_1._ipg_start;
+    right = nt_SubBlock_1._ipg_end;
 
     // { pointSize = pointSerializedSize(version) }
     self.pointSize = pointSerializedSize(a_version);
 
-    // ?[ check(SubBlock.length % pointSize == 0, "Point size does not divide subblock size") ]
-    if (!check(nt_SubBlock.length % self.pointSize == 0, "Point size does not divide subblock size")) break _ipg_alt;
+    // ?[ check(SubBlock@1.length % pointSize == 0, "Point size does not divide subblock size") ]
+    if (!check(nt_SubBlock_1.length % self.pointSize == 0, "Point size does not divide subblock size")) break _ipg_alt;
 
-    // for i = 0 to SubBlock.length / pointSize do Point(version)[SubBlock.END + pointSize * i, SubBlock.END + pointSize * (i + 1)]
-    nt_Point = { _ipg_end: right, _ipg_start: left };
-    seq_Point_start = 0;
-    loopEnd = nt_SubBlock.length / self.pointSize;
-    seq_Point = new Array(loopEnd - seq_Point_start);
-    for (self.i = seq_Point_start; self.i < loopEnd; self.i++) {
-      const left = nt_SubBlock._ipg_end + self.pointSize * self.i;
-      const right = nt_SubBlock._ipg_end + self.pointSize * (self.i + 1);
+    // for i = 0 to SubBlock@1.length / pointSize do Point@0(version)[SubBlock@1.END + pointSize * i, SubBlock@1.END + pointSize * (i + 1)]
+    nt_Point_0 = { _ipg_end: right, _ipg_start: left };
+    seq_Point_0_start = 0;
+    loopEnd = nt_SubBlock_1.length / self.pointSize;
+    seq_Point_0 = new Array(loopEnd - seq_Point_0_start);
+    for (self.i = seq_Point_0_start; self.i < loopEnd; self.i++) {
+      const left = nt_SubBlock_1._ipg_end + self.pointSize * self.i;
+      const right = nt_SubBlock_1._ipg_end + self.pointSize * (self.i + 1);
       if (left < 0 || right < left || right > EOI) break _ipg_alt;
       const tmp = Point(input, begin + left, begin + right, a_version);
       if (tmp === null) break _ipg_alt;
@@ -2299,82 +2318,82 @@ function SceneLineItemBlockValue(input, begin = 0, end = input.length, a_version
       }
       tmp._ipg_end += left;
       tmp._ipg_start += left;
-      nt_Point._ipg_end = tmp._ipg_end;
-      nt_Point._ipg_start = tmp._ipg_start;
-      seq_Point[self.i - seq_Point_start] = tmp;
+      nt_Point_0._ipg_end = tmp._ipg_end;
+      nt_Point_0._ipg_start = tmp._ipg_start;
+      seq_Point_0[self.i - seq_Point_0_start] = tmp;
     }
     delete self.i;
-    left = nt_Point._ipg_start;
-    right = nt_Point._ipg_end;
+    left = nt_Point_0._ipg_start;
+    right = nt_Point_0._ipg_end;
 
-    // { points = Point.these }
-    self.points = seq_Point.map(({_ipg_start,_ipg_end,...o}) => o);
+    // { points = Point@0.these }
+    self.points = seq_Point_0.map(({_ipg_start,_ipg_end,...o}) => o);
 
-    // ExpectEmpty[Point.END, SubBlock.END + SubBlock.length]
-    left = nt_Point._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@0[Point@0.END, SubBlock@1.END + SubBlock@1.length]
+    left = nt_Point_0._ipg_end;
+    right = nt_SubBlock_1._ipg_end + nt_SubBlock_1.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_0 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_0 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_0._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_0._ipg_end += left;
+    nt_ExpectEmpty_0._ipg_start += left;
+    left = nt_ExpectEmpty_0._ipg_start;
+    right = nt_ExpectEmpty_0._ipg_end;
 
-    // TaggedId(6)[ExpectEmpty.END, outerEnd]
-    left = nt_ExpectEmpty._ipg_end;
+    // TaggedId@0(6)[ExpectEmpty@0.END, outerEnd]
+    left = nt_ExpectEmpty_0._ipg_end;
     right = self.outerEnd;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 6);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_0 = TaggedId(input, begin + left, begin + right, 6);
+    if (nt_TaggedId_0 === null) break _ipg_alt;
+    if (nt_TaggedId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_0._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_0._ipg_end += left;
+    nt_TaggedId_0._ipg_start += left;
+    left = nt_TaggedId_0._ipg_start;
+    right = nt_TaggedId_0._ipg_end;
 
-    // { timestamp = TaggedId.value }
-    self.timestamp = nt_TaggedId.value;
+    // { timestamp = TaggedId@0.value }
+    self.timestamp = nt_TaggedId_0.value;
 
-    // OptionalTaggedId(7)[TaggedId.END, EOI]
-    left = nt_TaggedId._ipg_end;
+    // OptionalTaggedId@0(7)[TaggedId@0.END, EOI]
+    left = nt_TaggedId_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_OptionalTaggedId = OptionalTaggedId(input, begin + left, begin + right, 7);
-    if (nt_OptionalTaggedId === null) break _ipg_alt;
-    if (nt_OptionalTaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalTaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalTaggedId._ipg_end);
+    nt_OptionalTaggedId_0 = OptionalTaggedId(input, begin + left, begin + right, 7);
+    if (nt_OptionalTaggedId_0 === null) break _ipg_alt;
+    if (nt_OptionalTaggedId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalTaggedId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalTaggedId_0._ipg_end);
     }
-    nt_OptionalTaggedId._ipg_end += left;
-    nt_OptionalTaggedId._ipg_start += left;
-    left = nt_OptionalTaggedId._ipg_start;
-    right = nt_OptionalTaggedId._ipg_end;
+    nt_OptionalTaggedId_0._ipg_end += left;
+    nt_OptionalTaggedId_0._ipg_start += left;
+    left = nt_OptionalTaggedId_0._ipg_start;
+    right = nt_OptionalTaggedId_0._ipg_end;
 
-    // { moveId = OptionalTaggedId.value }
-    self.moveId = nt_OptionalTaggedId.value;
+    // { moveId = OptionalTaggedId@0.value }
+    self.moveId = nt_OptionalTaggedId_0.value;
 
-    // ExpectEmpty[OptionalTaggedId.END, outerEnd]
-    left = nt_OptionalTaggedId._ipg_end;
+    // ExpectEmpty@1[OptionalTaggedId@0.END, outerEnd]
+    left = nt_OptionalTaggedId_0._ipg_end;
     right = self.outerEnd;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_1 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_1 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_1._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_1._ipg_end += left;
+    nt_ExpectEmpty_1._ipg_start += left;
+    left = nt_ExpectEmpty_1._ipg_start;
+    right = nt_ExpectEmpty_1._ipg_end;
 
     // { value = makeSceneLineItemBlockValue(toolId, colorId, thicknessScale, startLength, points, moveId) }
     self.value = makeSceneLineItemBlockValue(self.toolId, self.colorId, self.thicknessScale, self.startLength, self.points, self.moveId);
@@ -2400,72 +2419,73 @@ function Point(input, begin = 0, end = input.length, a_version) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Float32;
-    let nt_PointVersions;
+    let nt_Float32_0;
+    let nt_Float32_1;
+    let nt_PointVersions_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // Float32[0, EOI]
+    // Float32@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Float32 = Float32(input, begin + left, begin + right);
-    if (nt_Float32 === null) break _ipg_alt;
-    if (nt_Float32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Float32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Float32._ipg_end);
+    nt_Float32_0 = Float32(input, begin + left, begin + right);
+    if (nt_Float32_0 === null) break _ipg_alt;
+    if (nt_Float32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Float32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Float32_0._ipg_end);
     }
-    nt_Float32._ipg_end += left;
-    nt_Float32._ipg_start += left;
-    left = nt_Float32._ipg_start;
-    right = nt_Float32._ipg_end;
+    nt_Float32_0._ipg_end += left;
+    nt_Float32_0._ipg_start += left;
+    left = nt_Float32_0._ipg_start;
+    right = nt_Float32_0._ipg_end;
 
-    // { x = Float32.value }
-    self.x = nt_Float32.value;
+    // { x = Float32@0.value }
+    self.x = nt_Float32_0.value;
 
-    // Float32[Float32.END, EOI]
-    left = nt_Float32._ipg_end;
+    // Float32@1[Float32@0.END, EOI]
+    left = nt_Float32_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Float32 = Float32(input, begin + left, begin + right);
-    if (nt_Float32 === null) break _ipg_alt;
-    if (nt_Float32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Float32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Float32._ipg_end);
+    nt_Float32_1 = Float32(input, begin + left, begin + right);
+    if (nt_Float32_1 === null) break _ipg_alt;
+    if (nt_Float32_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Float32_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Float32_1._ipg_end);
     }
-    nt_Float32._ipg_end += left;
-    nt_Float32._ipg_start += left;
-    left = nt_Float32._ipg_start;
-    right = nt_Float32._ipg_end;
+    nt_Float32_1._ipg_end += left;
+    nt_Float32_1._ipg_start += left;
+    left = nt_Float32_1._ipg_start;
+    right = nt_Float32_1._ipg_end;
 
-    // { y = Float32.value }
-    self.y = nt_Float32.value;
+    // { y = Float32@1.value }
+    self.y = nt_Float32_1.value;
 
-    // PointVersions(version)[Float32.END, EOI]
-    left = nt_Float32._ipg_end;
+    // PointVersions@0(version)[Float32@1.END, EOI]
+    left = nt_Float32_1._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_PointVersions = PointVersions(input, begin + left, begin + right, a_version);
-    if (nt_PointVersions === null) break _ipg_alt;
-    if (nt_PointVersions._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_PointVersions._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_PointVersions._ipg_end);
+    nt_PointVersions_0 = PointVersions(input, begin + left, begin + right, a_version);
+    if (nt_PointVersions_0 === null) break _ipg_alt;
+    if (nt_PointVersions_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_PointVersions_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_PointVersions_0._ipg_end);
     }
-    nt_PointVersions._ipg_end += left;
-    nt_PointVersions._ipg_start += left;
-    left = nt_PointVersions._ipg_start;
-    right = nt_PointVersions._ipg_end;
+    nt_PointVersions_0._ipg_end += left;
+    nt_PointVersions_0._ipg_start += left;
+    left = nt_PointVersions_0._ipg_start;
+    right = nt_PointVersions_0._ipg_end;
 
-    // { speed = PointVersions.speed }
-    self.speed = nt_PointVersions.speed;
+    // { speed = PointVersions@0.speed }
+    self.speed = nt_PointVersions_0.speed;
 
-    // { width = PointVersions.width }
-    self.width = nt_PointVersions.width;
+    // { width = PointVersions@0.width }
+    self.width = nt_PointVersions_0.width;
 
-    // { direction = PointVersions.direction }
-    self.direction = nt_PointVersions.direction;
+    // { direction = PointVersions@0.direction }
+    self.direction = nt_PointVersions_0.direction;
 
-    // { pressure = PointVersions.pressure }
-    self.pressure = nt_PointVersions.pressure;
+    // { pressure = PointVersions@0.pressure }
+    self.pressure = nt_PointVersions_0.pressure;
 
     return self;
   }
@@ -2479,140 +2499,144 @@ function PointVersions(input, begin = 0, end = input.length, a_version) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Float32;
+    let nt_Float32_0;
+    let nt_Float32_1;
+    let nt_Float32_2;
+    let nt_Float32_3;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // ?[ version == 1 ]
     if (!(a_version == 1)) break _ipg_alt;
 
-    // Float32[0, EOI]
+    // Float32@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Float32 = Float32(input, begin + left, begin + right);
-    if (nt_Float32 === null) break _ipg_alt;
-    if (nt_Float32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Float32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Float32._ipg_end);
+    nt_Float32_0 = Float32(input, begin + left, begin + right);
+    if (nt_Float32_0 === null) break _ipg_alt;
+    if (nt_Float32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Float32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Float32_0._ipg_end);
     }
-    nt_Float32._ipg_end += left;
-    nt_Float32._ipg_start += left;
-    left = nt_Float32._ipg_start;
-    right = nt_Float32._ipg_end;
+    nt_Float32_0._ipg_end += left;
+    nt_Float32_0._ipg_start += left;
+    left = nt_Float32_0._ipg_start;
+    right = nt_Float32_0._ipg_end;
 
-    // { speed = 4 * Float32.value }
-    self.speed = 4 * nt_Float32.value;
+    // { speed = 4 * Float32@0.value }
+    self.speed = 4 * nt_Float32_0.value;
 
-    // Float32[Float32.END, EOI]
-    left = nt_Float32._ipg_end;
+    // Float32@1[Float32@0.END, EOI]
+    left = nt_Float32_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Float32 = Float32(input, begin + left, begin + right);
-    if (nt_Float32 === null) break _ipg_alt;
-    if (nt_Float32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Float32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Float32._ipg_end);
+    nt_Float32_1 = Float32(input, begin + left, begin + right);
+    if (nt_Float32_1 === null) break _ipg_alt;
+    if (nt_Float32_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Float32_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Float32_1._ipg_end);
     }
-    nt_Float32._ipg_end += left;
-    nt_Float32._ipg_start += left;
-    left = nt_Float32._ipg_start;
-    right = nt_Float32._ipg_end;
+    nt_Float32_1._ipg_end += left;
+    nt_Float32_1._ipg_start += left;
+    left = nt_Float32_1._ipg_start;
+    right = nt_Float32_1._ipg_end;
 
-    // { direction = 255 * Float32.value / getTwoPi() }
-    self.direction = 255 * nt_Float32.value / getTwoPi();
+    // { direction = 255 * Float32@1.value / getTwoPi() }
+    self.direction = 255 * nt_Float32_1.value / getTwoPi();
 
-    // Float32[Float32.END, EOI]
-    left = nt_Float32._ipg_end;
+    // Float32@2[Float32@1.END, EOI]
+    left = nt_Float32_1._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Float32 = Float32(input, begin + left, begin + right);
-    if (nt_Float32 === null) break _ipg_alt;
-    if (nt_Float32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Float32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Float32._ipg_end);
+    nt_Float32_2 = Float32(input, begin + left, begin + right);
+    if (nt_Float32_2 === null) break _ipg_alt;
+    if (nt_Float32_2._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Float32_2._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Float32_2._ipg_end);
     }
-    nt_Float32._ipg_end += left;
-    nt_Float32._ipg_start += left;
-    left = nt_Float32._ipg_start;
-    right = nt_Float32._ipg_end;
+    nt_Float32_2._ipg_end += left;
+    nt_Float32_2._ipg_start += left;
+    left = nt_Float32_2._ipg_start;
+    right = nt_Float32_2._ipg_end;
 
-    // { width = int(round(4 * Float32.value)) }
-    self.width = int(round(4 * nt_Float32.value));
+    // { width = int(round(4 * Float32@2.value)) }
+    self.width = int(round(4 * nt_Float32_2.value));
 
-    // Float32[Float32.END, EOI]
-    left = nt_Float32._ipg_end;
+    // Float32@3[Float32@2.END, EOI]
+    left = nt_Float32_2._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Float32 = Float32(input, begin + left, begin + right);
-    if (nt_Float32 === null) break _ipg_alt;
-    if (nt_Float32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Float32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Float32._ipg_end);
+    nt_Float32_3 = Float32(input, begin + left, begin + right);
+    if (nt_Float32_3 === null) break _ipg_alt;
+    if (nt_Float32_3._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Float32_3._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Float32_3._ipg_end);
     }
-    nt_Float32._ipg_end += left;
-    nt_Float32._ipg_start += left;
-    left = nt_Float32._ipg_start;
-    right = nt_Float32._ipg_end;
+    nt_Float32_3._ipg_end += left;
+    nt_Float32_3._ipg_start += left;
+    left = nt_Float32_3._ipg_start;
+    right = nt_Float32_3._ipg_end;
 
-    // { pressure = 255 * Float32.value }
-    self.pressure = 255 * nt_Float32.value;
+    // { pressure = 255 * Float32@3.value }
+    self.pressure = 255 * nt_Float32_3.value;
 
     return self;
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_U16;
+    let nt_U16_0;
+    let nt_U16_1;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // ?[ version == 2 ]
     if (!(a_version == 2)) break _ipg_alt;
 
-    // U16[0, EOI]
+    // U16@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U16 = U16(input, begin + left, begin + right);
-    if (nt_U16 === null) break _ipg_alt;
-    if (nt_U16._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U16._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U16._ipg_end);
+    nt_U16_0 = U16(input, begin + left, begin + right);
+    if (nt_U16_0 === null) break _ipg_alt;
+    if (nt_U16_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U16_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U16_0._ipg_end);
     }
-    nt_U16._ipg_end += left;
-    nt_U16._ipg_start += left;
-    left = nt_U16._ipg_start;
-    right = nt_U16._ipg_end;
+    nt_U16_0._ipg_end += left;
+    nt_U16_0._ipg_start += left;
+    left = nt_U16_0._ipg_start;
+    right = nt_U16_0._ipg_end;
 
-    // { speed = U16.value }
-    self.speed = nt_U16.value;
+    // { speed = U16@0.value }
+    self.speed = nt_U16_0.value;
 
-    // U16[U16.END, EOI]
-    left = nt_U16._ipg_end;
+    // U16@1[U16@0.END, EOI]
+    left = nt_U16_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U16 = U16(input, begin + left, begin + right);
-    if (nt_U16 === null) break _ipg_alt;
-    if (nt_U16._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U16._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U16._ipg_end);
+    nt_U16_1 = U16(input, begin + left, begin + right);
+    if (nt_U16_1 === null) break _ipg_alt;
+    if (nt_U16_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U16_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U16_1._ipg_end);
     }
-    nt_U16._ipg_end += left;
-    nt_U16._ipg_start += left;
-    left = nt_U16._ipg_start;
-    right = nt_U16._ipg_end;
+    nt_U16_1._ipg_end += left;
+    nt_U16_1._ipg_start += left;
+    left = nt_U16_1._ipg_start;
+    right = nt_U16_1._ipg_end;
 
-    // { width = U16.value }
-    self.width = nt_U16.value;
+    // { width = U16@1.value }
+    self.width = nt_U16_1.value;
 
-    // { direction = .[U16.END] }
-    left = nt_U16._ipg_end;
+    // { direction = .[U16@1.END] }
+    left = nt_U16_1._ipg_end;
     right = left + 1;
     if (left < 0 || right > EOI) break _ipg_alt;
     self.direction = input[begin + left];
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
 
-    // { pressure = .[U16.END + 1] }
-    left = nt_U16._ipg_end + 1;
+    // { pressure = .[U16@1.END + 1] }
+    left = nt_U16_1._ipg_end + 1;
     right = left + 1;
     if (left < 0 || right > EOI) break _ipg_alt;
     self.pressure = input[begin + left];
@@ -2631,26 +2655,26 @@ function SceneTextItemBlock(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SceneItemInfo;
+    let nt_SceneItemInfo_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SceneItemInfo[0, EOI]
+    // SceneItemInfo@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SceneItemInfo = SceneItemInfo(input, begin + left, begin + right);
-    if (nt_SceneItemInfo === null) break _ipg_alt;
-    if (nt_SceneItemInfo._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneItemInfo._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneItemInfo._ipg_end);
+    nt_SceneItemInfo_0 = SceneItemInfo(input, begin + left, begin + right);
+    if (nt_SceneItemInfo_0 === null) break _ipg_alt;
+    if (nt_SceneItemInfo_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SceneItemInfo_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SceneItemInfo_0._ipg_end);
     }
-    nt_SceneItemInfo._ipg_end += left;
-    nt_SceneItemInfo._ipg_start += left;
-    left = nt_SceneItemInfo._ipg_start;
-    right = nt_SceneItemInfo._ipg_end;
+    nt_SceneItemInfo_0._ipg_end += left;
+    nt_SceneItemInfo_0._ipg_start += left;
+    left = nt_SceneItemInfo_0._ipg_start;
+    right = nt_SceneItemInfo_0._ipg_end;
 
-    // { item = makeCrdtSequenceItem(SceneItemInfo.this) }
-    self.item = makeCrdtSequenceItem((({_ipg_start,_ipg_end,...o}) => o)(nt_SceneItemInfo));
+    // { item = makeCrdtSequenceItem(SceneItemInfo@0.this) }
+    self.item = makeCrdtSequenceItem((({_ipg_start,_ipg_end,...o}) => o)(nt_SceneItemInfo_0));
 
     return self;
   }
@@ -2664,113 +2688,125 @@ function RootTextBlock(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_TaggedId;
-    let nt_SubBlock;
-    let nt_VarUInt;
-    let nt_TextItem;
-    let nt_ExpectEmpty;
-    let nt_TextFormat;
-    let nt_Float64;
-    let nt_TaggedFloat32;
-    let seq_TextItem; let seq_TextItem_start = 0;
-    let seq_TextFormat; let seq_TextFormat_start = 0;
+    let nt_TaggedId_0;
+    let nt_SubBlock_0;
+    let nt_SubBlock_1;
+    let nt_SubBlock_2;
+    let nt_VarUInt_0;
+    let nt_TextItem_0;
+    let nt_ExpectEmpty_0;
+    let nt_ExpectEmpty_1;
+    let nt_SubBlock_3;
+    let nt_SubBlock_4;
+    let nt_VarUInt_1;
+    let nt_TextFormat_0;
+    let nt_ExpectEmpty_2;
+    let nt_ExpectEmpty_3;
+    let nt_ExpectEmpty_4;
+    let nt_SubBlock_5;
+    let nt_Float64_0;
+    let nt_Float64_1;
+    let nt_ExpectEmpty_5;
+    let nt_TaggedFloat32_0;
+    let seq_TextItem_0; let seq_TextItem_0_start = 0;
+    let seq_TextFormat_0; let seq_TextFormat_0_start = 0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // TaggedId(1)[0, EOI]
+    // TaggedId@0(1)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 1);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_0 = TaggedId(input, begin + left, begin + right, 1);
+    if (nt_TaggedId_0 === null) break _ipg_alt;
+    if (nt_TaggedId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_0._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_0._ipg_end += left;
+    nt_TaggedId_0._ipg_start += left;
+    left = nt_TaggedId_0._ipg_start;
+    right = nt_TaggedId_0._ipg_end;
 
-    // { blockId = TaggedId.value }
-    self.blockId = nt_TaggedId.value;
+    // { blockId = TaggedId@0.value }
+    self.blockId = nt_TaggedId_0.value;
 
     // ?[ checkRootTextBlockId(blockId) ]
     if (!checkRootTextBlockId(self.blockId)) break _ipg_alt;
 
-    // SubBlock(2)[TaggedId.END, EOI]
-    left = nt_TaggedId._ipg_end;
+    // SubBlock@0(2)[TaggedId@0.END, EOI]
+    left = nt_TaggedId_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, 2);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_0 = SubBlock(input, begin + left, begin + right, 2);
+    if (nt_SubBlock_0 === null) break _ipg_alt;
+    if (nt_SubBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_0._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_0._ipg_end += left;
+    nt_SubBlock_0._ipg_start += left;
+    left = nt_SubBlock_0._ipg_start;
+    right = nt_SubBlock_0._ipg_end;
 
-    // { outerEnd = SubBlock.END + SubBlock.length }
-    self.outerEnd = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // { outerEnd = SubBlock@0.END + SubBlock@0.length }
+    self.outerEnd = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
 
-    // SubBlock(1)[SubBlock.END, outerEnd]
-    left = nt_SubBlock._ipg_end;
+    // SubBlock@1(1)[SubBlock@0.END, outerEnd]
+    left = nt_SubBlock_0._ipg_end;
     right = self.outerEnd;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, 1);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_1 = SubBlock(input, begin + left, begin + right, 1);
+    if (nt_SubBlock_1 === null) break _ipg_alt;
+    if (nt_SubBlock_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_1._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_1._ipg_end += left;
+    nt_SubBlock_1._ipg_start += left;
+    left = nt_SubBlock_1._ipg_start;
+    right = nt_SubBlock_1._ipg_end;
 
-    // { innerEnd = SubBlock.END + SubBlock.length }
-    self.innerEnd = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // { innerEnd = SubBlock@1.END + SubBlock@1.length }
+    self.innerEnd = nt_SubBlock_1._ipg_end + nt_SubBlock_1.length;
 
-    // SubBlock(1)[SubBlock.END, innerEnd]
-    left = nt_SubBlock._ipg_end;
+    // SubBlock@2(1)[SubBlock@1.END, innerEnd]
+    left = nt_SubBlock_1._ipg_end;
     right = self.innerEnd;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, 1);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_2 = SubBlock(input, begin + left, begin + right, 1);
+    if (nt_SubBlock_2 === null) break _ipg_alt;
+    if (nt_SubBlock_2._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_2._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_2._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_2._ipg_end += left;
+    nt_SubBlock_2._ipg_start += left;
+    left = nt_SubBlock_2._ipg_start;
+    right = nt_SubBlock_2._ipg_end;
 
-    // VarUInt[SubBlock.END, EOI]
-    left = nt_SubBlock._ipg_end;
+    // VarUInt@0[SubBlock@2.END, EOI]
+    left = nt_SubBlock_2._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_VarUInt = VarUInt(input, begin + left, begin + right);
-    if (nt_VarUInt === null) break _ipg_alt;
-    if (nt_VarUInt._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt._ipg_end);
+    nt_VarUInt_0 = VarUInt(input, begin + left, begin + right);
+    if (nt_VarUInt_0 === null) break _ipg_alt;
+    if (nt_VarUInt_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt_0._ipg_end);
     }
-    nt_VarUInt._ipg_end += left;
-    nt_VarUInt._ipg_start += left;
-    left = nt_VarUInt._ipg_start;
-    right = nt_VarUInt._ipg_end;
+    nt_VarUInt_0._ipg_end += left;
+    nt_VarUInt_0._ipg_start += left;
+    left = nt_VarUInt_0._ipg_start;
+    right = nt_VarUInt_0._ipg_end;
 
-    // for i = 0 to VarUInt.value do TextItem[TextItem.END, SubBlock.END + SubBlock.length]
-    nt_TextItem = { _ipg_end: right, _ipg_start: left };
-    seq_TextItem_start = 0;
-    loopEnd = nt_VarUInt.value;
-    seq_TextItem = new Array(loopEnd - seq_TextItem_start);
-    for (self.i = seq_TextItem_start; self.i < loopEnd; self.i++) {
-      const left = nt_TextItem._ipg_end;
-      const right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // for i = 0 to VarUInt@0.value do TextItem@0[TextItem@0.END, SubBlock@2.END + SubBlock@2.length]
+    nt_TextItem_0 = { _ipg_end: right, _ipg_start: left };
+    seq_TextItem_0_start = 0;
+    loopEnd = nt_VarUInt_0.value;
+    seq_TextItem_0 = new Array(loopEnd - seq_TextItem_0_start);
+    for (self.i = seq_TextItem_0_start; self.i < loopEnd; self.i++) {
+      const left = nt_TextItem_0._ipg_end;
+      const right = nt_SubBlock_2._ipg_end + nt_SubBlock_2.length;
       if (left < 0 || right < left || right > EOI) break _ipg_alt;
       const tmp = TextItem(input, begin + left, begin + right);
       if (tmp === null) break _ipg_alt;
@@ -2780,103 +2816,103 @@ function RootTextBlock(input, begin = 0, end = input.length) {
       }
       tmp._ipg_end += left;
       tmp._ipg_start += left;
-      nt_TextItem._ipg_end = tmp._ipg_end;
-      nt_TextItem._ipg_start = tmp._ipg_start;
-      seq_TextItem[self.i - seq_TextItem_start] = tmp;
+      nt_TextItem_0._ipg_end = tmp._ipg_end;
+      nt_TextItem_0._ipg_start = tmp._ipg_start;
+      seq_TextItem_0[self.i - seq_TextItem_0_start] = tmp;
     }
     delete self.i;
-    left = nt_TextItem._ipg_start;
-    right = nt_TextItem._ipg_end;
+    left = nt_TextItem_0._ipg_start;
+    right = nt_TextItem_0._ipg_end;
 
-    // { textItems = TextItem.these }
-    self.textItems = seq_TextItem.map(({_ipg_start,_ipg_end,...o}) => o);
+    // { textItems = TextItem@0.these }
+    self.textItems = seq_TextItem_0.map(({_ipg_start,_ipg_end,...o}) => o);
 
-    // ExpectEmpty[TextItem.END, SubBlock.END + SubBlock.length]
-    left = nt_TextItem._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@0[TextItem@0.END, SubBlock@2.END + SubBlock@2.length]
+    left = nt_TextItem_0._ipg_end;
+    right = nt_SubBlock_2._ipg_end + nt_SubBlock_2.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_0 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_0 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_0._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_0._ipg_end += left;
+    nt_ExpectEmpty_0._ipg_start += left;
+    left = nt_ExpectEmpty_0._ipg_start;
+    right = nt_ExpectEmpty_0._ipg_end;
 
-    // ExpectEmpty[ExpectEmpty.END, innerEnd]
-    left = nt_ExpectEmpty._ipg_end;
+    // ExpectEmpty@1[ExpectEmpty@0.END, innerEnd]
+    left = nt_ExpectEmpty_0._ipg_end;
     right = self.innerEnd;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_1 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_1 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_1._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_1._ipg_end += left;
+    nt_ExpectEmpty_1._ipg_start += left;
+    left = nt_ExpectEmpty_1._ipg_start;
+    right = nt_ExpectEmpty_1._ipg_end;
 
-    // SubBlock(2)[ExpectEmpty.END, outerEnd]
-    left = nt_ExpectEmpty._ipg_end;
+    // SubBlock@3(2)[ExpectEmpty@1.END, outerEnd]
+    left = nt_ExpectEmpty_1._ipg_end;
     right = self.outerEnd;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, 2);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_3 = SubBlock(input, begin + left, begin + right, 2);
+    if (nt_SubBlock_3 === null) break _ipg_alt;
+    if (nt_SubBlock_3._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_3._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_3._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_3._ipg_end += left;
+    nt_SubBlock_3._ipg_start += left;
+    left = nt_SubBlock_3._ipg_start;
+    right = nt_SubBlock_3._ipg_end;
 
-    // { innerEnd = SubBlock.END + SubBlock.length }
-    self.innerEnd = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // { innerEnd = SubBlock@3.END + SubBlock@3.length }
+    self.innerEnd = nt_SubBlock_3._ipg_end + nt_SubBlock_3.length;
 
-    // SubBlock(1)[SubBlock.END, innerEnd]
-    left = nt_SubBlock._ipg_end;
+    // SubBlock@4(1)[SubBlock@3.END, innerEnd]
+    left = nt_SubBlock_3._ipg_end;
     right = self.innerEnd;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, 1);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_4 = SubBlock(input, begin + left, begin + right, 1);
+    if (nt_SubBlock_4 === null) break _ipg_alt;
+    if (nt_SubBlock_4._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_4._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_4._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_4._ipg_end += left;
+    nt_SubBlock_4._ipg_start += left;
+    left = nt_SubBlock_4._ipg_start;
+    right = nt_SubBlock_4._ipg_end;
 
-    // VarUInt[SubBlock.END, EOI]
-    left = nt_SubBlock._ipg_end;
+    // VarUInt@1[SubBlock@4.END, EOI]
+    left = nt_SubBlock_4._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_VarUInt = VarUInt(input, begin + left, begin + right);
-    if (nt_VarUInt === null) break _ipg_alt;
-    if (nt_VarUInt._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt._ipg_end);
+    nt_VarUInt_1 = VarUInt(input, begin + left, begin + right);
+    if (nt_VarUInt_1 === null) break _ipg_alt;
+    if (nt_VarUInt_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt_1._ipg_end);
     }
-    nt_VarUInt._ipg_end += left;
-    nt_VarUInt._ipg_start += left;
-    left = nt_VarUInt._ipg_start;
-    right = nt_VarUInt._ipg_end;
+    nt_VarUInt_1._ipg_end += left;
+    nt_VarUInt_1._ipg_start += left;
+    left = nt_VarUInt_1._ipg_start;
+    right = nt_VarUInt_1._ipg_end;
 
-    // for i = 0 to VarUInt.value do TextFormat[TextFormat.END, SubBlock.END + SubBlock.length]
-    nt_TextFormat = { _ipg_end: right, _ipg_start: left };
-    seq_TextFormat_start = 0;
-    loopEnd = nt_VarUInt.value;
-    seq_TextFormat = new Array(loopEnd - seq_TextFormat_start);
-    for (self.i = seq_TextFormat_start; self.i < loopEnd; self.i++) {
-      const left = nt_TextFormat._ipg_end;
-      const right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // for i = 0 to VarUInt@1.value do TextFormat@0[TextFormat@0.END, SubBlock@4.END + SubBlock@4.length]
+    nt_TextFormat_0 = { _ipg_end: right, _ipg_start: left };
+    seq_TextFormat_0_start = 0;
+    loopEnd = nt_VarUInt_1.value;
+    seq_TextFormat_0 = new Array(loopEnd - seq_TextFormat_0_start);
+    for (self.i = seq_TextFormat_0_start; self.i < loopEnd; self.i++) {
+      const left = nt_TextFormat_0._ipg_end;
+      const right = nt_SubBlock_4._ipg_end + nt_SubBlock_4.length;
       if (left < 0 || right < left || right > EOI) break _ipg_alt;
       const tmp = TextFormat(input, begin + left, begin + right);
       if (tmp === null) break _ipg_alt;
@@ -2886,145 +2922,145 @@ function RootTextBlock(input, begin = 0, end = input.length) {
       }
       tmp._ipg_end += left;
       tmp._ipg_start += left;
-      nt_TextFormat._ipg_end = tmp._ipg_end;
-      nt_TextFormat._ipg_start = tmp._ipg_start;
-      seq_TextFormat[self.i - seq_TextFormat_start] = tmp;
+      nt_TextFormat_0._ipg_end = tmp._ipg_end;
+      nt_TextFormat_0._ipg_start = tmp._ipg_start;
+      seq_TextFormat_0[self.i - seq_TextFormat_0_start] = tmp;
     }
     delete self.i;
-    left = nt_TextFormat._ipg_start;
-    right = nt_TextFormat._ipg_end;
+    left = nt_TextFormat_0._ipg_start;
+    right = nt_TextFormat_0._ipg_end;
 
-    // { textFormats = TextFormat.these }
-    self.textFormats = seq_TextFormat.map(({_ipg_start,_ipg_end,...o}) => o);
+    // { textFormats = TextFormat@0.these }
+    self.textFormats = seq_TextFormat_0.map(({_ipg_start,_ipg_end,...o}) => o);
 
-    // ExpectEmpty[TextFormat.END, SubBlock.END + SubBlock.length]
-    left = nt_TextFormat._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@2[TextFormat@0.END, SubBlock@4.END + SubBlock@4.length]
+    left = nt_TextFormat_0._ipg_end;
+    right = nt_SubBlock_4._ipg_end + nt_SubBlock_4.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_2 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_2 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_2._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_2._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_2._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_2._ipg_end += left;
+    nt_ExpectEmpty_2._ipg_start += left;
+    left = nt_ExpectEmpty_2._ipg_start;
+    right = nt_ExpectEmpty_2._ipg_end;
 
-    // ExpectEmpty[ExpectEmpty.END, innerEnd]
-    left = nt_ExpectEmpty._ipg_end;
+    // ExpectEmpty@3[ExpectEmpty@2.END, innerEnd]
+    left = nt_ExpectEmpty_2._ipg_end;
     right = self.innerEnd;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_3 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_3 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_3._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_3._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_3._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_3._ipg_end += left;
+    nt_ExpectEmpty_3._ipg_start += left;
+    left = nt_ExpectEmpty_3._ipg_start;
+    right = nt_ExpectEmpty_3._ipg_end;
 
-    // ExpectEmpty[ExpectEmpty.END, outerEnd]
-    left = nt_ExpectEmpty._ipg_end;
+    // ExpectEmpty@4[ExpectEmpty@3.END, outerEnd]
+    left = nt_ExpectEmpty_3._ipg_end;
     right = self.outerEnd;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_4 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_4 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_4._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_4._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_4._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_4._ipg_end += left;
+    nt_ExpectEmpty_4._ipg_start += left;
+    left = nt_ExpectEmpty_4._ipg_start;
+    right = nt_ExpectEmpty_4._ipg_end;
 
-    // SubBlock(3)[ExpectEmpty.END, EOI]
-    left = nt_ExpectEmpty._ipg_end;
+    // SubBlock@5(3)[ExpectEmpty@4.END, EOI]
+    left = nt_ExpectEmpty_4._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, 3);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_5 = SubBlock(input, begin + left, begin + right, 3);
+    if (nt_SubBlock_5 === null) break _ipg_alt;
+    if (nt_SubBlock_5._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_5._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_5._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_5._ipg_end += left;
+    nt_SubBlock_5._ipg_start += left;
+    left = nt_SubBlock_5._ipg_start;
+    right = nt_SubBlock_5._ipg_end;
 
-    // Float64[SubBlock.END, SubBlock.END + SubBlock.length]
-    left = nt_SubBlock._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // Float64@0[SubBlock@5.END, SubBlock@5.END + SubBlock@5.length]
+    left = nt_SubBlock_5._ipg_end;
+    right = nt_SubBlock_5._ipg_end + nt_SubBlock_5.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Float64 = Float64(input, begin + left, begin + right);
-    if (nt_Float64 === null) break _ipg_alt;
-    if (nt_Float64._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Float64._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Float64._ipg_end);
+    nt_Float64_0 = Float64(input, begin + left, begin + right);
+    if (nt_Float64_0 === null) break _ipg_alt;
+    if (nt_Float64_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Float64_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Float64_0._ipg_end);
     }
-    nt_Float64._ipg_end += left;
-    nt_Float64._ipg_start += left;
-    left = nt_Float64._ipg_start;
-    right = nt_Float64._ipg_end;
+    nt_Float64_0._ipg_end += left;
+    nt_Float64_0._ipg_start += left;
+    left = nt_Float64_0._ipg_start;
+    right = nt_Float64_0._ipg_end;
 
-    // { xPosition = Float64.value }
-    self.xPosition = nt_Float64.value;
+    // { xPosition = Float64@0.value }
+    self.xPosition = nt_Float64_0.value;
 
-    // Float64[Float64.END, SubBlock.END + SubBlock.length]
-    left = nt_Float64._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // Float64@1[Float64@0.END, SubBlock@5.END + SubBlock@5.length]
+    left = nt_Float64_0._ipg_end;
+    right = nt_SubBlock_5._ipg_end + nt_SubBlock_5.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Float64 = Float64(input, begin + left, begin + right);
-    if (nt_Float64 === null) break _ipg_alt;
-    if (nt_Float64._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Float64._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Float64._ipg_end);
+    nt_Float64_1 = Float64(input, begin + left, begin + right);
+    if (nt_Float64_1 === null) break _ipg_alt;
+    if (nt_Float64_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Float64_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Float64_1._ipg_end);
     }
-    nt_Float64._ipg_end += left;
-    nt_Float64._ipg_start += left;
-    left = nt_Float64._ipg_start;
-    right = nt_Float64._ipg_end;
+    nt_Float64_1._ipg_end += left;
+    nt_Float64_1._ipg_start += left;
+    left = nt_Float64_1._ipg_start;
+    right = nt_Float64_1._ipg_end;
 
-    // { yPosition = Float64.value }
-    self.yPosition = nt_Float64.value;
+    // { yPosition = Float64@1.value }
+    self.yPosition = nt_Float64_1.value;
 
-    // ExpectEmpty[ExpectEmpty.END, SubBlock.END + SubBlock.length]
-    left = nt_ExpectEmpty._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@5[ExpectEmpty@4.END, SubBlock@5.END + SubBlock@5.length]
+    left = nt_ExpectEmpty_4._ipg_end;
+    right = nt_SubBlock_5._ipg_end + nt_SubBlock_5.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_5 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_5 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_5._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_5._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_5._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_5._ipg_end += left;
+    nt_ExpectEmpty_5._ipg_start += left;
+    left = nt_ExpectEmpty_5._ipg_start;
+    right = nt_ExpectEmpty_5._ipg_end;
 
-    // TaggedFloat32(4)[ExpectEmpty.END, EOI]
-    left = nt_ExpectEmpty._ipg_end;
+    // TaggedFloat32@0(4)[ExpectEmpty@5.END, EOI]
+    left = nt_ExpectEmpty_5._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedFloat32 = TaggedFloat32(input, begin + left, begin + right, 4);
-    if (nt_TaggedFloat32 === null) break _ipg_alt;
-    if (nt_TaggedFloat32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedFloat32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedFloat32._ipg_end);
+    nt_TaggedFloat32_0 = TaggedFloat32(input, begin + left, begin + right, 4);
+    if (nt_TaggedFloat32_0 === null) break _ipg_alt;
+    if (nt_TaggedFloat32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedFloat32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedFloat32_0._ipg_end);
     }
-    nt_TaggedFloat32._ipg_end += left;
-    nt_TaggedFloat32._ipg_start += left;
-    left = nt_TaggedFloat32._ipg_start;
-    right = nt_TaggedFloat32._ipg_end;
+    nt_TaggedFloat32_0._ipg_end += left;
+    nt_TaggedFloat32_0._ipg_start += left;
+    left = nt_TaggedFloat32_0._ipg_start;
+    right = nt_TaggedFloat32_0._ipg_end;
 
-    // { width = TaggedFloat32.value }
-    self.width = nt_TaggedFloat32.value;
+    // { width = TaggedFloat32@0.value }
+    self.width = nt_TaggedFloat32_0.value;
 
     return self;
   }
@@ -3038,132 +3074,134 @@ function TextItem(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SubBlock;
-    let nt_TaggedId;
-    let nt_TaggedU32;
-    let nt_TextItemValue;
-    let nt_ExpectEmpty;
+    let nt_SubBlock_0;
+    let nt_TaggedId_0;
+    let nt_TaggedId_1;
+    let nt_TaggedId_2;
+    let nt_TaggedU32_0;
+    let nt_TextItemValue_0;
+    let nt_ExpectEmpty_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SubBlock(0)[0, EOI]
+    // SubBlock@0(0)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, 0);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_0 = SubBlock(input, begin + left, begin + right, 0);
+    if (nt_SubBlock_0 === null) break _ipg_alt;
+    if (nt_SubBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_0._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_0._ipg_end += left;
+    nt_SubBlock_0._ipg_start += left;
+    left = nt_SubBlock_0._ipg_start;
+    right = nt_SubBlock_0._ipg_end;
 
-    // TaggedId(2)[SubBlock.END, EOI]
-    left = nt_SubBlock._ipg_end;
+    // TaggedId@0(2)[SubBlock@0.END, EOI]
+    left = nt_SubBlock_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 2);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_0 = TaggedId(input, begin + left, begin + right, 2);
+    if (nt_TaggedId_0 === null) break _ipg_alt;
+    if (nt_TaggedId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_0._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_0._ipg_end += left;
+    nt_TaggedId_0._ipg_start += left;
+    left = nt_TaggedId_0._ipg_start;
+    right = nt_TaggedId_0._ipg_end;
 
-    // { itemId = TaggedId.value }
-    self.itemId = nt_TaggedId.value;
+    // { itemId = TaggedId@0.value }
+    self.itemId = nt_TaggedId_0.value;
 
-    // TaggedId(3)[TaggedId.END, EOI]
-    left = nt_TaggedId._ipg_end;
+    // TaggedId@1(3)[TaggedId@0.END, EOI]
+    left = nt_TaggedId_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 3);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_1 = TaggedId(input, begin + left, begin + right, 3);
+    if (nt_TaggedId_1 === null) break _ipg_alt;
+    if (nt_TaggedId_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_1._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_1._ipg_end += left;
+    nt_TaggedId_1._ipg_start += left;
+    left = nt_TaggedId_1._ipg_start;
+    right = nt_TaggedId_1._ipg_end;
 
-    // { leftId = TaggedId.value }
-    self.leftId = nt_TaggedId.value;
+    // { leftId = TaggedId@1.value }
+    self.leftId = nt_TaggedId_1.value;
 
-    // TaggedId(4)[TaggedId.END, EOI]
-    left = nt_TaggedId._ipg_end;
+    // TaggedId@2(4)[TaggedId@1.END, EOI]
+    left = nt_TaggedId_1._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 4);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_2 = TaggedId(input, begin + left, begin + right, 4);
+    if (nt_TaggedId_2 === null) break _ipg_alt;
+    if (nt_TaggedId_2._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_2._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_2._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_2._ipg_end += left;
+    nt_TaggedId_2._ipg_start += left;
+    left = nt_TaggedId_2._ipg_start;
+    right = nt_TaggedId_2._ipg_end;
 
-    // { rightId = TaggedId.value }
-    self.rightId = nt_TaggedId.value;
+    // { rightId = TaggedId@2.value }
+    self.rightId = nt_TaggedId_2.value;
 
-    // TaggedU32(5)[TaggedId.END, EOI]
-    left = nt_TaggedId._ipg_end;
+    // TaggedU32@0(5)[TaggedId@2.END, EOI]
+    left = nt_TaggedId_2._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedU32 = TaggedU32(input, begin + left, begin + right, 5);
-    if (nt_TaggedU32 === null) break _ipg_alt;
-    if (nt_TaggedU32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32._ipg_end);
+    nt_TaggedU32_0 = TaggedU32(input, begin + left, begin + right, 5);
+    if (nt_TaggedU32_0 === null) break _ipg_alt;
+    if (nt_TaggedU32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32_0._ipg_end);
     }
-    nt_TaggedU32._ipg_end += left;
-    nt_TaggedU32._ipg_start += left;
-    left = nt_TaggedU32._ipg_start;
-    right = nt_TaggedU32._ipg_end;
+    nt_TaggedU32_0._ipg_end += left;
+    nt_TaggedU32_0._ipg_start += left;
+    left = nt_TaggedU32_0._ipg_start;
+    right = nt_TaggedU32_0._ipg_end;
 
-    // { deletedLength = TaggedU32.value }
-    self.deletedLength = nt_TaggedU32.value;
+    // { deletedLength = TaggedU32@0.value }
+    self.deletedLength = nt_TaggedU32_0.value;
 
-    // TextItemValue[TaggedU32.END, SubBlock.END + SubBlock.length]
-    left = nt_TaggedU32._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // TextItemValue@0[TaggedU32@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_TaggedU32_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TextItemValue = TextItemValue(input, begin + left, begin + right);
-    if (nt_TextItemValue === null) break _ipg_alt;
-    if (nt_TextItemValue._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TextItemValue._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TextItemValue._ipg_end);
+    nt_TextItemValue_0 = TextItemValue(input, begin + left, begin + right);
+    if (nt_TextItemValue_0 === null) break _ipg_alt;
+    if (nt_TextItemValue_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TextItemValue_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TextItemValue_0._ipg_end);
     }
-    nt_TextItemValue._ipg_end += left;
-    nt_TextItemValue._ipg_start += left;
-    left = nt_TextItemValue._ipg_start;
-    right = nt_TextItemValue._ipg_end;
+    nt_TextItemValue_0._ipg_end += left;
+    nt_TextItemValue_0._ipg_start += left;
+    left = nt_TextItemValue_0._ipg_start;
+    right = nt_TextItemValue_0._ipg_end;
 
-    // { value = TextItemValue.value }
-    self.value = nt_TextItemValue.value;
+    // { value = TextItemValue@0.value }
+    self.value = nt_TextItemValue_0.value;
 
-    // ExpectEmpty[TextItemValue.END, SubBlock.END + SubBlock.length]
-    left = nt_TextItemValue._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@0[TextItemValue@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_TextItemValue_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_0 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_0 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_0._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_0._ipg_end += left;
+    nt_ExpectEmpty_0._ipg_start += left;
+    left = nt_ExpectEmpty_0._ipg_start;
+    right = nt_ExpectEmpty_0._ipg_end;
 
     return self;
   }
@@ -3177,26 +3215,26 @@ function TextItemValue(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_StringWithFormat;
+    let nt_StringWithFormat_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // StringWithFormat(6)[0, EOI]
+    // StringWithFormat@0(6)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_StringWithFormat = StringWithFormat(input, begin + left, begin + right, 6);
-    if (nt_StringWithFormat === null) break _ipg_alt;
-    if (nt_StringWithFormat._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_StringWithFormat._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_StringWithFormat._ipg_end);
+    nt_StringWithFormat_0 = StringWithFormat(input, begin + left, begin + right, 6);
+    if (nt_StringWithFormat_0 === null) break _ipg_alt;
+    if (nt_StringWithFormat_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_StringWithFormat_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_StringWithFormat_0._ipg_end);
     }
-    nt_StringWithFormat._ipg_end += left;
-    nt_StringWithFormat._ipg_start += left;
-    left = nt_StringWithFormat._ipg_start;
-    right = nt_StringWithFormat._ipg_end;
+    nt_StringWithFormat_0._ipg_end += left;
+    nt_StringWithFormat_0._ipg_start += left;
+    left = nt_StringWithFormat_0._ipg_start;
+    right = nt_StringWithFormat_0._ipg_end;
 
-    // { value = processTextItemValue(StringWithFormat.value) }
-    self.value = processTextItemValue(nt_StringWithFormat.value);
+    // { value = processTextItemValue(StringWithFormat@0.value) }
+    self.value = processTextItemValue(nt_StringWithFormat_0.value);
 
     return self;
   }
@@ -3219,112 +3257,112 @@ function StringWithFormat(input, begin = 0, end = input.length, a_expectedIndex)
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SubBlock;
-    let nt_VarUInt;
-    let nt_Bool;
-    let nt_Bytes;
-    let nt_OptionalU32;
-    let nt_ExpectEmpty;
+    let nt_SubBlock_0;
+    let nt_VarUInt_0;
+    let nt_Bool_0;
+    let nt_Bytes_0;
+    let nt_OptionalU32_0;
+    let nt_ExpectEmpty_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SubBlock(expectedIndex)[0, EOI]
+    // SubBlock@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_0 = SubBlock(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_SubBlock_0 === null) break _ipg_alt;
+    if (nt_SubBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_0._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_0._ipg_end += left;
+    nt_SubBlock_0._ipg_start += left;
+    left = nt_SubBlock_0._ipg_start;
+    right = nt_SubBlock_0._ipg_end;
 
-    // VarUInt[SubBlock.END, SubBlock.END + SubBlock.length]
-    left = nt_SubBlock._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // VarUInt@0[SubBlock@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_SubBlock_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_VarUInt = VarUInt(input, begin + left, begin + right);
-    if (nt_VarUInt === null) break _ipg_alt;
-    if (nt_VarUInt._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt._ipg_end);
+    nt_VarUInt_0 = VarUInt(input, begin + left, begin + right);
+    if (nt_VarUInt_0 === null) break _ipg_alt;
+    if (nt_VarUInt_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt_0._ipg_end);
     }
-    nt_VarUInt._ipg_end += left;
-    nt_VarUInt._ipg_start += left;
-    left = nt_VarUInt._ipg_start;
-    right = nt_VarUInt._ipg_end;
+    nt_VarUInt_0._ipg_end += left;
+    nt_VarUInt_0._ipg_start += left;
+    left = nt_VarUInt_0._ipg_start;
+    right = nt_VarUInt_0._ipg_end;
 
-    // Bool[VarUInt.END, SubBlock.END + SubBlock.length]
-    left = nt_VarUInt._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // Bool@0[VarUInt@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_VarUInt_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Bool = Bool(input, begin + left, begin + right);
-    if (nt_Bool === null) break _ipg_alt;
-    if (nt_Bool._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Bool._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Bool._ipg_end);
+    nt_Bool_0 = Bool(input, begin + left, begin + right);
+    if (nt_Bool_0 === null) break _ipg_alt;
+    if (nt_Bool_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Bool_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Bool_0._ipg_end);
     }
-    nt_Bool._ipg_end += left;
-    nt_Bool._ipg_start += left;
-    left = nt_Bool._ipg_start;
-    right = nt_Bool._ipg_end;
+    nt_Bool_0._ipg_end += left;
+    nt_Bool_0._ipg_start += left;
+    left = nt_Bool_0._ipg_start;
+    right = nt_Bool_0._ipg_end;
 
-    // ?[ check(Bool.value, "StringWithFormat flag unset") ]
-    if (!check(nt_Bool.value, "StringWithFormat flag unset")) break _ipg_alt;
+    // ?[ check(Bool@0.value, "StringWithFormat flag unset") ]
+    if (!check(nt_Bool_0.value, "StringWithFormat flag unset")) break _ipg_alt;
 
-    // ?[ check(Bool.END + VarUInt.value <= SubBlock.END + SubBlock.length, "StringWithFormat: Overfull block") ]
-    if (!check(nt_Bool._ipg_end + nt_VarUInt.value <= nt_SubBlock._ipg_end + nt_SubBlock.length, "StringWithFormat: Overfull block")) break _ipg_alt;
+    // ?[ check(Bool@0.END + VarUInt@0.value <= SubBlock@0.END + SubBlock@0.length, "StringWithFormat: Overfull block") ]
+    if (!check(nt_Bool_0._ipg_end + nt_VarUInt_0.value <= nt_SubBlock_0._ipg_end + nt_SubBlock_0.length, "StringWithFormat: Overfull block")) break _ipg_alt;
 
-    // Bytes[Bool.END, Bool.END + VarUInt.value]
-    left = nt_Bool._ipg_end;
-    right = nt_Bool._ipg_end + nt_VarUInt.value;
+    // Bytes@0[Bool@0.END, Bool@0.END + VarUInt@0.value]
+    left = nt_Bool_0._ipg_end;
+    right = nt_Bool_0._ipg_end + nt_VarUInt_0.value;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Bytes = Bytes(input, begin + left, begin + right);
-    if (nt_Bytes === null) break _ipg_alt;
-    if (nt_Bytes._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Bytes._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Bytes._ipg_end);
+    nt_Bytes_0 = Bytes(input, begin + left, begin + right);
+    if (nt_Bytes_0 === null) break _ipg_alt;
+    if (nt_Bytes_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Bytes_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Bytes_0._ipg_end);
     }
-    nt_Bytes._ipg_end += left;
-    nt_Bytes._ipg_start += left;
-    left = nt_Bytes._ipg_start;
-    right = nt_Bytes._ipg_end;
+    nt_Bytes_0._ipg_end += left;
+    nt_Bytes_0._ipg_start += left;
+    left = nt_Bytes_0._ipg_start;
+    right = nt_Bytes_0._ipg_end;
 
-    // OptionalU32(2)[Bytes.END, SubBlock.END + SubBlock.length]
-    left = nt_Bytes._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // OptionalU32@0(2)[Bytes@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_Bytes_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_OptionalU32 = OptionalU32(input, begin + left, begin + right, 2);
-    if (nt_OptionalU32 === null) break _ipg_alt;
-    if (nt_OptionalU32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalU32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalU32._ipg_end);
+    nt_OptionalU32_0 = OptionalU32(input, begin + left, begin + right, 2);
+    if (nt_OptionalU32_0 === null) break _ipg_alt;
+    if (nt_OptionalU32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_OptionalU32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_OptionalU32_0._ipg_end);
     }
-    nt_OptionalU32._ipg_end += left;
-    nt_OptionalU32._ipg_start += left;
-    left = nt_OptionalU32._ipg_start;
-    right = nt_OptionalU32._ipg_end;
+    nt_OptionalU32_0._ipg_end += left;
+    nt_OptionalU32_0._ipg_start += left;
+    left = nt_OptionalU32_0._ipg_start;
+    right = nt_OptionalU32_0._ipg_end;
 
-    // { value = makeStringWithFormat(decodeAscii(Bytes.value), OptionalU32.value) }
-    self.value = makeStringWithFormat(decodeAscii(nt_Bytes.value), nt_OptionalU32.value);
+    // { value = makeStringWithFormat(decodeAscii(Bytes@0.value), OptionalU32@0.value) }
+    self.value = makeStringWithFormat(decodeAscii(nt_Bytes_0.value), nt_OptionalU32_0.value);
 
-    // ExpectEmpty[OptionalU32.END, SubBlock.END + SubBlock.length]
-    left = nt_OptionalU32._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@0[OptionalU32@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_OptionalU32_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_0 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_0 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_0._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_0._ipg_end += left;
+    nt_ExpectEmpty_0._ipg_start += left;
+    left = nt_ExpectEmpty_0._ipg_start;
+    right = nt_ExpectEmpty_0._ipg_end;
 
     return self;
   }
@@ -3338,94 +3376,94 @@ function TextFormat(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_CrdtId;
-    let nt_TaggedId;
-    let nt_SubBlock;
-    let nt_ExpectEmpty;
+    let nt_CrdtId_0;
+    let nt_TaggedId_0;
+    let nt_SubBlock_0;
+    let nt_ExpectEmpty_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // CrdtId[0, EOI]
+    // CrdtId@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_CrdtId = CrdtId(input, begin + left, begin + right);
-    if (nt_CrdtId === null) break _ipg_alt;
-    if (nt_CrdtId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_CrdtId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_CrdtId._ipg_end);
+    nt_CrdtId_0 = CrdtId(input, begin + left, begin + right);
+    if (nt_CrdtId_0 === null) break _ipg_alt;
+    if (nt_CrdtId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_CrdtId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_CrdtId_0._ipg_end);
     }
-    nt_CrdtId._ipg_end += left;
-    nt_CrdtId._ipg_start += left;
-    left = nt_CrdtId._ipg_start;
-    right = nt_CrdtId._ipg_end;
+    nt_CrdtId_0._ipg_end += left;
+    nt_CrdtId_0._ipg_start += left;
+    left = nt_CrdtId_0._ipg_start;
+    right = nt_CrdtId_0._ipg_end;
 
-    // { charId = CrdtId.this }
-    self.charId = (({_ipg_start,_ipg_end,...o}) => o)(nt_CrdtId);
+    // { charId = CrdtId@0.this }
+    self.charId = (({_ipg_start,_ipg_end,...o}) => o)(nt_CrdtId_0);
 
-    // TaggedId(1)[CrdtId.END, EOI]
-    left = nt_CrdtId._ipg_end;
+    // TaggedId@0(1)[CrdtId@0.END, EOI]
+    left = nt_CrdtId_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 1);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_0 = TaggedId(input, begin + left, begin + right, 1);
+    if (nt_TaggedId_0 === null) break _ipg_alt;
+    if (nt_TaggedId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_0._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_0._ipg_end += left;
+    nt_TaggedId_0._ipg_start += left;
+    left = nt_TaggedId_0._ipg_start;
+    right = nt_TaggedId_0._ipg_end;
 
-    // { timestamp = TaggedId.value }
-    self.timestamp = nt_TaggedId.value;
+    // { timestamp = TaggedId@0.value }
+    self.timestamp = nt_TaggedId_0.value;
 
-    // SubBlock(2)[TaggedId.END, EOI]
-    left = nt_TaggedId._ipg_end;
+    // SubBlock@0(2)[TaggedId@0.END, EOI]
+    left = nt_TaggedId_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, 2);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_0 = SubBlock(input, begin + left, begin + right, 2);
+    if (nt_SubBlock_0 === null) break _ipg_alt;
+    if (nt_SubBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_0._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_0._ipg_end += left;
+    nt_SubBlock_0._ipg_start += left;
+    left = nt_SubBlock_0._ipg_start;
+    right = nt_SubBlock_0._ipg_end;
 
-    // "\x11"[SubBlock.END, SubBlock.END + 1]
-    left = nt_SubBlock._ipg_end;
-    right = nt_SubBlock._ipg_end + 1;
+    // "\x11"[SubBlock@0.END, SubBlock@0.END + 1]
+    left = nt_SubBlock_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + 1;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x11")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
 
-    // { formatCode = .[SubBlock.END + 1] }
-    left = nt_SubBlock._ipg_end + 1;
+    // { formatCode = .[SubBlock@0.END + 1] }
+    left = nt_SubBlock_0._ipg_end + 1;
     right = left + 1;
     if (left < 0 || right > EOI) break _ipg_alt;
     self.formatCode = input[begin + left];
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
 
-    // ExpectEmpty[SubBlock.END + 2, SubBlock.END + SubBlock.length]
-    left = nt_SubBlock._ipg_end + 2;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@0[SubBlock@0.END + 2, SubBlock@0.END + SubBlock@0.length]
+    left = nt_SubBlock_0._ipg_end + 2;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_0 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_0 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_0._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_0._ipg_end += left;
+    nt_ExpectEmpty_0._ipg_start += left;
+    left = nt_ExpectEmpty_0._ipg_start;
+    right = nt_ExpectEmpty_0._ipg_end;
 
     // { value = lwwU8(timestamp, formatCode < 0 || formatCode > 7 ? 1 : formatCode) }
     self.value = lwwU8(self.timestamp, self.formatCode < 0 || self.formatCode > 7 ? 1 : self.formatCode);
@@ -3466,26 +3504,26 @@ function OptionalLWWBool(input, begin = 0, end = input.length, a_expectedIndex) 
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_LWWBool;
+    let nt_LWWBool_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // LWWBool(expectedIndex)[0, EOI]
+    // LWWBool@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_LWWBool = LWWBool(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_LWWBool === null) break _ipg_alt;
-    if (nt_LWWBool._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_LWWBool._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_LWWBool._ipg_end);
+    nt_LWWBool_0 = LWWBool(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_LWWBool_0 === null) break _ipg_alt;
+    if (nt_LWWBool_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_LWWBool_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_LWWBool_0._ipg_end);
     }
-    nt_LWWBool._ipg_end += left;
-    nt_LWWBool._ipg_start += left;
-    left = nt_LWWBool._ipg_start;
-    right = nt_LWWBool._ipg_end;
+    nt_LWWBool_0._ipg_end += left;
+    nt_LWWBool_0._ipg_start += left;
+    left = nt_LWWBool_0._ipg_start;
+    right = nt_LWWBool_0._ipg_end;
 
-    // { value = LWWBool.value }
-    self.value = nt_LWWBool.value;
+    // { value = LWWBool@0.value }
+    self.value = nt_LWWBool_0.value;
 
     return self;
   }
@@ -3508,74 +3546,74 @@ function LWWBool(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SubBlock;
-    let nt_TaggedId;
-    let nt_TaggedBool;
-    let nt_ExpectEmpty;
+    let nt_SubBlock_0;
+    let nt_TaggedId_0;
+    let nt_TaggedBool_0;
+    let nt_ExpectEmpty_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SubBlock(expectedIndex)[0, EOI]
+    // SubBlock@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_0 = SubBlock(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_SubBlock_0 === null) break _ipg_alt;
+    if (nt_SubBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_0._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_0._ipg_end += left;
+    nt_SubBlock_0._ipg_start += left;
+    left = nt_SubBlock_0._ipg_start;
+    right = nt_SubBlock_0._ipg_end;
 
-    // TaggedId(1)[SubBlock.END, SubBlock.END + SubBlock.length]
-    left = nt_SubBlock._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // TaggedId@0(1)[SubBlock@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_SubBlock_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 1);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_0 = TaggedId(input, begin + left, begin + right, 1);
+    if (nt_TaggedId_0 === null) break _ipg_alt;
+    if (nt_TaggedId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_0._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_0._ipg_end += left;
+    nt_TaggedId_0._ipg_start += left;
+    left = nt_TaggedId_0._ipg_start;
+    right = nt_TaggedId_0._ipg_end;
 
-    // TaggedBool(2)[TaggedId.END, SubBlock.END + SubBlock.length]
-    left = nt_TaggedId._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // TaggedBool@0(2)[TaggedId@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_TaggedId_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedBool = TaggedBool(input, begin + left, begin + right, 2);
-    if (nt_TaggedBool === null) break _ipg_alt;
-    if (nt_TaggedBool._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedBool._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedBool._ipg_end);
+    nt_TaggedBool_0 = TaggedBool(input, begin + left, begin + right, 2);
+    if (nt_TaggedBool_0 === null) break _ipg_alt;
+    if (nt_TaggedBool_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedBool_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedBool_0._ipg_end);
     }
-    nt_TaggedBool._ipg_end += left;
-    nt_TaggedBool._ipg_start += left;
-    left = nt_TaggedBool._ipg_start;
-    right = nt_TaggedBool._ipg_end;
+    nt_TaggedBool_0._ipg_end += left;
+    nt_TaggedBool_0._ipg_start += left;
+    left = nt_TaggedBool_0._ipg_start;
+    right = nt_TaggedBool_0._ipg_end;
 
-    // { value = lwwBool(TaggedId.value, TaggedBool.value) }
-    self.value = lwwBool(nt_TaggedId.value, nt_TaggedBool.value);
+    // { value = lwwBool(TaggedId@0.value, TaggedBool@0.value) }
+    self.value = lwwBool(nt_TaggedId_0.value, nt_TaggedBool_0.value);
 
-    // ExpectEmpty[TaggedBool.END, SubBlock.END + SubBlock.length]
-    left = nt_TaggedBool._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@0[TaggedBool@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_TaggedBool_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_0 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_0 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_0._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_0._ipg_end += left;
+    nt_ExpectEmpty_0._ipg_start += left;
+    left = nt_ExpectEmpty_0._ipg_start;
+    right = nt_ExpectEmpty_0._ipg_end;
 
     return self;
   }
@@ -3589,26 +3627,26 @@ function OptionalLWWU8(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_LWWU8;
+    let nt_LWWU8_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // LWWU8(expectedIndex)[0, EOI]
+    // LWWU8@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_LWWU8 = LWWU8(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_LWWU8 === null) break _ipg_alt;
-    if (nt_LWWU8._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_LWWU8._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_LWWU8._ipg_end);
+    nt_LWWU8_0 = LWWU8(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_LWWU8_0 === null) break _ipg_alt;
+    if (nt_LWWU8_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_LWWU8_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_LWWU8_0._ipg_end);
     }
-    nt_LWWU8._ipg_end += left;
-    nt_LWWU8._ipg_start += left;
-    left = nt_LWWU8._ipg_start;
-    right = nt_LWWU8._ipg_end;
+    nt_LWWU8_0._ipg_end += left;
+    nt_LWWU8_0._ipg_start += left;
+    left = nt_LWWU8_0._ipg_start;
+    right = nt_LWWU8_0._ipg_end;
 
-    // { value = LWWU8.value }
-    self.value = nt_LWWU8.value;
+    // { value = LWWU8@0.value }
+    self.value = nt_LWWU8_0.value;
 
     return self;
   }
@@ -3631,74 +3669,74 @@ function LWWU8(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SubBlock;
-    let nt_TaggedId;
-    let nt_TaggedU8;
-    let nt_ExpectEmpty;
+    let nt_SubBlock_0;
+    let nt_TaggedId_0;
+    let nt_TaggedU8_0;
+    let nt_ExpectEmpty_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SubBlock(expectedIndex)[0, EOI]
+    // SubBlock@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_0 = SubBlock(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_SubBlock_0 === null) break _ipg_alt;
+    if (nt_SubBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_0._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_0._ipg_end += left;
+    nt_SubBlock_0._ipg_start += left;
+    left = nt_SubBlock_0._ipg_start;
+    right = nt_SubBlock_0._ipg_end;
 
-    // TaggedId(1)[SubBlock.END, SubBlock.END + SubBlock.length]
-    left = nt_SubBlock._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // TaggedId@0(1)[SubBlock@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_SubBlock_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 1);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_0 = TaggedId(input, begin + left, begin + right, 1);
+    if (nt_TaggedId_0 === null) break _ipg_alt;
+    if (nt_TaggedId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_0._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_0._ipg_end += left;
+    nt_TaggedId_0._ipg_start += left;
+    left = nt_TaggedId_0._ipg_start;
+    right = nt_TaggedId_0._ipg_end;
 
-    // TaggedU8(2)[TaggedId.END, SubBlock.END + SubBlock.length]
-    left = nt_TaggedId._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // TaggedU8@0(2)[TaggedId@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_TaggedId_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedU8 = TaggedU8(input, begin + left, begin + right, 2);
-    if (nt_TaggedU8 === null) break _ipg_alt;
-    if (nt_TaggedU8._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU8._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU8._ipg_end);
+    nt_TaggedU8_0 = TaggedU8(input, begin + left, begin + right, 2);
+    if (nt_TaggedU8_0 === null) break _ipg_alt;
+    if (nt_TaggedU8_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU8_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU8_0._ipg_end);
     }
-    nt_TaggedU8._ipg_end += left;
-    nt_TaggedU8._ipg_start += left;
-    left = nt_TaggedU8._ipg_start;
-    right = nt_TaggedU8._ipg_end;
+    nt_TaggedU8_0._ipg_end += left;
+    nt_TaggedU8_0._ipg_start += left;
+    left = nt_TaggedU8_0._ipg_start;
+    right = nt_TaggedU8_0._ipg_end;
 
-    // { value = lwwU8(TaggedId.value, TaggedU8.value) }
-    self.value = lwwU8(nt_TaggedId.value, nt_TaggedU8.value);
+    // { value = lwwU8(TaggedId@0.value, TaggedU8@0.value) }
+    self.value = lwwU8(nt_TaggedId_0.value, nt_TaggedU8_0.value);
 
-    // ExpectEmpty[TaggedU8.END, SubBlock.END + SubBlock.length]
-    left = nt_TaggedU8._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@0[TaggedU8@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_TaggedU8_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_0 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_0 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_0._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_0._ipg_end += left;
+    nt_ExpectEmpty_0._ipg_start += left;
+    left = nt_ExpectEmpty_0._ipg_start;
+    right = nt_ExpectEmpty_0._ipg_end;
 
     return self;
   }
@@ -3712,26 +3750,26 @@ function OptionalLWWFloat32(input, begin = 0, end = input.length, a_expectedInde
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_LWWFloat32;
+    let nt_LWWFloat32_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // LWWFloat32(expectedIndex)[0, EOI]
+    // LWWFloat32@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_LWWFloat32 = LWWFloat32(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_LWWFloat32 === null) break _ipg_alt;
-    if (nt_LWWFloat32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_LWWFloat32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_LWWFloat32._ipg_end);
+    nt_LWWFloat32_0 = LWWFloat32(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_LWWFloat32_0 === null) break _ipg_alt;
+    if (nt_LWWFloat32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_LWWFloat32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_LWWFloat32_0._ipg_end);
     }
-    nt_LWWFloat32._ipg_end += left;
-    nt_LWWFloat32._ipg_start += left;
-    left = nt_LWWFloat32._ipg_start;
-    right = nt_LWWFloat32._ipg_end;
+    nt_LWWFloat32_0._ipg_end += left;
+    nt_LWWFloat32_0._ipg_start += left;
+    left = nt_LWWFloat32_0._ipg_start;
+    right = nt_LWWFloat32_0._ipg_end;
 
-    // { value = LWWFloat32.value }
-    self.value = nt_LWWFloat32.value;
+    // { value = LWWFloat32@0.value }
+    self.value = nt_LWWFloat32_0.value;
 
     return self;
   }
@@ -3754,74 +3792,74 @@ function LWWFloat32(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SubBlock;
-    let nt_TaggedId;
-    let nt_TaggedFloat32;
-    let nt_ExpectEmpty;
+    let nt_SubBlock_0;
+    let nt_TaggedId_0;
+    let nt_TaggedFloat32_0;
+    let nt_ExpectEmpty_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SubBlock(expectedIndex)[0, EOI]
+    // SubBlock@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_0 = SubBlock(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_SubBlock_0 === null) break _ipg_alt;
+    if (nt_SubBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_0._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_0._ipg_end += left;
+    nt_SubBlock_0._ipg_start += left;
+    left = nt_SubBlock_0._ipg_start;
+    right = nt_SubBlock_0._ipg_end;
 
-    // TaggedId(1)[SubBlock.END, SubBlock.END + SubBlock.length]
-    left = nt_SubBlock._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // TaggedId@0(1)[SubBlock@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_SubBlock_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 1);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_0 = TaggedId(input, begin + left, begin + right, 1);
+    if (nt_TaggedId_0 === null) break _ipg_alt;
+    if (nt_TaggedId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_0._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_0._ipg_end += left;
+    nt_TaggedId_0._ipg_start += left;
+    left = nt_TaggedId_0._ipg_start;
+    right = nt_TaggedId_0._ipg_end;
 
-    // TaggedFloat32(2)[TaggedId.END, SubBlock.END + SubBlock.length]
-    left = nt_TaggedId._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // TaggedFloat32@0(2)[TaggedId@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_TaggedId_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedFloat32 = TaggedFloat32(input, begin + left, begin + right, 2);
-    if (nt_TaggedFloat32 === null) break _ipg_alt;
-    if (nt_TaggedFloat32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedFloat32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedFloat32._ipg_end);
+    nt_TaggedFloat32_0 = TaggedFloat32(input, begin + left, begin + right, 2);
+    if (nt_TaggedFloat32_0 === null) break _ipg_alt;
+    if (nt_TaggedFloat32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedFloat32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedFloat32_0._ipg_end);
     }
-    nt_TaggedFloat32._ipg_end += left;
-    nt_TaggedFloat32._ipg_start += left;
-    left = nt_TaggedFloat32._ipg_start;
-    right = nt_TaggedFloat32._ipg_end;
+    nt_TaggedFloat32_0._ipg_end += left;
+    nt_TaggedFloat32_0._ipg_start += left;
+    left = nt_TaggedFloat32_0._ipg_start;
+    right = nt_TaggedFloat32_0._ipg_end;
 
-    // { value = lwwFloat32(TaggedId.value, TaggedFloat32.value) }
-    self.value = lwwFloat32(nt_TaggedId.value, nt_TaggedFloat32.value);
+    // { value = lwwFloat32(TaggedId@0.value, TaggedFloat32@0.value) }
+    self.value = lwwFloat32(nt_TaggedId_0.value, nt_TaggedFloat32_0.value);
 
-    // ExpectEmpty[TaggedFloat32.END, SubBlock.END + SubBlock.length]
-    left = nt_TaggedFloat32._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@0[TaggedFloat32@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_TaggedFloat32_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_0 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_0 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_0._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_0._ipg_end += left;
+    nt_ExpectEmpty_0._ipg_start += left;
+    left = nt_ExpectEmpty_0._ipg_start;
+    right = nt_ExpectEmpty_0._ipg_end;
 
     return self;
   }
@@ -3835,26 +3873,26 @@ function OptionalLWWID(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_LWWID;
+    let nt_LWWID_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // LWWID(expectedIndex)[0, EOI]
+    // LWWID@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_LWWID = LWWID(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_LWWID === null) break _ipg_alt;
-    if (nt_LWWID._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_LWWID._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_LWWID._ipg_end);
+    nt_LWWID_0 = LWWID(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_LWWID_0 === null) break _ipg_alt;
+    if (nt_LWWID_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_LWWID_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_LWWID_0._ipg_end);
     }
-    nt_LWWID._ipg_end += left;
-    nt_LWWID._ipg_start += left;
-    left = nt_LWWID._ipg_start;
-    right = nt_LWWID._ipg_end;
+    nt_LWWID_0._ipg_end += left;
+    nt_LWWID_0._ipg_start += left;
+    left = nt_LWWID_0._ipg_start;
+    right = nt_LWWID_0._ipg_end;
 
-    // { value = LWWID.value }
-    self.value = nt_LWWID.value;
+    // { value = LWWID@0.value }
+    self.value = nt_LWWID_0.value;
 
     return self;
   }
@@ -3877,76 +3915,77 @@ function LWWID(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SubBlock;
-    let nt_TaggedId;
-    let nt_ExpectEmpty;
+    let nt_SubBlock_0;
+    let nt_TaggedId_0;
+    let nt_TaggedId_1;
+    let nt_ExpectEmpty_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SubBlock(expectedIndex)[0, EOI]
+    // SubBlock@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_0 = SubBlock(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_SubBlock_0 === null) break _ipg_alt;
+    if (nt_SubBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_0._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_0._ipg_end += left;
+    nt_SubBlock_0._ipg_start += left;
+    left = nt_SubBlock_0._ipg_start;
+    right = nt_SubBlock_0._ipg_end;
 
-    // TaggedId(1)[SubBlock.END, SubBlock.END + SubBlock.length]
-    left = nt_SubBlock._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // TaggedId@0(1)[SubBlock@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_SubBlock_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 1);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_0 = TaggedId(input, begin + left, begin + right, 1);
+    if (nt_TaggedId_0 === null) break _ipg_alt;
+    if (nt_TaggedId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_0._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_0._ipg_end += left;
+    nt_TaggedId_0._ipg_start += left;
+    left = nt_TaggedId_0._ipg_start;
+    right = nt_TaggedId_0._ipg_end;
 
-    // { timestamp = TaggedId.value }
-    self.timestamp = nt_TaggedId.value;
+    // { timestamp = TaggedId@0.value }
+    self.timestamp = nt_TaggedId_0.value;
 
-    // TaggedId(2)[TaggedId.END, SubBlock.END + SubBlock.length]
-    left = nt_TaggedId._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // TaggedId@1(2)[TaggedId@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_TaggedId_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 2);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_1 = TaggedId(input, begin + left, begin + right, 2);
+    if (nt_TaggedId_1 === null) break _ipg_alt;
+    if (nt_TaggedId_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_1._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_1._ipg_end += left;
+    nt_TaggedId_1._ipg_start += left;
+    left = nt_TaggedId_1._ipg_start;
+    right = nt_TaggedId_1._ipg_end;
 
-    // { value = lwwCrdtId(timestamp, TaggedId.value) }
-    self.value = lwwCrdtId(self.timestamp, nt_TaggedId.value);
+    // { value = lwwCrdtId(timestamp, TaggedId@1.value) }
+    self.value = lwwCrdtId(self.timestamp, nt_TaggedId_1.value);
 
-    // ExpectEmpty[TaggedId.END, SubBlock.END + SubBlock.length]
-    left = nt_TaggedId._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@0[TaggedId@1.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_TaggedId_1._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_0 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_0 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_0._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_0._ipg_end += left;
+    nt_ExpectEmpty_0._ipg_start += left;
+    left = nt_ExpectEmpty_0._ipg_start;
+    right = nt_ExpectEmpty_0._ipg_end;
 
     return self;
   }
@@ -3960,74 +3999,74 @@ function LWWString(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SubBlock;
-    let nt_TaggedId;
-    let nt_String;
-    let nt_ExpectEmpty;
+    let nt_SubBlock_0;
+    let nt_TaggedId_0;
+    let nt_String_0;
+    let nt_ExpectEmpty_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SubBlock(expectedIndex)[0, EOI]
+    // SubBlock@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_0 = SubBlock(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_SubBlock_0 === null) break _ipg_alt;
+    if (nt_SubBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_0._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_0._ipg_end += left;
+    nt_SubBlock_0._ipg_start += left;
+    left = nt_SubBlock_0._ipg_start;
+    right = nt_SubBlock_0._ipg_end;
 
-    // TaggedId(1)[SubBlock.END, SubBlock.END + SubBlock.length]
-    left = nt_SubBlock._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // TaggedId@0(1)[SubBlock@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_SubBlock_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, 1);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_0 = TaggedId(input, begin + left, begin + right, 1);
+    if (nt_TaggedId_0 === null) break _ipg_alt;
+    if (nt_TaggedId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_0._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_0._ipg_end += left;
+    nt_TaggedId_0._ipg_start += left;
+    left = nt_TaggedId_0._ipg_start;
+    right = nt_TaggedId_0._ipg_end;
 
-    // String(2)[TaggedId.END, SubBlock.END + SubBlock.length]
-    left = nt_TaggedId._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // String@0(2)[TaggedId@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_TaggedId_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_String = String(input, begin + left, begin + right, 2);
-    if (nt_String === null) break _ipg_alt;
-    if (nt_String._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_String._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_String._ipg_end);
+    nt_String_0 = String(input, begin + left, begin + right, 2);
+    if (nt_String_0 === null) break _ipg_alt;
+    if (nt_String_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_String_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_String_0._ipg_end);
     }
-    nt_String._ipg_end += left;
-    nt_String._ipg_start += left;
-    left = nt_String._ipg_start;
-    right = nt_String._ipg_end;
+    nt_String_0._ipg_end += left;
+    nt_String_0._ipg_start += left;
+    left = nt_String_0._ipg_start;
+    right = nt_String_0._ipg_end;
 
-    // { value = lwwString(TaggedId.value, String.value) }
-    self.value = lwwString(nt_TaggedId.value, nt_String.value);
+    // { value = lwwString(TaggedId@0.value, String@0.value) }
+    self.value = lwwString(nt_TaggedId_0.value, nt_String_0.value);
 
-    // ExpectEmpty[String.END, SubBlock.END + SubBlock.length]
-    left = nt_String._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@0[String@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_String_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_0 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_0 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_0._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_0._ipg_end += left;
+    nt_ExpectEmpty_0._ipg_start += left;
+    left = nt_ExpectEmpty_0._ipg_start;
+    right = nt_ExpectEmpty_0._ipg_end;
 
     return self;
   }
@@ -4041,96 +4080,96 @@ function String(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SubBlock;
-    let nt_VarUInt;
-    let nt_Bool;
-    let nt_Bytes;
-    let nt_ExpectEmpty;
+    let nt_SubBlock_0;
+    let nt_VarUInt_0;
+    let nt_Bool_0;
+    let nt_Bytes_0;
+    let nt_ExpectEmpty_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SubBlock(expectedIndex)[0, EOI]
+    // SubBlock@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_0 = SubBlock(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_SubBlock_0 === null) break _ipg_alt;
+    if (nt_SubBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_0._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_0._ipg_end += left;
+    nt_SubBlock_0._ipg_start += left;
+    left = nt_SubBlock_0._ipg_start;
+    right = nt_SubBlock_0._ipg_end;
 
-    // VarUInt[SubBlock.END, SubBlock.END + SubBlock.length]
-    left = nt_SubBlock._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // VarUInt@0[SubBlock@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_SubBlock_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_VarUInt = VarUInt(input, begin + left, begin + right);
-    if (nt_VarUInt === null) break _ipg_alt;
-    if (nt_VarUInt._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt._ipg_end);
+    nt_VarUInt_0 = VarUInt(input, begin + left, begin + right);
+    if (nt_VarUInt_0 === null) break _ipg_alt;
+    if (nt_VarUInt_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt_0._ipg_end);
     }
-    nt_VarUInt._ipg_end += left;
-    nt_VarUInt._ipg_start += left;
-    left = nt_VarUInt._ipg_start;
-    right = nt_VarUInt._ipg_end;
+    nt_VarUInt_0._ipg_end += left;
+    nt_VarUInt_0._ipg_start += left;
+    left = nt_VarUInt_0._ipg_start;
+    right = nt_VarUInt_0._ipg_end;
 
-    // Bool[VarUInt.END, SubBlock.END + SubBlock.length]
-    left = nt_VarUInt._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // Bool@0[VarUInt@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_VarUInt_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Bool = Bool(input, begin + left, begin + right);
-    if (nt_Bool === null) break _ipg_alt;
-    if (nt_Bool._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Bool._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Bool._ipg_end);
+    nt_Bool_0 = Bool(input, begin + left, begin + right);
+    if (nt_Bool_0 === null) break _ipg_alt;
+    if (nt_Bool_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Bool_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Bool_0._ipg_end);
     }
-    nt_Bool._ipg_end += left;
-    nt_Bool._ipg_start += left;
-    left = nt_Bool._ipg_start;
-    right = nt_Bool._ipg_end;
+    nt_Bool_0._ipg_end += left;
+    nt_Bool_0._ipg_start += left;
+    left = nt_Bool_0._ipg_start;
+    right = nt_Bool_0._ipg_end;
 
-    // ?[ check(Bool.value, "String flag unset") ]
-    if (!check(nt_Bool.value, "String flag unset")) break _ipg_alt;
+    // ?[ check(Bool@0.value, "String flag unset") ]
+    if (!check(nt_Bool_0.value, "String flag unset")) break _ipg_alt;
 
-    // ?[ check(Bool.END + VarUInt.value <= SubBlock.END + SubBlock.length, "String: Overfull block") ]
-    if (!check(nt_Bool._ipg_end + nt_VarUInt.value <= nt_SubBlock._ipg_end + nt_SubBlock.length, "String: Overfull block")) break _ipg_alt;
+    // ?[ check(Bool@0.END + VarUInt@0.value <= SubBlock@0.END + SubBlock@0.length, "String: Overfull block") ]
+    if (!check(nt_Bool_0._ipg_end + nt_VarUInt_0.value <= nt_SubBlock_0._ipg_end + nt_SubBlock_0.length, "String: Overfull block")) break _ipg_alt;
 
-    // Bytes[Bool.END, Bool.END + VarUInt.value]
-    left = nt_Bool._ipg_end;
-    right = nt_Bool._ipg_end + nt_VarUInt.value;
+    // Bytes@0[Bool@0.END, Bool@0.END + VarUInt@0.value]
+    left = nt_Bool_0._ipg_end;
+    right = nt_Bool_0._ipg_end + nt_VarUInt_0.value;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Bytes = Bytes(input, begin + left, begin + right);
-    if (nt_Bytes === null) break _ipg_alt;
-    if (nt_Bytes._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Bytes._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Bytes._ipg_end);
+    nt_Bytes_0 = Bytes(input, begin + left, begin + right);
+    if (nt_Bytes_0 === null) break _ipg_alt;
+    if (nt_Bytes_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Bytes_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Bytes_0._ipg_end);
     }
-    nt_Bytes._ipg_end += left;
-    nt_Bytes._ipg_start += left;
-    left = nt_Bytes._ipg_start;
-    right = nt_Bytes._ipg_end;
+    nt_Bytes_0._ipg_end += left;
+    nt_Bytes_0._ipg_start += left;
+    left = nt_Bytes_0._ipg_start;
+    right = nt_Bytes_0._ipg_end;
 
-    // { value = decodeAscii(Bytes.value) }
-    self.value = decodeAscii(nt_Bytes.value);
+    // { value = decodeAscii(Bytes@0.value) }
+    self.value = decodeAscii(nt_Bytes_0.value);
 
-    // ExpectEmpty[Bytes.END, SubBlock.END + SubBlock.length]
-    left = nt_Bytes._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@0[Bytes@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_Bytes_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_0 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_0 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_0._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_0._ipg_end += left;
+    nt_ExpectEmpty_0._ipg_start += left;
+    left = nt_ExpectEmpty_0._ipg_start;
+    right = nt_ExpectEmpty_0._ipg_end;
 
     return self;
   }
@@ -4144,26 +4183,26 @@ function OptionalU32(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_TaggedU32;
+    let nt_TaggedU32_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // TaggedU32(expectedIndex)[0, EOI]
+    // TaggedU32@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedU32 = TaggedU32(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_TaggedU32 === null) break _ipg_alt;
-    if (nt_TaggedU32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32._ipg_end);
+    nt_TaggedU32_0 = TaggedU32(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_TaggedU32_0 === null) break _ipg_alt;
+    if (nt_TaggedU32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedU32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedU32_0._ipg_end);
     }
-    nt_TaggedU32._ipg_end += left;
-    nt_TaggedU32._ipg_start += left;
-    left = nt_TaggedU32._ipg_start;
-    right = nt_TaggedU32._ipg_end;
+    nt_TaggedU32_0._ipg_end += left;
+    nt_TaggedU32_0._ipg_start += left;
+    left = nt_TaggedU32_0._ipg_start;
+    right = nt_TaggedU32_0._ipg_end;
 
-    // { value = TaggedU32.value }
-    self.value = nt_TaggedU32.value;
+    // { value = TaggedU32@0.value }
+    self.value = nt_TaggedU32_0.value;
 
     return self;
   }
@@ -4186,26 +4225,26 @@ function OptionalIntPair(input, begin = 0, end = input.length, a_expectedIndex) 
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_IntPair;
+    let nt_IntPair_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // IntPair(expectedIndex)[0, EOI]
+    // IntPair@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_IntPair = IntPair(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_IntPair === null) break _ipg_alt;
-    if (nt_IntPair._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_IntPair._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_IntPair._ipg_end);
+    nt_IntPair_0 = IntPair(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_IntPair_0 === null) break _ipg_alt;
+    if (nt_IntPair_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_IntPair_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_IntPair_0._ipg_end);
     }
-    nt_IntPair._ipg_end += left;
-    nt_IntPair._ipg_start += left;
-    left = nt_IntPair._ipg_start;
-    right = nt_IntPair._ipg_end;
+    nt_IntPair_0._ipg_end += left;
+    nt_IntPair_0._ipg_start += left;
+    left = nt_IntPair_0._ipg_start;
+    right = nt_IntPair_0._ipg_end;
 
-    // { value = IntPair.value }
-    self.value = nt_IntPair.value;
+    // { value = IntPair@0.value }
+    self.value = nt_IntPair_0.value;
 
     return self;
   }
@@ -4228,76 +4267,77 @@ function IntPair(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_SubBlock;
-    let nt_U32;
-    let nt_ExpectEmpty;
+    let nt_SubBlock_0;
+    let nt_U32_0;
+    let nt_U32_1;
+    let nt_ExpectEmpty_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // SubBlock(expectedIndex)[0, EOI]
+    // SubBlock@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_SubBlock = SubBlock(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_SubBlock === null) break _ipg_alt;
-    if (nt_SubBlock._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock._ipg_end);
+    nt_SubBlock_0 = SubBlock(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_SubBlock_0 === null) break _ipg_alt;
+    if (nt_SubBlock_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_SubBlock_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_SubBlock_0._ipg_end);
     }
-    nt_SubBlock._ipg_end += left;
-    nt_SubBlock._ipg_start += left;
-    left = nt_SubBlock._ipg_start;
-    right = nt_SubBlock._ipg_end;
+    nt_SubBlock_0._ipg_end += left;
+    nt_SubBlock_0._ipg_start += left;
+    left = nt_SubBlock_0._ipg_start;
+    right = nt_SubBlock_0._ipg_end;
 
-    // U32[SubBlock.END, SubBlock.END + SubBlock.length]
-    left = nt_SubBlock._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // U32@0[SubBlock@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_SubBlock_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U32 = U32(input, begin + left, begin + right);
-    if (nt_U32 === null) break _ipg_alt;
-    if (nt_U32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U32._ipg_end);
+    nt_U32_0 = U32(input, begin + left, begin + right);
+    if (nt_U32_0 === null) break _ipg_alt;
+    if (nt_U32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U32_0._ipg_end);
     }
-    nt_U32._ipg_end += left;
-    nt_U32._ipg_start += left;
-    left = nt_U32._ipg_start;
-    right = nt_U32._ipg_end;
+    nt_U32_0._ipg_end += left;
+    nt_U32_0._ipg_start += left;
+    left = nt_U32_0._ipg_start;
+    right = nt_U32_0._ipg_end;
 
-    // { fst = U32.value }
-    self.fst = nt_U32.value;
+    // { fst = U32@0.value }
+    self.fst = nt_U32_0.value;
 
-    // U32[U32.END, SubBlock.END + SubBlock.length]
-    left = nt_U32._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // U32@1[U32@0.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_U32_0._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U32 = U32(input, begin + left, begin + right);
-    if (nt_U32 === null) break _ipg_alt;
-    if (nt_U32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U32._ipg_end);
+    nt_U32_1 = U32(input, begin + left, begin + right);
+    if (nt_U32_1 === null) break _ipg_alt;
+    if (nt_U32_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U32_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U32_1._ipg_end);
     }
-    nt_U32._ipg_end += left;
-    nt_U32._ipg_start += left;
-    left = nt_U32._ipg_start;
-    right = nt_U32._ipg_end;
+    nt_U32_1._ipg_end += left;
+    nt_U32_1._ipg_start += left;
+    left = nt_U32_1._ipg_start;
+    right = nt_U32_1._ipg_end;
 
-    // { value = makePair(fst, U32.value) }
-    self.value = makePair(self.fst, nt_U32.value);
+    // { value = makePair(fst, U32@1.value) }
+    self.value = makePair(self.fst, nt_U32_1.value);
 
-    // ExpectEmpty[U32.END, SubBlock.END + SubBlock.length]
-    left = nt_U32._ipg_end;
-    right = nt_SubBlock._ipg_end + nt_SubBlock.length;
+    // ExpectEmpty@0[U32@1.END, SubBlock@0.END + SubBlock@0.length]
+    left = nt_U32_1._ipg_end;
+    right = nt_SubBlock_0._ipg_end + nt_SubBlock_0.length;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_ExpectEmpty = ExpectEmpty(input, begin + left, begin + right);
-    if (nt_ExpectEmpty === null) break _ipg_alt;
-    if (nt_ExpectEmpty._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty._ipg_end);
+    nt_ExpectEmpty_0 = ExpectEmpty(input, begin + left, begin + right);
+    if (nt_ExpectEmpty_0 === null) break _ipg_alt;
+    if (nt_ExpectEmpty_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_ExpectEmpty_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_ExpectEmpty_0._ipg_end);
     }
-    nt_ExpectEmpty._ipg_end += left;
-    nt_ExpectEmpty._ipg_start += left;
-    left = nt_ExpectEmpty._ipg_start;
-    right = nt_ExpectEmpty._ipg_end;
+    nt_ExpectEmpty_0._ipg_end += left;
+    nt_ExpectEmpty_0._ipg_start += left;
+    left = nt_ExpectEmpty_0._ipg_start;
+    right = nt_ExpectEmpty_0._ipg_end;
 
     return self;
   }
@@ -4311,42 +4351,42 @@ function SubBlock(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Length4Tag;
-    let nt_U32;
+    let nt_Length4Tag_0;
+    let nt_U32_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // Length4Tag(expectedIndex)[0, EOI]
+    // Length4Tag@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Length4Tag = Length4Tag(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_Length4Tag === null) break _ipg_alt;
-    if (nt_Length4Tag._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Length4Tag._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Length4Tag._ipg_end);
+    nt_Length4Tag_0 = Length4Tag(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_Length4Tag_0 === null) break _ipg_alt;
+    if (nt_Length4Tag_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Length4Tag_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Length4Tag_0._ipg_end);
     }
-    nt_Length4Tag._ipg_end += left;
-    nt_Length4Tag._ipg_start += left;
-    left = nt_Length4Tag._ipg_start;
-    right = nt_Length4Tag._ipg_end;
+    nt_Length4Tag_0._ipg_end += left;
+    nt_Length4Tag_0._ipg_start += left;
+    left = nt_Length4Tag_0._ipg_start;
+    right = nt_Length4Tag_0._ipg_end;
 
-    // U32[Length4Tag.END, EOI]
-    left = nt_Length4Tag._ipg_end;
+    // U32@0[Length4Tag@0.END, EOI]
+    left = nt_Length4Tag_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U32 = U32(input, begin + left, begin + right);
-    if (nt_U32 === null) break _ipg_alt;
-    if (nt_U32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U32._ipg_end);
+    nt_U32_0 = U32(input, begin + left, begin + right);
+    if (nt_U32_0 === null) break _ipg_alt;
+    if (nt_U32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U32_0._ipg_end);
     }
-    nt_U32._ipg_end += left;
-    nt_U32._ipg_start += left;
-    left = nt_U32._ipg_start;
-    right = nt_U32._ipg_end;
+    nt_U32_0._ipg_end += left;
+    nt_U32_0._ipg_start += left;
+    left = nt_U32_0._ipg_start;
+    right = nt_U32_0._ipg_end;
 
-    // { length = U32.value }
-    self.length = nt_U32.value;
+    // { length = U32@0.value }
+    self.length = nt_U32_0.value;
 
     return self;
   }
@@ -4360,7 +4400,7 @@ function CrdtId(input, begin = 0, end = input.length) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_VarUInt;
+    let nt_VarUInt_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // { part1 = .[0] }
@@ -4371,23 +4411,23 @@ function CrdtId(input, begin = 0, end = input.length) {
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
 
-    // VarUInt[1, EOI]
+    // VarUInt@0[1, EOI]
     left = 1;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_VarUInt = VarUInt(input, begin + left, begin + right);
-    if (nt_VarUInt === null) break _ipg_alt;
-    if (nt_VarUInt._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt._ipg_end);
+    nt_VarUInt_0 = VarUInt(input, begin + left, begin + right);
+    if (nt_VarUInt_0 === null) break _ipg_alt;
+    if (nt_VarUInt_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt_0._ipg_end);
     }
-    nt_VarUInt._ipg_end += left;
-    nt_VarUInt._ipg_start += left;
-    left = nt_VarUInt._ipg_start;
-    right = nt_VarUInt._ipg_end;
+    nt_VarUInt_0._ipg_end += left;
+    nt_VarUInt_0._ipg_start += left;
+    left = nt_VarUInt_0._ipg_start;
+    right = nt_VarUInt_0._ipg_end;
 
-    // { part2 = VarUInt.value }
-    self.part2 = nt_VarUInt.value;
+    // { part2 = VarUInt@0.value }
+    self.part2 = nt_VarUInt_0.value;
 
     return self;
   }
@@ -4401,26 +4441,26 @@ function OptionalTaggedBool(input, begin = 0, end = input.length, a_expectedInde
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_TaggedBool;
+    let nt_TaggedBool_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // TaggedBool(expectedIndex)[0, EOI]
+    // TaggedBool@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedBool = TaggedBool(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_TaggedBool === null) break _ipg_alt;
-    if (nt_TaggedBool._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedBool._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedBool._ipg_end);
+    nt_TaggedBool_0 = TaggedBool(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_TaggedBool_0 === null) break _ipg_alt;
+    if (nt_TaggedBool_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedBool_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedBool_0._ipg_end);
     }
-    nt_TaggedBool._ipg_end += left;
-    nt_TaggedBool._ipg_start += left;
-    left = nt_TaggedBool._ipg_start;
-    right = nt_TaggedBool._ipg_end;
+    nt_TaggedBool_0._ipg_end += left;
+    nt_TaggedBool_0._ipg_start += left;
+    left = nt_TaggedBool_0._ipg_start;
+    right = nt_TaggedBool_0._ipg_end;
 
-    // { value = TaggedBool.value }
-    self.value = nt_TaggedBool.value;
+    // { value = TaggedBool@0.value }
+    self.value = nt_TaggedBool_0.value;
 
     return self;
   }
@@ -4443,42 +4483,42 @@ function TaggedBool(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Byte1Tag;
-    let nt_Bool;
+    let nt_Byte1Tag_0;
+    let nt_Bool_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // Byte1Tag(expectedIndex)[0, EOI]
+    // Byte1Tag@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Byte1Tag = Byte1Tag(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_Byte1Tag === null) break _ipg_alt;
-    if (nt_Byte1Tag._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Byte1Tag._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Byte1Tag._ipg_end);
+    nt_Byte1Tag_0 = Byte1Tag(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_Byte1Tag_0 === null) break _ipg_alt;
+    if (nt_Byte1Tag_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Byte1Tag_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Byte1Tag_0._ipg_end);
     }
-    nt_Byte1Tag._ipg_end += left;
-    nt_Byte1Tag._ipg_start += left;
-    left = nt_Byte1Tag._ipg_start;
-    right = nt_Byte1Tag._ipg_end;
+    nt_Byte1Tag_0._ipg_end += left;
+    nt_Byte1Tag_0._ipg_start += left;
+    left = nt_Byte1Tag_0._ipg_start;
+    right = nt_Byte1Tag_0._ipg_end;
 
-    // Bool[Byte1Tag.END, EOI]
-    left = nt_Byte1Tag._ipg_end;
+    // Bool@0[Byte1Tag@0.END, EOI]
+    left = nt_Byte1Tag_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Bool = Bool(input, begin + left, begin + right);
-    if (nt_Bool === null) break _ipg_alt;
-    if (nt_Bool._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Bool._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Bool._ipg_end);
+    nt_Bool_0 = Bool(input, begin + left, begin + right);
+    if (nt_Bool_0 === null) break _ipg_alt;
+    if (nt_Bool_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Bool_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Bool_0._ipg_end);
     }
-    nt_Bool._ipg_end += left;
-    nt_Bool._ipg_start += left;
-    left = nt_Bool._ipg_start;
-    right = nt_Bool._ipg_end;
+    nt_Bool_0._ipg_end += left;
+    nt_Bool_0._ipg_start += left;
+    left = nt_Bool_0._ipg_start;
+    right = nt_Bool_0._ipg_end;
 
-    // { value = Bool.value }
-    self.value = nt_Bool.value;
+    // { value = Bool@0.value }
+    self.value = nt_Bool_0.value;
 
     return self;
   }
@@ -4492,26 +4532,26 @@ function TaggedU8(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Byte1Tag;
+    let nt_Byte1Tag_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // Byte1Tag(expectedIndex)[0, EOI]
+    // Byte1Tag@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Byte1Tag = Byte1Tag(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_Byte1Tag === null) break _ipg_alt;
-    if (nt_Byte1Tag._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Byte1Tag._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Byte1Tag._ipg_end);
+    nt_Byte1Tag_0 = Byte1Tag(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_Byte1Tag_0 === null) break _ipg_alt;
+    if (nt_Byte1Tag_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Byte1Tag_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Byte1Tag_0._ipg_end);
     }
-    nt_Byte1Tag._ipg_end += left;
-    nt_Byte1Tag._ipg_start += left;
-    left = nt_Byte1Tag._ipg_start;
-    right = nt_Byte1Tag._ipg_end;
+    nt_Byte1Tag_0._ipg_end += left;
+    nt_Byte1Tag_0._ipg_start += left;
+    left = nt_Byte1Tag_0._ipg_start;
+    right = nt_Byte1Tag_0._ipg_end;
 
-    // { value = .[Byte1Tag.END] }
-    left = nt_Byte1Tag._ipg_end;
+    // { value = .[Byte1Tag@0.END] }
+    left = nt_Byte1Tag_0._ipg_end;
     right = left + 1;
     if (left < 0 || right > EOI) break _ipg_alt;
     self.value = input[begin + left];
@@ -4530,42 +4570,42 @@ function TaggedU32(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Byte4Tag;
-    let nt_U32;
+    let nt_Byte4Tag_0;
+    let nt_U32_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // Byte4Tag(expectedIndex)[0, EOI]
+    // Byte4Tag@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Byte4Tag = Byte4Tag(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_Byte4Tag === null) break _ipg_alt;
-    if (nt_Byte4Tag._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Byte4Tag._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Byte4Tag._ipg_end);
+    nt_Byte4Tag_0 = Byte4Tag(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_Byte4Tag_0 === null) break _ipg_alt;
+    if (nt_Byte4Tag_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Byte4Tag_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Byte4Tag_0._ipg_end);
     }
-    nt_Byte4Tag._ipg_end += left;
-    nt_Byte4Tag._ipg_start += left;
-    left = nt_Byte4Tag._ipg_start;
-    right = nt_Byte4Tag._ipg_end;
+    nt_Byte4Tag_0._ipg_end += left;
+    nt_Byte4Tag_0._ipg_start += left;
+    left = nt_Byte4Tag_0._ipg_start;
+    right = nt_Byte4Tag_0._ipg_end;
 
-    // U32[Byte4Tag.END, EOI]
-    left = nt_Byte4Tag._ipg_end;
+    // U32@0[Byte4Tag@0.END, EOI]
+    left = nt_Byte4Tag_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U32 = U32(input, begin + left, begin + right);
-    if (nt_U32 === null) break _ipg_alt;
-    if (nt_U32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U32._ipg_end);
+    nt_U32_0 = U32(input, begin + left, begin + right);
+    if (nt_U32_0 === null) break _ipg_alt;
+    if (nt_U32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U32_0._ipg_end);
     }
-    nt_U32._ipg_end += left;
-    nt_U32._ipg_start += left;
-    left = nt_U32._ipg_start;
-    right = nt_U32._ipg_end;
+    nt_U32_0._ipg_end += left;
+    nt_U32_0._ipg_start += left;
+    left = nt_U32_0._ipg_start;
+    right = nt_U32_0._ipg_end;
 
-    // { value = U32.value }
-    self.value = nt_U32.value;
+    // { value = U32@0.value }
+    self.value = nt_U32_0.value;
 
     return self;
   }
@@ -4579,42 +4619,42 @@ function TaggedFloat32(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Byte4Tag;
-    let nt_Float32;
+    let nt_Byte4Tag_0;
+    let nt_Float32_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // Byte4Tag(expectedIndex)[0, EOI]
+    // Byte4Tag@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Byte4Tag = Byte4Tag(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_Byte4Tag === null) break _ipg_alt;
-    if (nt_Byte4Tag._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Byte4Tag._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Byte4Tag._ipg_end);
+    nt_Byte4Tag_0 = Byte4Tag(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_Byte4Tag_0 === null) break _ipg_alt;
+    if (nt_Byte4Tag_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Byte4Tag_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Byte4Tag_0._ipg_end);
     }
-    nt_Byte4Tag._ipg_end += left;
-    nt_Byte4Tag._ipg_start += left;
-    left = nt_Byte4Tag._ipg_start;
-    right = nt_Byte4Tag._ipg_end;
+    nt_Byte4Tag_0._ipg_end += left;
+    nt_Byte4Tag_0._ipg_start += left;
+    left = nt_Byte4Tag_0._ipg_start;
+    right = nt_Byte4Tag_0._ipg_end;
 
-    // Float32[Byte4Tag.END, EOI]
-    left = nt_Byte4Tag._ipg_end;
+    // Float32@0[Byte4Tag@0.END, EOI]
+    left = nt_Byte4Tag_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Float32 = Float32(input, begin + left, begin + right);
-    if (nt_Float32 === null) break _ipg_alt;
-    if (nt_Float32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Float32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Float32._ipg_end);
+    nt_Float32_0 = Float32(input, begin + left, begin + right);
+    if (nt_Float32_0 === null) break _ipg_alt;
+    if (nt_Float32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Float32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Float32_0._ipg_end);
     }
-    nt_Float32._ipg_end += left;
-    nt_Float32._ipg_start += left;
-    left = nt_Float32._ipg_start;
-    right = nt_Float32._ipg_end;
+    nt_Float32_0._ipg_end += left;
+    nt_Float32_0._ipg_start += left;
+    left = nt_Float32_0._ipg_start;
+    right = nt_Float32_0._ipg_end;
 
-    // { value = Float32.value }
-    self.value = nt_Float32.value;
+    // { value = Float32@0.value }
+    self.value = nt_Float32_0.value;
 
     return self;
   }
@@ -4628,42 +4668,42 @@ function TaggedFloat64(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Byte8Tag;
-    let nt_Float64;
+    let nt_Byte8Tag_0;
+    let nt_Float64_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // Byte8Tag(expectedIndex)[0, EOI]
+    // Byte8Tag@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Byte8Tag = Byte8Tag(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_Byte8Tag === null) break _ipg_alt;
-    if (nt_Byte8Tag._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Byte8Tag._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Byte8Tag._ipg_end);
+    nt_Byte8Tag_0 = Byte8Tag(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_Byte8Tag_0 === null) break _ipg_alt;
+    if (nt_Byte8Tag_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Byte8Tag_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Byte8Tag_0._ipg_end);
     }
-    nt_Byte8Tag._ipg_end += left;
-    nt_Byte8Tag._ipg_start += left;
-    left = nt_Byte8Tag._ipg_start;
-    right = nt_Byte8Tag._ipg_end;
+    nt_Byte8Tag_0._ipg_end += left;
+    nt_Byte8Tag_0._ipg_start += left;
+    left = nt_Byte8Tag_0._ipg_start;
+    right = nt_Byte8Tag_0._ipg_end;
 
-    // Float64[Byte8Tag.END, EOI]
-    left = nt_Byte8Tag._ipg_end;
+    // Float64@0[Byte8Tag@0.END, EOI]
+    left = nt_Byte8Tag_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Float64 = Float64(input, begin + left, begin + right);
-    if (nt_Float64 === null) break _ipg_alt;
-    if (nt_Float64._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Float64._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Float64._ipg_end);
+    nt_Float64_0 = Float64(input, begin + left, begin + right);
+    if (nt_Float64_0 === null) break _ipg_alt;
+    if (nt_Float64_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Float64_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Float64_0._ipg_end);
     }
-    nt_Float64._ipg_end += left;
-    nt_Float64._ipg_start += left;
-    left = nt_Float64._ipg_start;
-    right = nt_Float64._ipg_end;
+    nt_Float64_0._ipg_end += left;
+    nt_Float64_0._ipg_start += left;
+    left = nt_Float64_0._ipg_start;
+    right = nt_Float64_0._ipg_end;
 
-    // { value = Float64.value }
-    self.value = nt_Float64.value;
+    // { value = Float64@0.value }
+    self.value = nt_Float64_0.value;
 
     return self;
   }
@@ -4677,26 +4717,26 @@ function OptionalTaggedId(input, begin = 0, end = input.length, a_expectedIndex)
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_TaggedId;
+    let nt_TaggedId_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // TaggedId(expectedIndex)[0, EOI]
+    // TaggedId@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_TaggedId = TaggedId(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_TaggedId === null) break _ipg_alt;
-    if (nt_TaggedId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId._ipg_end);
+    nt_TaggedId_0 = TaggedId(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_TaggedId_0 === null) break _ipg_alt;
+    if (nt_TaggedId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_TaggedId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_TaggedId_0._ipg_end);
     }
-    nt_TaggedId._ipg_end += left;
-    nt_TaggedId._ipg_start += left;
-    left = nt_TaggedId._ipg_start;
-    right = nt_TaggedId._ipg_end;
+    nt_TaggedId_0._ipg_end += left;
+    nt_TaggedId_0._ipg_start += left;
+    left = nt_TaggedId_0._ipg_start;
+    right = nt_TaggedId_0._ipg_end;
 
-    // { value = TaggedId.value }
-    self.value = nt_TaggedId.value;
+    // { value = TaggedId@0.value }
+    self.value = nt_TaggedId_0.value;
 
     return self;
   }
@@ -4719,42 +4759,42 @@ function TaggedId(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_IDTag;
-    let nt_CrdtId;
+    let nt_IDTag_0;
+    let nt_CrdtId_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // IDTag(expectedIndex)[0, EOI]
+    // IDTag@0(expectedIndex)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_IDTag = IDTag(input, begin + left, begin + right, a_expectedIndex);
-    if (nt_IDTag === null) break _ipg_alt;
-    if (nt_IDTag._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_IDTag._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_IDTag._ipg_end);
+    nt_IDTag_0 = IDTag(input, begin + left, begin + right, a_expectedIndex);
+    if (nt_IDTag_0 === null) break _ipg_alt;
+    if (nt_IDTag_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_IDTag_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_IDTag_0._ipg_end);
     }
-    nt_IDTag._ipg_end += left;
-    nt_IDTag._ipg_start += left;
-    left = nt_IDTag._ipg_start;
-    right = nt_IDTag._ipg_end;
+    nt_IDTag_0._ipg_end += left;
+    nt_IDTag_0._ipg_start += left;
+    left = nt_IDTag_0._ipg_start;
+    right = nt_IDTag_0._ipg_end;
 
-    // CrdtId[IDTag.END, EOI]
-    left = nt_IDTag._ipg_end;
+    // CrdtId@0[IDTag@0.END, EOI]
+    left = nt_IDTag_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_CrdtId = CrdtId(input, begin + left, begin + right);
-    if (nt_CrdtId === null) break _ipg_alt;
-    if (nt_CrdtId._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_CrdtId._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_CrdtId._ipg_end);
+    nt_CrdtId_0 = CrdtId(input, begin + left, begin + right);
+    if (nt_CrdtId_0 === null) break _ipg_alt;
+    if (nt_CrdtId_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_CrdtId_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_CrdtId_0._ipg_end);
     }
-    nt_CrdtId._ipg_end += left;
-    nt_CrdtId._ipg_start += left;
-    left = nt_CrdtId._ipg_start;
-    right = nt_CrdtId._ipg_end;
+    nt_CrdtId_0._ipg_end += left;
+    nt_CrdtId_0._ipg_start += left;
+    left = nt_CrdtId_0._ipg_start;
+    right = nt_CrdtId_0._ipg_end;
 
-    // { value = makeCrdtId(CrdtId.part1, CrdtId.part2) }
-    self.value = makeCrdtId(nt_CrdtId.part1, nt_CrdtId.part2);
+    // { value = makeCrdtId(CrdtId@0.part1, CrdtId@0.part2) }
+    self.value = makeCrdtId(nt_CrdtId_0.part1, nt_CrdtId_0.part2);
 
     return self;
   }
@@ -4768,23 +4808,23 @@ function IDTag(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Tag;
+    let nt_Tag_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // Tag(expectedIndex, 15)[0, EOI]
+    // Tag@0(expectedIndex, 15)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Tag = Tag(input, begin + left, begin + right, a_expectedIndex, 15);
-    if (nt_Tag === null) break _ipg_alt;
-    if (nt_Tag._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Tag._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Tag._ipg_end);
+    nt_Tag_0 = Tag(input, begin + left, begin + right, a_expectedIndex, 15);
+    if (nt_Tag_0 === null) break _ipg_alt;
+    if (nt_Tag_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Tag_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Tag_0._ipg_end);
     }
-    nt_Tag._ipg_end += left;
-    nt_Tag._ipg_start += left;
-    left = nt_Tag._ipg_start;
-    right = nt_Tag._ipg_end;
+    nt_Tag_0._ipg_end += left;
+    nt_Tag_0._ipg_start += left;
+    left = nt_Tag_0._ipg_start;
+    right = nt_Tag_0._ipg_end;
 
     return self;
   }
@@ -4798,23 +4838,23 @@ function Byte1Tag(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Tag;
+    let nt_Tag_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // Tag(expectedIndex, 1)[0, EOI]
+    // Tag@0(expectedIndex, 1)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Tag = Tag(input, begin + left, begin + right, a_expectedIndex, 1);
-    if (nt_Tag === null) break _ipg_alt;
-    if (nt_Tag._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Tag._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Tag._ipg_end);
+    nt_Tag_0 = Tag(input, begin + left, begin + right, a_expectedIndex, 1);
+    if (nt_Tag_0 === null) break _ipg_alt;
+    if (nt_Tag_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Tag_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Tag_0._ipg_end);
     }
-    nt_Tag._ipg_end += left;
-    nt_Tag._ipg_start += left;
-    left = nt_Tag._ipg_start;
-    right = nt_Tag._ipg_end;
+    nt_Tag_0._ipg_end += left;
+    nt_Tag_0._ipg_start += left;
+    left = nt_Tag_0._ipg_start;
+    right = nt_Tag_0._ipg_end;
 
     return self;
   }
@@ -4828,23 +4868,23 @@ function Byte4Tag(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Tag;
+    let nt_Tag_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // Tag(expectedIndex, 4)[0, EOI]
+    // Tag@0(expectedIndex, 4)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Tag = Tag(input, begin + left, begin + right, a_expectedIndex, 4);
-    if (nt_Tag === null) break _ipg_alt;
-    if (nt_Tag._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Tag._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Tag._ipg_end);
+    nt_Tag_0 = Tag(input, begin + left, begin + right, a_expectedIndex, 4);
+    if (nt_Tag_0 === null) break _ipg_alt;
+    if (nt_Tag_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Tag_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Tag_0._ipg_end);
     }
-    nt_Tag._ipg_end += left;
-    nt_Tag._ipg_start += left;
-    left = nt_Tag._ipg_start;
-    right = nt_Tag._ipg_end;
+    nt_Tag_0._ipg_end += left;
+    nt_Tag_0._ipg_start += left;
+    left = nt_Tag_0._ipg_start;
+    right = nt_Tag_0._ipg_end;
 
     return self;
   }
@@ -4858,23 +4898,23 @@ function Byte8Tag(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Tag;
+    let nt_Tag_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // Tag(expectedIndex, 8)[0, EOI]
+    // Tag@0(expectedIndex, 8)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Tag = Tag(input, begin + left, begin + right, a_expectedIndex, 8);
-    if (nt_Tag === null) break _ipg_alt;
-    if (nt_Tag._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Tag._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Tag._ipg_end);
+    nt_Tag_0 = Tag(input, begin + left, begin + right, a_expectedIndex, 8);
+    if (nt_Tag_0 === null) break _ipg_alt;
+    if (nt_Tag_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Tag_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Tag_0._ipg_end);
     }
-    nt_Tag._ipg_end += left;
-    nt_Tag._ipg_start += left;
-    left = nt_Tag._ipg_start;
-    right = nt_Tag._ipg_end;
+    nt_Tag_0._ipg_end += left;
+    nt_Tag_0._ipg_start += left;
+    left = nt_Tag_0._ipg_start;
+    right = nt_Tag_0._ipg_end;
 
     return self;
   }
@@ -4888,23 +4928,23 @@ function Length4Tag(input, begin = 0, end = input.length, a_expectedIndex) {
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Tag;
+    let nt_Tag_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // Tag(expectedIndex, 12)[0, EOI]
+    // Tag@0(expectedIndex, 12)[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Tag = Tag(input, begin + left, begin + right, a_expectedIndex, 12);
-    if (nt_Tag === null) break _ipg_alt;
-    if (nt_Tag._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Tag._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Tag._ipg_end);
+    nt_Tag_0 = Tag(input, begin + left, begin + right, a_expectedIndex, 12);
+    if (nt_Tag_0 === null) break _ipg_alt;
+    if (nt_Tag_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Tag_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Tag_0._ipg_end);
     }
-    nt_Tag._ipg_end += left;
-    nt_Tag._ipg_start += left;
-    left = nt_Tag._ipg_start;
-    right = nt_Tag._ipg_end;
+    nt_Tag_0._ipg_end += left;
+    nt_Tag_0._ipg_start += left;
+    left = nt_Tag_0._ipg_start;
+    right = nt_Tag_0._ipg_end;
 
     return self;
   }
@@ -4918,29 +4958,29 @@ function Tag(input, begin = 0, end = input.length, a_expectedIndex, a_expectedTa
   
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_VarUInt;
+    let nt_VarUInt_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // VarUInt[0, EOI]
+    // VarUInt@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_VarUInt = VarUInt(input, begin + left, begin + right);
-    if (nt_VarUInt === null) break _ipg_alt;
-    if (nt_VarUInt._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt._ipg_end);
+    nt_VarUInt_0 = VarUInt(input, begin + left, begin + right);
+    if (nt_VarUInt_0 === null) break _ipg_alt;
+    if (nt_VarUInt_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt_0._ipg_end);
     }
-    nt_VarUInt._ipg_end += left;
-    nt_VarUInt._ipg_start += left;
-    left = nt_VarUInt._ipg_start;
-    right = nt_VarUInt._ipg_end;
+    nt_VarUInt_0._ipg_end += left;
+    nt_VarUInt_0._ipg_start += left;
+    left = nt_VarUInt_0._ipg_start;
+    right = nt_VarUInt_0._ipg_end;
 
-    // ?[ expectedIndex == VarUInt.value >> 4 ]
-    if (!(a_expectedIndex == nt_VarUInt.value >> 4)) break _ipg_alt;
+    // ?[ expectedIndex == VarUInt@0.value >> 4 ]
+    if (!(a_expectedIndex == nt_VarUInt_0.value >> 4)) break _ipg_alt;
 
-    // ?[ expectedTagType == (VarUInt.value & 15) ]
-    if (!(a_expectedTagType == (nt_VarUInt.value & 15))) break _ipg_alt;
+    // ?[ expectedTagType == (VarUInt@0.value & 15) ]
+    if (!(a_expectedTagType == (nt_VarUInt_0.value & 15))) break _ipg_alt;
 
     return self;
   }
@@ -5196,42 +5236,42 @@ function VarUInt(input, begin = 0, end = input.length) {
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_U8;
-    let nt_VarUInt;
+    let nt_U8_0;
+    let nt_VarUInt_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // U8[0, EOI]
+    // U8@0[0, EOI]
     left = 0;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U8 = U8(input, begin + left, begin + right);
-    if (nt_U8 === null) break _ipg_alt;
-    if (nt_U8._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U8._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U8._ipg_end);
+    nt_U8_0 = U8(input, begin + left, begin + right);
+    if (nt_U8_0 === null) break _ipg_alt;
+    if (nt_U8_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U8_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U8_0._ipg_end);
     }
-    nt_U8._ipg_end += left;
-    nt_U8._ipg_start += left;
-    left = nt_U8._ipg_start;
-    right = nt_U8._ipg_end;
+    nt_U8_0._ipg_end += left;
+    nt_U8_0._ipg_start += left;
+    left = nt_U8_0._ipg_start;
+    right = nt_U8_0._ipg_end;
 
-    // VarUInt[U8.END, EOI]
-    left = nt_U8._ipg_end;
+    // VarUInt@0[U8@0.END, EOI]
+    left = nt_U8_0._ipg_end;
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_VarUInt = VarUInt(input, begin + left, begin + right);
-    if (nt_VarUInt === null) break _ipg_alt;
-    if (nt_VarUInt._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt._ipg_end);
+    nt_VarUInt_0 = VarUInt(input, begin + left, begin + right);
+    if (nt_VarUInt_0 === null) break _ipg_alt;
+    if (nt_VarUInt_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_VarUInt_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_VarUInt_0._ipg_end);
     }
-    nt_VarUInt._ipg_end += left;
-    nt_VarUInt._ipg_start += left;
-    left = nt_VarUInt._ipg_start;
-    right = nt_VarUInt._ipg_end;
+    nt_VarUInt_0._ipg_end += left;
+    nt_VarUInt_0._ipg_start += left;
+    left = nt_VarUInt_0._ipg_start;
+    right = nt_VarUInt_0._ipg_end;
 
-    // { value = U8.value & 127 | VarUInt.value << 7 }
-    self.value = nt_U8.value & 127 | nt_VarUInt.value << 7;
+    // { value = U8@0.value & 127 | VarUInt@0.value << 7 }
+    self.value = nt_U8_0.value & 127 | nt_VarUInt_0.value << 7;
 
     return self;
   }

@@ -32,18 +32,21 @@ whenDebug :: Context -> Out -> Out
 whenDebug (Context { debugMode = True }) o = o
 whenDebug (Context { debugMode = False }) _ = ""
 
+u :: (T, Int) -> Out
+u (nt, n) = Builder.byteString nt <> "_" <> Builder.intDec n
+
 refToJS :: Context -> Env -> Ref T T Expr -> Out
 refToJS _ env (Id f) | f `Set.member` env = [i|a_#{f}|]
                      | otherwise          = [i|self.#{f}|]
-refToJS _ _   (Attr nt "this") = [i|(({_ipg_start,_ipg_end,...o}) => o)(nt_#{nt})|]
-refToJS _ _   (Attr nt "these") = [i|seq_#{nt}.map(({_ipg_start,_ipg_end,...o}) => o)|]
-refToJS _ _   (Attr nt f) = [i|nt_#{nt}.#{f}|]
+refToJS _ _   (Attr nt "this") = [i|(({_ipg_start,_ipg_end,...o}) => o)(nt_#{u nt})|]
+refToJS _ _   (Attr nt "these") = [i|seq_#{u nt}.map(({_ipg_start,_ipg_end,...o}) => o)|]
+refToJS _ _   (Attr nt f) = [i|nt_#{u nt}.#{f}|]
 refToJS c env (Index nt e "this") =
-    [i|(({_ipg_start,_ipg_end,...o}) => o)(seq_#{nt}[#{exprToJS c env e} - seq_#{nt}_start])|]
-refToJS c env (Index nt e f) = [i|seq_#{nt}[#{exprToJS c env e} - seq_#{nt}_start].#{f}|]
+    [i|(({_ipg_start,_ipg_end,...o}) => o)(seq_#{u nt}[#{exprToJS c env e} - seq_#{u nt}_start])|]
+refToJS c env (Index nt e f) = [i|seq_#{u nt}[#{exprToJS c env e} - seq_#{u nt}_start].#{f}|]
 refToJS _ _   EOI = "EOI";
-refToJS _ _   (Start nt) = [i|nt_#{nt}._ipg_start|]
-refToJS _ _   (End nt) = [i|nt_#{nt}._ipg_end|]
+refToJS _ _   (Start nt) = [i|nt_#{u nt}._ipg_start|]
+refToJS _ _   (End nt) = [i|nt_#{u nt}._ipg_end|]
 
 exprToJS :: Context -> Env -> Expr -> Out
 exprToJS ctxt env e = exprToJS' ctxt env 0 e
@@ -122,16 +125,16 @@ termToJS indent c env z@(NonTerminal nt args l r)
    <> whenDebug c (indent <> [i|_ipg_failedTerm = { term: #{show (pprintTerm z)}, left, right };\n|])
    <> indent <> [i|right = #{rExp};\n|]
    <> indent <>   "if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
-   <> indent <> [i|nt_#{nt} = #{nt}(input, begin + left, begin + right#{argList es});\n|]
-   <> indent <> [i|if (nt_#{nt} === null) break _ipg_alt;\n|]
-   <> indent <> [i|if (nt_#{nt}._ipg_end !== 0) {\n|]
-   <> indent <> [i|  self._ipg_start = Math.min(self._ipg_start, left + nt_#{nt}._ipg_start);\n|]
-   <> indent <> [i|  self._ipg_end = Math.max(self._ipg_end, left + nt_#{nt}._ipg_end);\n|]
+   <> indent <> [i|nt_#{u nt} = #{fst nt}(input, begin + left, begin + right#{argList es});\n|]
+   <> indent <> [i|if (nt_#{u nt} === null) break _ipg_alt;\n|]
+   <> indent <> [i|if (nt_#{u nt}._ipg_end !== 0) {\n|]
+   <> indent <> [i|  self._ipg_start = Math.min(self._ipg_start, left + nt_#{u nt}._ipg_start);\n|]
+   <> indent <> [i|  self._ipg_end = Math.max(self._ipg_end, left + nt_#{u nt}._ipg_end);\n|]
    <> indent <>   "}\n"
-   <> indent <> [i|nt_#{nt}._ipg_end += left;\n|]
-   <> indent <> [i|nt_#{nt}._ipg_start += left;\n|]
-   <> indent <> [i|left = nt_#{nt}._ipg_start;\n|]
-   <> indent <> [i|right = nt_#{nt}._ipg_end;\n\n|]
+   <> indent <> [i|nt_#{u nt}._ipg_end += left;\n|]
+   <> indent <> [i|nt_#{u nt}._ipg_start += left;\n|]
+   <> indent <> [i|left = nt_#{u nt}._ipg_start;\n|]
+   <> indent <> [i|right = nt_#{u nt}._ipg_end;\n\n|]
   where lExp = exprToJS c env l; rExp = exprToJS c env r; es = map (exprToJS c env) args
 termToJS indent c env z@(Terminal "" l r) 
     = indent <> [i|// #{pprintTerm z}\n|]
@@ -163,16 +166,16 @@ termToJS indent c env z@(Guard e)
 termToJS indent c env z@(Array x start end nt args l r)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> whenDebug c (indent <> [i|_ipg_failedTerm = { term: #{show (pprintTerm z)} };\n|])
-   <> indent <> [i|nt_#{nt} = { _ipg_end: right, _ipg_start: left };\n|] -- Special case
-   <> indent <> [i|seq_#{nt}_start = #{startExp};\n|]
+   <> indent <> [i|nt_#{u nt} = { _ipg_end: right, _ipg_start: left };\n|] -- Special case
+   <> indent <> [i|seq_#{u nt}_start = #{startExp};\n|]
    <> indent <> [i|loopEnd = #{endExp};\n|]
-   <> indent <> [i|seq_#{nt} = new Array(loopEnd - seq_#{nt}_start);\n|]
-   <> indent <> [i|for (self.#{x} = seq_#{nt}_start; self.#{x} < loopEnd; self.#{x}++) {\n|]
+   <> indent <> [i|seq_#{u nt} = new Array(loopEnd - seq_#{u nt}_start);\n|]
+   <> indent <> [i|for (self.#{x} = seq_#{u nt}_start; self.#{x} < loopEnd; self.#{x}++) {\n|]
    <> indent <> [i|  const left = #{lExp};\n|]
    <> indent <> [i|  const right = #{rExp};\n|]
    <> whenDebug c (indent <> [i|_ipg_failedTerm.left = left; _ipg_failedTerm.right = right;\n|])
    <> indent <>   "  if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
-   <> indent <> [i|  const tmp = #{nt}(input, begin + left, begin + right#{argList es});\n|]
+   <> indent <> [i|  const tmp = #{fst nt}(input, begin + left, begin + right#{argList es});\n|]
    <> indent <>   "  if (tmp === null) break _ipg_alt;\n"
    <> indent <>   "  if (tmp._ipg_end !== 0) {\n"
    <> indent <>   "    self._ipg_start = Math.min(self._ipg_start, left + tmp._ipg_start);\n"
@@ -180,13 +183,13 @@ termToJS indent c env z@(Array x start end nt args l r)
    <> indent <>   "  }\n"
    <> indent <>   "  tmp._ipg_end += left;\n"
    <> indent <>   "  tmp._ipg_start += left;\n"
-   <> indent <> [i|  nt_#{nt}._ipg_end = tmp._ipg_end;\n|] -- Special case
-   <> indent <> [i|  nt_#{nt}._ipg_start = tmp._ipg_start;\n|] -- Special case
-   <> indent <> [i|  seq_#{nt}[self.#{x} - seq_#{nt}_start] = tmp;\n|]
+   <> indent <> [i|  nt_#{u nt}._ipg_end = tmp._ipg_end;\n|] -- Special case
+   <> indent <> [i|  nt_#{u nt}._ipg_start = tmp._ipg_start;\n|] -- Special case
+   <> indent <> [i|  seq_#{u nt}[self.#{x} - seq_#{u nt}_start] = tmp;\n|]
    <> indent <>   "}\n"
    <> indent <> [i|delete self.#{x};\n|]
-   <> indent <> [i|left = nt_#{nt}._ipg_start;\n|]
-   <> indent <> [i|right = nt_#{nt}._ipg_end;\n\n|]
+   <> indent <> [i|left = nt_#{u nt}._ipg_start;\n|]
+   <> indent <> [i|right = nt_#{u nt}._ipg_end;\n\n|]
   where startExp = exprToJS c env start; endExp = exprToJS' c env 10 end;
         lExp = exprToJS c env l; rExp = exprToJS c env r; es = map (exprToJS c env) args
 termToJS indent c env z@(Any x l)
@@ -216,26 +219,26 @@ termToJS indent c env z@(Repeat nt args l r x l0 r0)
    <> indent <>   "self.values = [];\n"
    <> indent <> [i|left = #{l0Exp};\n|]
    <> indent <> [i|right = #{r0Exp};\n|]
-   <> indent <> [i|nt_#{nt} = #{nt}(input, begin + left, begin + right#{argList es});\n|]
-   <> indent <> [i|if (nt_#{nt} !== null) {\n|]
-   <> indent <> [i|  if (nt_#{nt}._ipg_end === 0) throw 'repeat of non-consuming rule: #{nt}';\n|]
-   <> indent <> [i|  self._ipg_start = Math.min(self._ipg_start, left + nt_#{nt}._ipg_start);\n|]
-   <> indent <> [i|  self._ipg_end = Math.max(self._ipg_end, left + nt_#{nt}._ipg_end);\n|]
-   <> indent <> [i|  nt_#{nt}._ipg_end += left;\n|]
-   <> indent <> [i|  nt_#{nt}._ipg_start += left;\n|]
+   <> indent <> [i|nt_#{u nt} = #{fst nt}(input, begin + left, begin + right#{argList es});\n|]
+   <> indent <> [i|if (nt_#{u nt} !== null) {\n|]
+   <> indent <> [i|  if (nt_#{u nt}._ipg_end === 0) throw 'repeat of non-consuming rule: #{fst nt}';\n|]
+   <> indent <> [i|  self._ipg_start = Math.min(self._ipg_start, left + nt_#{u nt}._ipg_start);\n|]
+   <> indent <> [i|  self._ipg_end = Math.max(self._ipg_end, left + nt_#{u nt}._ipg_end);\n|]
+   <> indent <> [i|  nt_#{u nt}._ipg_end += left;\n|]
+   <> indent <> [i|  nt_#{u nt}._ipg_start += left;\n|]
    <> indent <> [i|  left = #{lExp};\n|]
    <> indent <> [i|  right = #{rExp};\n|]
-   <> indent <> [i|  self.values.push(nt_#{nt}.#{x});\n\n|]
+   <> indent <> [i|  self.values.push(nt_#{u nt}.#{x});\n\n|]
 
    <> indent <>   "  while (left >= 0 && left <= right && right <= EOI) {\n"
-   <> indent <> [i|    nt_#{nt} = #{nt}(input, begin + left, begin + right#{argList es});\n|]
-   <> indent <> [i|    if (nt_#{nt} === null) break;\n|]
-   <> indent <> [i|    if (nt_#{nt}._ipg_end === 0) throw 'repeat of non-consuming rule: #{nt}';\n|]
-   <> indent <> [i|    self._ipg_start = Math.min(self._ipg_start, left + nt_#{nt}._ipg_start);\n|]
-   <> indent <> [i|    self._ipg_end = Math.max(self._ipg_end, left + nt_#{nt}._ipg_end);\n|]
-   <> indent <> [i|    nt_#{nt}._ipg_end += left;\n|]
-   <> indent <> [i|    nt_#{nt}._ipg_start += left;\n|]
-   <> indent <> [i|    self.values.push(nt_#{nt}.#{x});\n|]
+   <> indent <> [i|    nt_#{u nt} = #{fst nt}(input, begin + left, begin + right#{argList es});\n|]
+   <> indent <> [i|    if (nt_#{u nt} === null) break;\n|]
+   <> indent <> [i|    if (nt_#{u nt}._ipg_end === 0) throw 'repeat of non-consuming rule: #{fst nt}';\n|]
+   <> indent <> [i|    self._ipg_start = Math.min(self._ipg_start, left + nt_#{u nt}._ipg_start);\n|]
+   <> indent <> [i|    self._ipg_end = Math.max(self._ipg_end, left + nt_#{u nt}._ipg_end);\n|]
+   <> indent <> [i|    nt_#{u nt}._ipg_end += left;\n|]
+   <> indent <> [i|    nt_#{u nt}._ipg_start += left;\n|]
+   <> indent <> [i|    self.values.push(nt_#{u nt}.#{x});\n|]
    <> indent <> [i|    left = #{lExp};\n|]
    <> indent <> [i|    right = #{rExp};\n|]
    <> indent <>   "  }\n"
@@ -251,25 +254,25 @@ termToJS indent c env z@(RepeatUntil nt1 args1 l r x l0 r0 nt2 args2)
    <> indent <>   "self.values = [];\n"
    <> indent <>   "while (true) {\n"
    <> indent <>   "  if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
-   <> indent <> [i|  nt_#{nt2} = #{nt2}(input, begin + left, begin + right#{argList es2});\n|]
-   <> indent <> [i|  if (nt_#{nt2} !== null) {\n|]
-   <> indent <> [i|    if (nt_#{nt2}._ipg_end !== 0) {\n|]
-   <> indent <> [i|      self._ipg_start = Math.min(self._ipg_start, left + nt_#{nt2}._ipg_start);\n|]
-   <> indent <> [i|      self._ipg_end = Math.max(self._ipg_end, left + nt_#{nt2}._ipg_end);\n|]
+   <> indent <> [i|  nt_#{u nt2} = #{fst nt2}(input, begin + left, begin + right#{argList es2});\n|]
+   <> indent <> [i|  if (nt_#{u nt2} !== null) {\n|]
+   <> indent <> [i|    if (nt_#{u nt2}._ipg_end !== 0) {\n|]
+   <> indent <> [i|      self._ipg_start = Math.min(self._ipg_start, left + nt_#{u nt2}._ipg_start);\n|]
+   <> indent <> [i|      self._ipg_end = Math.max(self._ipg_end, left + nt_#{u nt2}._ipg_end);\n|]
    <> indent <>   "    }\n"
-   <> indent <> [i|    nt_#{nt2}._ipg_end += left;\n|]
-   <> indent <> [i|    nt_#{nt2}._ipg_start += left;\n|]
-   <> indent <> [i|    right = nt_#{nt2}._ipg_end;\n|]
+   <> indent <> [i|    nt_#{u nt2}._ipg_end += left;\n|]
+   <> indent <> [i|    nt_#{u nt2}._ipg_start += left;\n|]
+   <> indent <> [i|    right = nt_#{u nt2}._ipg_end;\n|]
    <> indent <>   "    break;\n"
    <> indent <>   "  }\n"
-   <> indent <> [i|  nt_#{nt1} = #{nt1}(input, begin + left, begin + right#{argList es1});\n|]
-   <> indent <> [i|  if (nt_#{nt1} === null) break _ipg_alt;\n|]
-   <> indent <> [i|  if (nt_#{nt1}._ipg_end === 0) throw 'repeat of non-consuming rule: #{nt1}';\n|]
-   <> indent <> [i|  self._ipg_start = Math.min(self._ipg_start, left + nt_#{nt1}._ipg_start);\n|]
-   <> indent <> [i|  self._ipg_end = Math.max(self._ipg_end, left + nt_#{nt1}._ipg_end);\n|]
-   <> indent <> [i|  nt_#{nt1}._ipg_end += left;\n|]
-   <> indent <> [i|  nt_#{nt1}._ipg_start += left;\n|]
-   <> indent <> [i|  self.values.push(nt_#{nt1}.#{x});\n|]
+   <> indent <> [i|  nt_#{u nt1} = #{fst nt1}(input, begin + left, begin + right#{argList es1});\n|]
+   <> indent <> [i|  if (nt_#{u nt1} === null) break _ipg_alt;\n|]
+   <> indent <> [i|  if (nt_#{u nt1}._ipg_end === 0) throw 'repeat of non-consuming rule: #{fst nt1}';\n|]
+   <> indent <> [i|  self._ipg_start = Math.min(self._ipg_start, left + nt_#{u nt1}._ipg_start);\n|]
+   <> indent <> [i|  self._ipg_end = Math.max(self._ipg_end, left + nt_#{u nt1}._ipg_end);\n|]
+   <> indent <> [i|  nt_#{u nt1}._ipg_end += left;\n|]
+   <> indent <> [i|  nt_#{u nt1}._ipg_start += left;\n|]
+   <> indent <> [i|  self.values.push(nt_#{u nt1}.#{x});\n|]
    <> indent <> [i|  left = #{lExp};\n|]
    <> indent <> [i|  right = #{rExp};\n|]
    <> indent <>   "}\n\n"
@@ -291,8 +294,8 @@ alternativeToJS instrument indent c env (Alternative ts)
    <> indent <> "}\n"
   where nts = nonTerminals ts
         seqs = arrayNonTerminals ts
-        declare nt = indent <> [i|  let nt_#{nt :: T};\n|]
-        declareSeqs nt = indent <> [i|  let seq_#{nt :: T}; let seq_#{nt}_start = 0;\n|]
+        declare nt = indent <> [i|  let nt_#{u nt};\n|]
+        declareSeqs nt = indent <> [i|  let seq_#{u nt}; let seq_#{u nt}_start = 0;\n|]
         instrumentation = case instrument of
                             Nothing -> ""
                             -- Purposely over-indented.

@@ -1,28 +1,28 @@
 QOI
-  -> QOIHeader[0, EOI]
-     { width = QOIHeader.width }
-     { height = QOIHeader.height }
-     { channels = QOIHeader.channels }
-     { colorspace = QOIHeader.colorspace }
-     QOIChunks(initState())[QOIHeader.END, EOI]
-     { colors = concat(QOIChunks.values) };
+  -> QOIHeader@0[0, EOI]
+     { width = QOIHeader@0.width }
+     { height = QOIHeader@0.height }
+     { channels = QOIHeader@0.channels }
+     { colorspace = QOIHeader@0.colorspace }
+     QOIChunks@0(initState())[QOIHeader@0.END, EOI]
+     { colors = concat(QOIChunks@0.values) };
 
 QOIHeader
   -> "qoif"[0, 4]
-     BE_U32[4, EOI]
-     { width = BE_U32.value }
-     BE_U32[BE_U32.END, EOI]
-     { height = BE_U32.value }
-     { channels = .[BE_U32.END] }
-     { colorspace = .[BE_U32.END + 1] };
+     BE_U32@0[4, EOI]
+     { width = BE_U32@0.value }
+     BE_U32@1[BE_U32@0.END, EOI]
+     { height = BE_U32@1.value }
+     { channels = .[BE_U32@1.END] }
+     { colorspace = .[BE_U32@1.END + 1] };
 
 QOIChunks(state)
-  -> repeat QOIChunk(state)[QOIChunk.END, EOI].chunk starting on [0, EOI] until EndMarker;
+  -> repeat QOIChunk@0(state)[QOIChunk@0.END, EOI].chunk starting on [0, EOI] until EndMarker@0;
 
 QOIChunk(state)
   -> { tagByte = .[0] }
-     Chunk(state, tagByte)[1, EOI]
-     { chunk = Chunk.run };
+     Chunk@0(state, tagByte)[1, EOI]
+     { chunk = Chunk@0.run };
 
 Chunk(state, tagByte)
   -> ?[ tagByte == 254 ]
@@ -51,9 +51,9 @@ Chunk(state, tagByte)
    / ?[ tagByte >> 6 == 2 ]
      { tag = "luma" }
      { diffGreen = (tagByte & 63) - 32 }
-     U8[0, EOI]
-     { drdg = (U8.value >> 4) - 8 }
-     { dbdg = (U8.value & 15) - 8 }
+     U8@0[0, EOI]
+     { drdg = (U8@0.value >> 4) - 8 }
+     { dbdg = (U8@0.value & 15) - 8 }
      { run = lumaCase(state, diffGreen, drdg, dbdg) }
    / ?[ tagByte >> 6 == 3 ]
      { tag = "run" }

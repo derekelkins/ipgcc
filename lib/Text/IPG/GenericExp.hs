@@ -1,4 +1,4 @@
-module Text.IPG.GenericExp ( Exp(..), simplify, simplifyExp ) where
+module Text.IPG.GenericExp ( Exp(..), mapRef, simplify, simplifyExp ) where
 import Data.Bits ( shift, complement, xor, (.&.), (.|.) ) -- base
 
 import Text.IPG.Core ( Grammar, Ref )
@@ -35,6 +35,37 @@ data Exp nt t id
     | Ref (Ref nt id (Exp nt t id))
   deriving ( Show )
 
+mapRef :: (Ref nt id (Exp nt t id) -> Ref nt' id (Exp nt' t id)) -> Exp nt t id -> Exp nt' t id 
+mapRef f (Not l) = Not (mapRef f l)
+mapRef f (Neg l) = Neg (mapRef f l)
+mapRef f (BitwiseNeg l) = BitwiseNeg (mapRef f l)
+mapRef f (Add l r) = Add (mapRef f l) (mapRef f r)
+mapRef f (Sub l r) = Sub (mapRef f l) (mapRef f r)
+mapRef f (Mul l r) = Mul (mapRef f l) (mapRef f r)
+mapRef f (Div l r) = Div (mapRef f l) (mapRef f r)
+mapRef f (Mod l r) = Mod (mapRef f l) (mapRef f r)
+mapRef f (Exp l r) = Exp (mapRef f l) (mapRef f r)
+mapRef f (And l r) = And (mapRef f l) (mapRef f r)
+mapRef f (Or l r) = Or (mapRef f l) (mapRef f r)
+mapRef f (BitwiseAnd l r) = BitwiseAnd (mapRef f l) (mapRef f r)
+mapRef f (BitwiseXor l r) = BitwiseXor (mapRef f l) (mapRef f r)
+mapRef f (BitwiseOr l r) = BitwiseOr (mapRef f l) (mapRef f r)
+mapRef f (LSh l r) = LSh (mapRef f l) (mapRef f r)
+mapRef f (RSh l r) = RSh (mapRef f l) (mapRef f r)
+mapRef f (LessThan l r) = LessThan (mapRef f l) (mapRef f r)
+mapRef f (LTE l r) = LTE (mapRef f l) (mapRef f r)
+mapRef f (GreaterThan l r) = GreaterThan (mapRef f l) (mapRef f r)
+mapRef f (GTE l r) = GTE (mapRef f l) (mapRef f r)
+mapRef f (Equal l r) = Equal (mapRef f l) (mapRef f r)
+mapRef f (NotEqual l r) = NotEqual (mapRef f l) (mapRef f r)
+mapRef f (At l r) = At (mapRef f l) (mapRef f r)
+mapRef f (If b t e) = If (mapRef f b) (mapRef f t) (mapRef f e)
+mapRef f (Call t es) = Call t (map (mapRef f) es)
+mapRef f (Ref r) = Ref (f r)
+mapRef _ (Int n) = Int n
+mapRef _ (Float n) = Float n
+mapRef _ (String s) = String s
+       
 simplify :: (Ord t) => Grammar nt t id (Exp nt t id) -> Grammar nt t id (Exp nt t id)
 simplify = fmap simplifyExp
 

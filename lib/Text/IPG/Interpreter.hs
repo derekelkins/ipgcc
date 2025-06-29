@@ -44,7 +44,7 @@ data EnvEntry a = EnvEntry {
     offset_ :: Int
   }
 
-type NTBindings a = Map.Map NT (EnvEntry a)
+type NTBindings a = Map.Map (NT, Int) (EnvEntry a)
 
 type Environment a = (NTBindings a, Bindings a)
 
@@ -132,7 +132,15 @@ slice :: Int -> Int -> Buffer -> Maybe Buffer
 slice l r buf | 0 <= l && l <= r && r <= BS.length buf = Just (BS.take (r - l) (BS.drop l buf))
               | otherwise = Nothing
 
-interpNonTerminal :: HasCallStack => Context a -> NT -> [Exp'] -> Exp' -> Exp' -> Int -> InterpFunc a
+interpNonTerminal
+    :: HasCallStack
+    => Context a
+    -> (NT, Int)
+    -> [Exp']
+    -> Exp'
+    -> Exp'
+    -> Int
+    -> InterpFunc a
 interpNonTerminal ctxt nt args e_l e_r = \_ env@(ntbs, bs) ps buf ->
     let eoi = BS.length buf
         args' = Map.fromList (zip ids (map (eval ctxt eoi env ps) args))
@@ -155,7 +163,7 @@ interpNonTerminal ctxt nt args e_l e_r = \_ env@(ntbs, bs) ps buf ->
                                 }
                             ntbs'' = Map.insertWith const nt initialEntry ntbs
                         in Just ((ntbs'', bs), start, end)
-  where (ids, rf) = ruleFuncs ctxt !!! nt
+  where (ids, rf) = ruleFuncs ctxt !!! fst nt
 
 interpTerm :: (HasCallStack) => Context a -> Term' -> Int -> InterpFunc a
 interpTerm ctxt = go
@@ -277,7 +285,7 @@ interpTerm ctxt = go
                 body = interpNonTerminal ctxt nt1 es1 l r
                 condition = interpNonTerminal ctxt nt2 es2 l r
 
-access :: HasCallStack => NTBindings a -> NT -> Id -> Value a
+access :: HasCallStack => NTBindings a -> (NT, Int) -> Id -> Value a
 access env nt "this" = BINDINGS (this_ (env !!! nt))
 access env nt "these" = SEQUENCE (map BINDINGS (these_ (env !!! nt)))
 access env nt x = case this_ (env !!! nt) of bs -> bs !!! x

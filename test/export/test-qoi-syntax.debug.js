@@ -22,56 +22,56 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_QOIHeader;
-    let nt_QOIChunks;
+    let nt_QOIHeader_0;
+    let nt_QOIChunks_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // QOIHeader[0, EOI]
+    // QOIHeader@0[0, EOI]
     left = 0;
-    _ipg_failedTerm = { term: "QOIHeader[0, EOI]", left, right };
+    _ipg_failedTerm = { term: "QOIHeader@0[0, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_QOIHeader = QOIHeader(input, begin + left, begin + right);
-    if (nt_QOIHeader === null) break _ipg_alt;
-    if (nt_QOIHeader._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_QOIHeader._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_QOIHeader._ipg_end);
+    nt_QOIHeader_0 = QOIHeader(input, begin + left, begin + right);
+    if (nt_QOIHeader_0 === null) break _ipg_alt;
+    if (nt_QOIHeader_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_QOIHeader_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_QOIHeader_0._ipg_end);
     }
-    nt_QOIHeader._ipg_end += left;
-    nt_QOIHeader._ipg_start += left;
-    left = nt_QOIHeader._ipg_start;
-    right = nt_QOIHeader._ipg_end;
+    nt_QOIHeader_0._ipg_end += left;
+    nt_QOIHeader_0._ipg_start += left;
+    left = nt_QOIHeader_0._ipg_start;
+    right = nt_QOIHeader_0._ipg_end;
 
-    // { width = QOIHeader.width }
-    self.width = nt_QOIHeader.width;
+    // { width = QOIHeader@0.width }
+    self.width = nt_QOIHeader_0.width;
 
-    // { height = QOIHeader.height }
-    self.height = nt_QOIHeader.height;
+    // { height = QOIHeader@0.height }
+    self.height = nt_QOIHeader_0.height;
 
-    // { channels = QOIHeader.channels }
-    self.channels = nt_QOIHeader.channels;
+    // { channels = QOIHeader@0.channels }
+    self.channels = nt_QOIHeader_0.channels;
 
-    // { colorspace = QOIHeader.colorspace }
-    self.colorspace = nt_QOIHeader.colorspace;
+    // { colorspace = QOIHeader@0.colorspace }
+    self.colorspace = nt_QOIHeader_0.colorspace;
 
-    // QOIChunks[QOIHeader.END, EOI]
-    left = nt_QOIHeader._ipg_end;
-    _ipg_failedTerm = { term: "QOIChunks[QOIHeader.END, EOI]", left, right };
+    // QOIChunks@0[QOIHeader@0.END, EOI]
+    left = nt_QOIHeader_0._ipg_end;
+    _ipg_failedTerm = { term: "QOIChunks@0[QOIHeader@0.END, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_QOIChunks = QOIChunks(input, begin + left, begin + right);
-    if (nt_QOIChunks === null) break _ipg_alt;
-    if (nt_QOIChunks._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_QOIChunks._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_QOIChunks._ipg_end);
+    nt_QOIChunks_0 = QOIChunks(input, begin + left, begin + right);
+    if (nt_QOIChunks_0 === null) break _ipg_alt;
+    if (nt_QOIChunks_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_QOIChunks_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_QOIChunks_0._ipg_end);
     }
-    nt_QOIChunks._ipg_end += left;
-    nt_QOIChunks._ipg_start += left;
-    left = nt_QOIChunks._ipg_start;
-    right = nt_QOIChunks._ipg_end;
+    nt_QOIChunks_0._ipg_end += left;
+    nt_QOIChunks_0._ipg_start += left;
+    left = nt_QOIChunks_0._ipg_start;
+    right = nt_QOIChunks_0._ipg_end;
 
-    // { chunks = QOIChunks.values }
-    self.chunks = nt_QOIChunks.values;
+    // { chunks = QOIChunks@0.values }
+    self.chunks = nt_QOIChunks_0.values;
 
   _ipg_failTreeStack.pop();
     return self;
@@ -96,7 +96,8 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_BE_U32;
+    let nt_BE_U32_0;
+    let nt_BE_U32_1;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // "qoif"[0, 4]
@@ -109,57 +110,57 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 4;
 
-    // BE_U32[4, EOI]
+    // BE_U32@0[4, EOI]
     left = 4;
-    _ipg_failedTerm = { term: "BE_U32[4, EOI]", left, right };
+    _ipg_failedTerm = { term: "BE_U32@0[4, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_BE_U32 = BE_U32(input, begin + left, begin + right);
-    if (nt_BE_U32 === null) break _ipg_alt;
-    if (nt_BE_U32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_BE_U32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_BE_U32._ipg_end);
+    nt_BE_U32_0 = BE_U32(input, begin + left, begin + right);
+    if (nt_BE_U32_0 === null) break _ipg_alt;
+    if (nt_BE_U32_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_BE_U32_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_BE_U32_0._ipg_end);
     }
-    nt_BE_U32._ipg_end += left;
-    nt_BE_U32._ipg_start += left;
-    left = nt_BE_U32._ipg_start;
-    right = nt_BE_U32._ipg_end;
+    nt_BE_U32_0._ipg_end += left;
+    nt_BE_U32_0._ipg_start += left;
+    left = nt_BE_U32_0._ipg_start;
+    right = nt_BE_U32_0._ipg_end;
 
-    // { width = BE_U32.value }
-    self.width = nt_BE_U32.value;
+    // { width = BE_U32@0.value }
+    self.width = nt_BE_U32_0.value;
 
-    // BE_U32[BE_U32.END, EOI]
-    left = nt_BE_U32._ipg_end;
-    _ipg_failedTerm = { term: "BE_U32[BE_U32.END, EOI]", left, right };
+    // BE_U32@1[BE_U32@0.END, EOI]
+    left = nt_BE_U32_0._ipg_end;
+    _ipg_failedTerm = { term: "BE_U32@1[BE_U32@0.END, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_BE_U32 = BE_U32(input, begin + left, begin + right);
-    if (nt_BE_U32 === null) break _ipg_alt;
-    if (nt_BE_U32._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_BE_U32._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_BE_U32._ipg_end);
+    nt_BE_U32_1 = BE_U32(input, begin + left, begin + right);
+    if (nt_BE_U32_1 === null) break _ipg_alt;
+    if (nt_BE_U32_1._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_BE_U32_1._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_BE_U32_1._ipg_end);
     }
-    nt_BE_U32._ipg_end += left;
-    nt_BE_U32._ipg_start += left;
-    left = nt_BE_U32._ipg_start;
-    right = nt_BE_U32._ipg_end;
+    nt_BE_U32_1._ipg_end += left;
+    nt_BE_U32_1._ipg_start += left;
+    left = nt_BE_U32_1._ipg_start;
+    right = nt_BE_U32_1._ipg_end;
 
-    // { height = BE_U32.value }
-    self.height = nt_BE_U32.value;
+    // { height = BE_U32@1.value }
+    self.height = nt_BE_U32_1.value;
 
-    // { channels = .[BE_U32.END] }
-    left = nt_BE_U32._ipg_end;
+    // { channels = .[BE_U32@1.END] }
+    left = nt_BE_U32_1._ipg_end;
     right = left + 1;
-    _ipg_failedTerm = { term: "{ channels = .[BE_U32.END] }", left, right };
+    _ipg_failedTerm = { term: "{ channels = .[BE_U32@1.END] }", left, right };
     if (left < 0 || right > EOI) break _ipg_alt;
     self.channels = input[begin + left];
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
 
-    // { colorspace = .[BE_U32.END + 1] }
-    left = nt_BE_U32._ipg_end + 1;
+    // { colorspace = .[BE_U32@1.END + 1] }
+    left = nt_BE_U32_1._ipg_end + 1;
     right = left + 1;
-    _ipg_failedTerm = { term: "{ colorspace = .[BE_U32.END + 1] }", left, right };
+    _ipg_failedTerm = { term: "{ colorspace = .[BE_U32@1.END + 1] }", left, right };
     if (left < 0 || right > EOI) break _ipg_alt;
     self.colorspace = input[begin + left];
     self._ipg_start = Math.min(self._ipg_start, left);
@@ -188,37 +189,37 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_QOIChunk;
-    let nt_EndMarker;
+    let nt_QOIChunk_0;
+    let nt_EndMarker_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // repeat QOIChunk[QOIChunk.END, EOI].chunk starting on [0, EOI] until EndMarker
-    _ipg_failedTerm = { term: "repeat QOIChunk[QOIChunk.END, EOI].chunk starting on [0, EOI] until EndMarker" };
+    // repeat QOIChunk@0[QOIChunk@0.END, EOI].chunk starting on [0, EOI] until EndMarker@0
+    _ipg_failedTerm = { term: "repeat QOIChunk@0[QOIChunk@0.END, EOI].chunk starting on [0, EOI] until EndMarker@0" };
     left = 0;
     right = EOI;
     self.values = [];
     while (true) {
       if (left < 0 || right < left || right > EOI) break _ipg_alt;
-      nt_EndMarker = EndMarker(input, begin + left, begin + right);
-      if (nt_EndMarker !== null) {
-        if (nt_EndMarker._ipg_end !== 0) {
-          self._ipg_start = Math.min(self._ipg_start, left + nt_EndMarker._ipg_start);
-          self._ipg_end = Math.max(self._ipg_end, left + nt_EndMarker._ipg_end);
+      nt_EndMarker_0 = EndMarker(input, begin + left, begin + right);
+      if (nt_EndMarker_0 !== null) {
+        if (nt_EndMarker_0._ipg_end !== 0) {
+          self._ipg_start = Math.min(self._ipg_start, left + nt_EndMarker_0._ipg_start);
+          self._ipg_end = Math.max(self._ipg_end, left + nt_EndMarker_0._ipg_end);
         }
-        nt_EndMarker._ipg_end += left;
-        nt_EndMarker._ipg_start += left;
-        right = nt_EndMarker._ipg_end;
+        nt_EndMarker_0._ipg_end += left;
+        nt_EndMarker_0._ipg_start += left;
+        right = nt_EndMarker_0._ipg_end;
         break;
       }
-      nt_QOIChunk = QOIChunk(input, begin + left, begin + right);
-      if (nt_QOIChunk === null) break _ipg_alt;
-      if (nt_QOIChunk._ipg_end === 0) throw 'repeat of non-consuming rule: QOIChunk';
-      self._ipg_start = Math.min(self._ipg_start, left + nt_QOIChunk._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_QOIChunk._ipg_end);
-      nt_QOIChunk._ipg_end += left;
-      nt_QOIChunk._ipg_start += left;
-      self.values.push(nt_QOIChunk.chunk);
-      left = nt_QOIChunk._ipg_end;
+      nt_QOIChunk_0 = QOIChunk(input, begin + left, begin + right);
+      if (nt_QOIChunk_0 === null) break _ipg_alt;
+      if (nt_QOIChunk_0._ipg_end === 0) throw 'repeat of non-consuming rule: QOIChunk';
+      self._ipg_start = Math.min(self._ipg_start, left + nt_QOIChunk_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_QOIChunk_0._ipg_end);
+      nt_QOIChunk_0._ipg_end += left;
+      nt_QOIChunk_0._ipg_start += left;
+      self.values.push(nt_QOIChunk_0.chunk);
+      left = nt_QOIChunk_0._ipg_end;
       right = EOI;
     }
 
@@ -245,7 +246,7 @@ let _ipg_failedTerm = null;
 _ipg_failTreeStack.push(_ipg_currentFailTree);
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_Chunk;
+    let nt_Chunk_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // { tagByte = .[0] }
@@ -257,24 +258,24 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
 
-    // Chunk(tagByte)[1, EOI]
+    // Chunk@0(tagByte)[1, EOI]
     left = 1;
-    _ipg_failedTerm = { term: "Chunk(tagByte)[1, EOI]", left, right };
+    _ipg_failedTerm = { term: "Chunk@0(tagByte)[1, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_Chunk = Chunk(input, begin + left, begin + right, self.tagByte);
-    if (nt_Chunk === null) break _ipg_alt;
-    if (nt_Chunk._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_Chunk._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_Chunk._ipg_end);
+    nt_Chunk_0 = Chunk(input, begin + left, begin + right, self.tagByte);
+    if (nt_Chunk_0 === null) break _ipg_alt;
+    if (nt_Chunk_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Chunk_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Chunk_0._ipg_end);
     }
-    nt_Chunk._ipg_end += left;
-    nt_Chunk._ipg_start += left;
-    left = nt_Chunk._ipg_start;
-    right = nt_Chunk._ipg_end;
+    nt_Chunk_0._ipg_end += left;
+    nt_Chunk_0._ipg_start += left;
+    left = nt_Chunk_0._ipg_start;
+    right = nt_Chunk_0._ipg_end;
 
-    // { chunk = Chunk.this }
-    self.chunk = (({_ipg_start,_ipg_end,...o}) => o)(nt_Chunk);
+    // { chunk = Chunk@0.this }
+    self.chunk = (({_ipg_start,_ipg_end,...o}) => o)(nt_Chunk_0);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -430,7 +431,7 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
   }
   _ipg_alt: {
     let left = EOI; let right = 0; let loopEnd = 0;
-    let nt_U8;
+    let nt_U8_0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
     // ?[ tagByte >> 6 == 2 ]
@@ -443,27 +444,27 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     // { diffGreen = (tagByte & 63) - 32 }
     self.diffGreen = (a_tagByte & 63) - 32;
 
-    // U8[0, EOI]
+    // U8@0[0, EOI]
     left = 0;
-    _ipg_failedTerm = { term: "U8[0, EOI]", left, right };
+    _ipg_failedTerm = { term: "U8@0[0, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_U8 = U8(input, begin + left, begin + right);
-    if (nt_U8 === null) break _ipg_alt;
-    if (nt_U8._ipg_end !== 0) {
-      self._ipg_start = Math.min(self._ipg_start, left + nt_U8._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, left + nt_U8._ipg_end);
+    nt_U8_0 = U8(input, begin + left, begin + right);
+    if (nt_U8_0 === null) break _ipg_alt;
+    if (nt_U8_0._ipg_end !== 0) {
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U8_0._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U8_0._ipg_end);
     }
-    nt_U8._ipg_end += left;
-    nt_U8._ipg_start += left;
-    left = nt_U8._ipg_start;
-    right = nt_U8._ipg_end;
+    nt_U8_0._ipg_end += left;
+    nt_U8_0._ipg_start += left;
+    left = nt_U8_0._ipg_start;
+    right = nt_U8_0._ipg_end;
 
-    // { drdg = (U8.value >> 4) - 8 }
-    self.drdg = (nt_U8.value >> 4) - 8;
+    // { drdg = (U8@0.value >> 4) - 8 }
+    self.drdg = (nt_U8_0.value >> 4) - 8;
 
-    // { dbdg = (U8.value & 15) - 8 }
-    self.dbdg = (nt_U8.value & 15) - 8;
+    // { dbdg = (U8@0.value & 15) - 8 }
+    self.dbdg = (nt_U8_0.value & 15) - 8;
 
   _ipg_failTreeStack.pop();
     return self;
