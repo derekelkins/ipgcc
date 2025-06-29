@@ -17,7 +17,7 @@ QOIHeader
      { colorspace = .[BE_U32.END + 1] };
 
 QOIChunks(state)
-  -> repeat QOIChunk(state).chunk until EndMarker;
+  -> repeat QOIChunk(state)[QOIChunk.END, EOI].chunk starting on [0, EOI] until EndMarker;
 
 QOIChunk(state)
   -> { tagByte = .[0] }

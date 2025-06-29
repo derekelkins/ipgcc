@@ -367,31 +367,33 @@ function Blocks(input, begin = 0, end = input.length) {
     let nt_Trailer;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // repeat Block.block until Trailer
-    left = right;
+    // repeat Block[Block.END, EOI].block starting on [0, EOI] until Trailer
+    left = 0;
+    right = EOI;
     self.values = [];
     while (true) {
-      if (EOI < right) break _ipg_alt;
-      nt_Trailer = Trailer(input, begin + right, begin + EOI);
+      if (left < 0 || right < left || right > EOI) break _ipg_alt;
+      nt_Trailer = Trailer(input, begin + left, begin + right);
       if (nt_Trailer !== null) {
         if (nt_Trailer._ipg_end !== 0) {
-          self._ipg_start = Math.min(self._ipg_start, right + nt_Trailer._ipg_start);
-          self._ipg_end = Math.max(self._ipg_end, right + nt_Trailer._ipg_end);
+          self._ipg_start = Math.min(self._ipg_start, left + nt_Trailer._ipg_start);
+          self._ipg_end = Math.max(self._ipg_end, left + nt_Trailer._ipg_end);
         }
-        nt_Trailer._ipg_end += right;
-        nt_Trailer._ipg_start += right;
+        nt_Trailer._ipg_end += left;
+        nt_Trailer._ipg_start += left;
         right = nt_Trailer._ipg_end;
         break;
       }
-      nt_Block = Block(input, begin + right, begin + EOI);
+      nt_Block = Block(input, begin + left, begin + right);
       if (nt_Block === null) break _ipg_alt;
       if (nt_Block._ipg_end === 0) throw 'repeat of non-consuming rule: Block';
-      self._ipg_start = Math.min(self._ipg_start, right + nt_Block._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, right + nt_Block._ipg_end);
-      nt_Block._ipg_end += right;
-      nt_Block._ipg_start += right;
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Block._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Block._ipg_end);
+      nt_Block._ipg_end += left;
+      nt_Block._ipg_start += left;
       self.values.push(nt_Block.block);
-      right = nt_Block._ipg_end;
+      left = nt_Block._ipg_end;
+      right = EOI;
     }
 
     return self;
@@ -1254,31 +1256,33 @@ function Subblocks(input, begin = 0, end = input.length) {
     let nt_BlockTerminator;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // repeat Subblock.data until BlockTerminator
-    left = right;
+    // repeat Subblock[Subblock.END, EOI].data starting on [0, EOI] until BlockTerminator
+    left = 0;
+    right = EOI;
     self.values = [];
     while (true) {
-      if (EOI < right) break _ipg_alt;
-      nt_BlockTerminator = BlockTerminator(input, begin + right, begin + EOI);
+      if (left < 0 || right < left || right > EOI) break _ipg_alt;
+      nt_BlockTerminator = BlockTerminator(input, begin + left, begin + right);
       if (nt_BlockTerminator !== null) {
         if (nt_BlockTerminator._ipg_end !== 0) {
-          self._ipg_start = Math.min(self._ipg_start, right + nt_BlockTerminator._ipg_start);
-          self._ipg_end = Math.max(self._ipg_end, right + nt_BlockTerminator._ipg_end);
+          self._ipg_start = Math.min(self._ipg_start, left + nt_BlockTerminator._ipg_start);
+          self._ipg_end = Math.max(self._ipg_end, left + nt_BlockTerminator._ipg_end);
         }
-        nt_BlockTerminator._ipg_end += right;
-        nt_BlockTerminator._ipg_start += right;
+        nt_BlockTerminator._ipg_end += left;
+        nt_BlockTerminator._ipg_start += left;
         right = nt_BlockTerminator._ipg_end;
         break;
       }
-      nt_Subblock = Subblock(input, begin + right, begin + EOI);
+      nt_Subblock = Subblock(input, begin + left, begin + right);
       if (nt_Subblock === null) break _ipg_alt;
       if (nt_Subblock._ipg_end === 0) throw 'repeat of non-consuming rule: Subblock';
-      self._ipg_start = Math.min(self._ipg_start, right + nt_Subblock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, right + nt_Subblock._ipg_end);
-      nt_Subblock._ipg_end += right;
-      nt_Subblock._ipg_start += right;
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Subblock._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Subblock._ipg_end);
+      nt_Subblock._ipg_end += left;
+      nt_Subblock._ipg_start += left;
       self.values.push(nt_Subblock.data);
-      right = nt_Subblock._ipg_end;
+      left = nt_Subblock._ipg_end;
+      right = EOI;
     }
 
     return self;

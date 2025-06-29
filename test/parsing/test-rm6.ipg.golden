@@ -7,7 +7,7 @@ HeaderV6
   -> "reMarkable .lines file, version=6          "[0, 43];
 
 Blocks
-  -> repeat FullBlock.block;
+  -> repeat FullBlock[FullBlock.END, EOI].block starting on [0, EOI];
 
 FullBlock
   -> MainBlockInfo[0, EOI]

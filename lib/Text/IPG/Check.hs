@@ -37,8 +37,8 @@ validate externalRules (Grammar rules) = mconcat (map check rules) <> basicCheck
     attrInTerm (x := _) = Set.singleton x
     attrInTerm (Any x _) = Set.singleton x
     attrInTerm (Slice x _ _) = Set.singleton x
-    attrInTerm (Repeat _ _ _) = Set.singleton "values"
-    attrInTerm (RepeatUntil _ _ _ _ _) = Set.singleton "values"
+    attrInTerm (Repeat _ _ _ _ _ _ _) = Set.singleton "values"
+    attrInTerm (RepeatUntil _ _ _ _ _ _ _ _ _) = Set.singleton "values"
     attrInTerm _ = Set.empty
 
     basicChecks = mconcat [
@@ -77,26 +77,26 @@ validate externalRules (Grammar rules) = mconcat (map check rules) <> basicCheck
         <> checkExp nt params locals r
         <> checkTerms nt params locals ts
     checkTerms nt params locals (Terminal _ l r:ts) =
-            checkExp nt params locals l
+           checkExp nt params locals l
         <> checkExp nt params locals r
         <> checkTerms nt params locals ts
     checkTerms nt params locals ((x := e):ts) =
-            checkExp nt params locals e
+           checkExp nt params locals e
         <> checkTerms nt params locals' ts
       where locals' = Set.insert x locals
     checkTerms nt params locals (Any x e:ts) =
-            checkExp nt params locals e
+           checkExp nt params locals e
         <> checkTerms nt params locals' ts
       where locals' = Set.insert x locals
     checkTerms nt params locals (Slice x l r:ts) =
-            checkExp nt params locals l
+           checkExp nt params locals l
         <> checkExp nt params locals r
         <> checkTerms nt params locals' ts
       where locals' = Set.insert x locals
     checkTerms nt params locals (Guard e:ts) =
             checkExp nt params locals e
         <> checkTerms nt params locals ts
-    checkTerms nt params locals (Repeat a es x:ts) =
+    checkTerms nt params locals (Repeat a es l r x l0 r0:ts) =
         (case Map.lookup a parameters of
             Nothing -> if a `Set.member` externalRules then Nothing
                         else Just [[i|Rule #{a} in rule {nt} is undefined|]]
@@ -107,9 +107,13 @@ validate externalRules (Grammar rules) = mconcat (map check rules) <> basicCheck
                 Just attrs -> if x `Set.member` attrs then Nothing
                                 else Just [[i|#{x} isn't an attribute on #{a} in rule #{nt}|]])
         <> mconcat (map (checkExp nt params locals) es)
+        <> checkExp nt params locals l
+        <> checkExp nt params locals r
+        <> checkExp nt params locals l0
+        <> checkExp nt params locals r0
         <> checkTerms nt params locals' ts
       where locals' = Set.insert "values" locals
-    checkTerms nt params locals (RepeatUntil a es1 x b es2:ts) =
+    checkTerms nt params locals (RepeatUntil a es1 l r x l0 r0 b es2:ts) =
         (case Map.lookup a parameters of
             Nothing -> if a `Set.member` externalRules then Nothing
                         else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
@@ -126,6 +130,10 @@ validate externalRules (Grammar rules) = mconcat (map check rules) <> basicCheck
                                 else Just [[i|Arity mismatch when calling #{b} in rule #{nt}|]])
         <> mconcat (map (checkExp nt params locals) es1)
         <> mconcat (map (checkExp nt params locals) es2)
+        <> checkExp nt params locals l
+        <> checkExp nt params locals r
+        <> checkExp nt params locals l0
+        <> checkExp nt params locals r0
         <> checkTerms nt params locals' ts
       where locals' = Set.insert "values" locals
     checkTerms nt params locals (Array x s e a es l r:ts) =

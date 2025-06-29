@@ -94,10 +94,10 @@ Term
     | "?[" Exp "]"                  -- ?[ e ]
     | "for" NAME "=" Exp "to" Exp "do" NAME ArgumentList? Interval?
       -- for id=e_1 to e_2 do A(a_1, ..., a_m)[e_l, e_r]
-    | "repeat" NAME ArgumentList? "." NAME
-      -- repeat A(a_1, ..., a_m).id
-    | "repeat" NAME ArgumentList? "." NAME "until" NAME ArgumentList?
-      -- repeat A(a_1, ..., a_m).id until B(b_1, ..., b_k)
+    | "repeat" NAME ArgumentList? Interval? "." NAME ("starting" "on" Interval)?
+      -- repeat A(a_1, ..., a_m)[l, r].id starting on [l0, r0]
+    | "repeat" NAME ArgumentList? Interval? "." NAME ("starting" "on" Interval)? "until" NAME ArgumentList?
+      -- repeat A(a_1, ..., a_m)[l, r].id starting on [l0, r0] until B(b_1, ..., b_k)
 
 RHS
   ::= Exp                 -- e, as in { id = e }
@@ -316,28 +316,22 @@ It is essentially equivalent to `{ tmp = *[l, l + 1] } { id = tmp[0] }`.
 `id`. It consumes no input and can never fail. Note that `*[l, r]` and `.[l]`
 are not expressions, so you can't do something like `{ id = process(*[l, r]) }`.
 
-Currently, the repeat and repeat-until terms are quite restricted.
-(TODO: Figure out something that is elegant and lifts these restrictions.
-A notable restriction is that they don't support going backwards.
-Maybe allow `A` to specify attributes that will be used as the interval
-for the next iteration? Of course, I could just add a backwards variant
-as that's like the only other interesting case.)
-Their semantics are straightforward as they exist to optimize a common
-pattern.
+The semantics of `repeat` and `repeat-until` are straightforward as they exist
+to optimize a common pattern.
 
-Namely, `repeat A(a_1, ..., a_m).id` is logically shorthand for invoking the
-following rule in the current scope:
+Namely, `repeat A(a_1, ..., a_m)[l, r].id starting on [l0, r0]` is logically
+shorthand for invoking the following rule as `R[l0, r0]` in the current scope:
 
 ```
-R -> A(a_1, ..., a_m)[0, EOI] R[A.END, EOI] { values = cons(A.id, R.values) }
+R -> A(a_1, ..., a_m) R[l, r] { values = cons(A.id, R.values) }
    / { values = nil() };
 ```
 
-and similarly for `repeat A(a_1, ..., a_m).id until B(b_1, ..., b_k)`:
+and similarly for `repeat A(a_1, ..., a_m)[l, r].id starting on [l0, r0] until B(b_1, ..., b_k)`:
 
 ```
 R -> B(b_1, ..., b_k) { values = nil() }
-   / A(a_1, ..., a_m)[0, EOI] R[A.END, EOI] { values = cons(A.id, R.values) };
+   / A(a_1, ..., a_m) R[l, r] { values = cons(A.id, R.values) };
 ```
 
 Here `cons` and `nil` are functions that append an element to the beginning of
@@ -370,6 +364,12 @@ given, it indicates a length.
 For terminals, we know the length so `"s"[l]` becomes `"s"[l, l + "s".length]`.
 Just `"s"` can then become `"s"[Prev.END]` and then be transformed again where
 `Prev.END` is as above.
+
+For `repeat`/`repeat-until` terms, interval inference proceeds like above for the
+`starting on` portion where an omitted `starting on` behaves like `starting on` with
+no interval. For the body, have `repeat A.id` expands to `repeat A[A.END, EOI].id`
+and `repeat A[l].id` expands to `repeat A[A.END, A.END + l]` and similarly for
+`repeat-until`.
 
 Interval inference proceeds left-to-right.
 
@@ -568,3 +568,80 @@ high-level overview of at least the syntactic aspects of this format.
 
 As an example, there isn't too much novel about it other than its size and some checking
 code incorporated into it.
+
+## Future Work
+
+### Not Future Work
+
+First, some things that are extremely unlikely to be added. This formalism is geared
+toward binary formats. While you technically *can* make a parser for a programming
+language or whatever with this, there is no benefit to doing that in IPG as compared
+to other grammar formalisms such as PEG. As such, things like being able to specify
+precedence of operators won't be added. Similarly, "good error messages" isn't
+really a goal, however see the section on [Grammar Debugging Tools](#grammar-debugging-tools).
+
+### Termination Checker and Other Analyses
+
+The paper discusses termination checking. There are other potential static analyses
+that could be done. One of the benefits of using a grammar formalism is that it
+is relatively easy to analyze compared to arbitrary code.
+
+### Grammar Debugging Tools
+
+I've made some stabs at debugging aids, but I'm not really sure what is useful (except
+that I wish I implemented the validation earlier). Currently, `%instrument` just
+spits out the result of a successful rule application, but that is mostly useful
+for indicating that some subparse succeeded and had the values you expect. If it
+doesn't though, it doesn't really help you know why. There's also a "debug mode"
+that, currently, produces a tree-like structure which explains why a parse failed.
+Specifically, it specifies what term failed for each alternative of a rule that
+failed and the relevant interval. This is most useful when the entire parse failed,
+but many rules always succeed, e.g. `repeat A.id` always succeeds.
+
+The good-ish news is that a recursive descent parser has a close and straightforward
+relationship to the grammar, so debugging the generated code with JavaScript debugging
+tools is a completely reasonable thing to do.
+
+### More Back-ends
+
+I don't really have a need for other back-ends, but it would be nice to have others.
+Allocation is more or less unavoidable to represent the collections of attributes,
+but otherwise it should be fairly straightforward to adapt the JavaScript export to
+other languages. One could also imagine an optimizing version which, for example,
+inlines rules.
+
+### Streaming
+
+The nature of the grammar formalism implies that streaming isn't an option in general.
+You can trivially (and usefully!) have a rule that checks the end of the input as
+the first thing it does. Indeed, this is what the PDF parser in the paper does. Nevertheless,
+the paper suggests as future work of its own, that you could make a static analysis that
+could determine when an IPG grammar was streamable.
+
+Possibly you could add a variant of `EOI` called `UNKNOWN` representing the remainder
+of the input. The difference would be that `UNKNOWN` isn't a number, so you can't do
+arithmetic on it, `UNKNOWN` can never be the start of an interval, and `EOI` is only
+defined if the end of the interval a rule was applied on was a number, i.e. not `UNKNOWN`.
+The simplest approach would just enforce these checks at runtime.
+
+### Tail-Call Elimination
+
+The `repeat` and `repeat-until` story is only necessary because recursion leads to
+stack overflows. This isn't just a problem with the underlying runtime, i.e. this
+isn't just because JavaScript doesn't guarantee tail-call elimination (though that
+is also an issue.) The issue is two-fold. First, there is some work maintaining
+`A.START` and `A.END` and checking for failure that happens after a rule completes.
+Second, you often do want to do something after what would otherwise be a tail call.
+Most fundamentally, you probably want to assign the result to some attribute.
+
+Adding notation like `A(a_1, ..., a_n)[l, r].x into y` that is conceptually the
+same as `A(a_1, ..., a_n)[l,r] { y = A.x }` and then using continuation-/destination-passing
+style techniques could probably resolve the issues. (At which point we'd run into
+the issue of the underlying runtime not supporting tail-call elimination.)
+Even for non-tail-calls this is a common pattern, so this notation would be nice.
+
+### Higher-Order Rules
+
+You can sort of already do this kind of by accident, but being more deliberate about this
+may be nice. That said, it would be very easy to make the grammar significantly less
+analyzable this way, so one could imagine this being guarded by a flag.

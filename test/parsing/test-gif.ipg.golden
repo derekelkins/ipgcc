@@ -38,7 +38,7 @@ ColorTable
      { table = RGB.these };
 
 Blocks
-  -> repeat Block.block until Trailer;
+  -> repeat Block[Block.END, EOI].block starting on [0, EOI] until Trailer;
 
 Block
   -> GraphicBlock[0, EOI]
@@ -143,7 +143,7 @@ CommentExtension
      { commentData = decodeAscii(concat(Subblocks.values)) };
 
 Subblocks
-  -> repeat Subblock.data until BlockTerminator;
+  -> repeat Subblock[Subblock.END, EOI].data starting on [0, EOI] until BlockTerminator;
 
 Subblock
   -> { size = .[0] }

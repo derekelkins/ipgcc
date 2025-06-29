@@ -79,10 +79,12 @@ pprintTerm' ppExp (Array j s e nt es l r) =
 pprintTerm' ppExp (Any x e) = "{ " <> Builder.byteString x <> " = .[" <> ppExp e <> "] }"
 pprintTerm' ppExp (Slice x l r) =
     "{ " <> Builder.byteString x <> " = *" <> pprintInterval ppExp l r <> " }"
-pprintTerm' ppExp (Repeat nt es x) =
-    "repeat " <> Builder.byteString nt <> pprintArgList ppExp es <> "." <> Builder.byteString x
-pprintTerm' ppExp (RepeatUntil nt1 es1 x nt2 es2) =
-    "repeat " <> Builder.byteString nt1 <> pprintArgList ppExp es1 <> "." <> Builder.byteString x
+pprintTerm' ppExp (Repeat nt es l r x l0 r0) =
+    "repeat " <> Builder.byteString nt <> pprintArgList ppExp es <> pprintInterval ppExp l r
+ <> "." <> Builder.byteString x <> " starting on " <> pprintInterval ppExp l0 r0
+pprintTerm' ppExp (RepeatUntil nt1 es1 l r x l0 r0 nt2 es2) =
+    "repeat " <> Builder.byteString nt1 <> pprintArgList ppExp es1 <> pprintInterval ppExp l r
+ <> "." <> Builder.byteString x <> " starting on " <> pprintInterval ppExp l0 r0
  <> " until " <> Builder.byteString nt2 <> pprintArgList ppExp es2
     
 pprintRef :: Ref T T (Exp T T T) -> Out

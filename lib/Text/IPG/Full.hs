@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveFunctor #-}
 module Text.IPG.Full ( 
-    Grammar(..), Rule(..), Alternative(..), Term(..),
+    Grammar(..), Rule(..), Alternative(..), Term(..), StartingOn(..),
     ExpHelpers(..),
     toCore, toCoreRule, toCoreAlternative, toCoreTerm,
 ) where
@@ -32,9 +32,28 @@ data Term nt t id e
     | Slice0 id                     -- {id = *}
     | Slice1 id e                   -- {id = *[e_l]}
     | Slice2 id e e                 -- {id = *[e_l, e_r]}
-    | Repeat nt [e] id              -- repeat A(a_1, ..., a_m).id
-    | RepeatUntil nt [e] id nt [e]  -- repeat A(a_1, ..., a_m).id until B(b_1, ..., b_k)
+    | Repeat0 nt [e] id (StartingOn e)
+                                    -- repeat A(a_1, ..., a_m).id starting on [e_l0, e_r0]
+    | Repeat1 nt [e] e id (StartingOn e)
+                                    -- repeat A(a_1, ..., a_m)[e_l].id starting on [e_l0, e_r0]
+    | Repeat2 nt [e] e e id (StartingOn e)
+                                    -- repeat A(a_1, ..., a_m)[e_l, e_r].id starting on [e_l0, e_r0]
+    | RepeatUntil0 nt [e] id (StartingOn e) nt [e]
+                                    -- repeat A(a_1, ..., a_m).id starting on [e_l0, e_r0]
+                                    --     until B(b_1, ..., b_k)
+    | RepeatUntil1 nt [e] e id (StartingOn e) nt [e]
+                                    -- repeat A(a_1, ..., a_m)[e_l].id starting on [e_l0, e_r0]
+                                    --     until B(b_1, ..., b_k)
+    | RepeatUntil2 nt [e] e e id (StartingOn e) nt [e]
+                                    -- repeat A(a_1, ..., a_m)[e_l, e_r].id starting on [e_l0, e_r0]
+                                    --     until B(b_1, ..., b_k)
     -- TODO: Switch
+  deriving ( Functor, Show )
+
+data StartingOn e
+    = StartingOn0
+    | StartingOn1 e
+    | StartingOn2 e e
   deriving ( Functor, Show )
 
 data ExpHelpers nt t id e = ExpHelpers {
@@ -76,6 +95,29 @@ toCoreTerm h _ (Any1 i l) = (Core.Any i l, add h l (num h 1))
 toCoreTerm h p (Slice0 i) = (Core.Slice i p (ref h Core.EOI), ref h Core.EOI)
 toCoreTerm h p (Slice1 i l) = (Core.Slice i p (add h p l), (add h p l))
 toCoreTerm _ _ (Slice2 i l r) = (Core.Slice i l r, r)
-toCoreTerm h _ (Repeat nt args i) = (Core.Repeat nt args i, ref h (Core.End nt))
-toCoreTerm h _ (RepeatUntil nt1 args1 i nt2 args2) =
-    (Core.RepeatUntil nt1 args1 i nt2 args2, ref h (Core.End nt2))
+toCoreTerm h p (Repeat0 nt args i s) =
+    (Core.Repeat nt args (ref h (Core.End nt)) (ref h Core.EOI) i l0 r0, ref h (Core.End nt))
+  where (l0, r0) = toCoreStartingOn h p s
+toCoreTerm h p (Repeat1 nt args l i s) =
+    (Core.Repeat nt args ntEnd (add h ntEnd l) i l0 r0, ntEnd)
+  where (l0, r0) = toCoreStartingOn h p s
+        ntEnd = ref h (Core.End nt)
+toCoreTerm h p (Repeat2 nt args l r i s) =
+    (Core.Repeat nt args l r i l0 r0, ref h (Core.End nt))
+  where (l0, r0) = toCoreStartingOn h p s
+toCoreTerm h p (RepeatUntil0 nt1 args1 i s nt2 args2) =
+    (Core.RepeatUntil nt1 args1 nt1End (ref h Core.EOI) i l0 r0 nt2 args2, ref h (Core.End nt2))
+  where (l0, r0) = toCoreStartingOn h p s
+        nt1End = ref h (Core.End nt1)
+toCoreTerm h p (RepeatUntil1 nt1 args1 l i s nt2 args2) =
+    (Core.RepeatUntil nt1 args1 nt1End (add h nt1End l) i l0 r0 nt2 args2, ref h (Core.End nt2))
+  where (l0, r0) = toCoreStartingOn h p s
+        nt1End = ref h (Core.End nt1)
+toCoreTerm h p (RepeatUntil2 nt1 args1 l r i s nt2 args2) =
+    (Core.RepeatUntil nt1 args1 l r i l0 r0 nt2 args2, ref h (Core.End nt2))
+  where (l0, r0) = toCoreStartingOn h p s
+
+toCoreStartingOn :: ExpHelpers nt t id e -> e -> StartingOn e -> (e, e)
+toCoreStartingOn h p StartingOn0 = (p, ref h Core.EOI)
+toCoreStartingOn h p (StartingOn1 l) = (p, add h p l)
+toCoreStartingOn _ _ (StartingOn2 l r) = (l, r)

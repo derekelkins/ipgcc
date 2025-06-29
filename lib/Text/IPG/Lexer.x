@@ -45,6 +45,9 @@ tokens :-
 <0>    "%end"  { token $ \_ _ -> TokenEndDeclare }
 <0>    EOI     { token $ \_ _ -> TokenEOI }
 <0>    repeat  { token $ \_ _ -> TokenRepeat }
+<0>    starting
+               { token $ \_ _ -> TokenStarting }
+<0>    on      { token $ \_ _ -> TokenOn }
 <0>    until   { token $ \_ _ -> TokenUntil }
 <0>    START   { token $ \_ _ -> TokenStart }
 <0>    END     { token $ \_ _ -> TokenEnd }
@@ -99,6 +102,8 @@ data Token
     | TokenInstrument
     | TokenEndDeclare
     | TokenRepeat
+    | TokenStarting
+    | TokenOn
     | TokenUntil
     | TokenStart
     | TokenEnd

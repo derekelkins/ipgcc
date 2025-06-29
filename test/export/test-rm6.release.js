@@ -225,29 +225,32 @@ function Blocks(input, begin = 0, end = input.length) {
     let nt_FullBlock;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // repeat FullBlock.block
+    // repeat FullBlock[FullBlock.END, EOI].block starting on [0, EOI]
     self.values = [];
-    nt_FullBlock = FullBlock(input, begin + right, begin + EOI);
+    left = 0;
+    right = EOI;
+    nt_FullBlock = FullBlock(input, begin + left, begin + right);
     if (nt_FullBlock !== null) {
       if (nt_FullBlock._ipg_end === 0) throw 'repeat of non-consuming rule: FullBlock';
-      self._ipg_start = Math.min(self._ipg_start, right + nt_FullBlock._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, right + nt_FullBlock._ipg_end);
-      nt_FullBlock._ipg_end += right;
-      nt_FullBlock._ipg_start += right;
-      left = nt_FullBlock._ipg_start;
-      right = nt_FullBlock._ipg_end;
+      self._ipg_start = Math.min(self._ipg_start, left + nt_FullBlock._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_FullBlock._ipg_end);
+      nt_FullBlock._ipg_end += left;
+      nt_FullBlock._ipg_start += left;
+      left = nt_FullBlock._ipg_end;
+      right = EOI;
       self.values.push(nt_FullBlock.block);
 
-      while (right <= EOI) {
-        nt_FullBlock = FullBlock(input, begin + right, begin + EOI);
+      while (left >= 0 && left <= right && right <= EOI) {
+        nt_FullBlock = FullBlock(input, begin + left, begin + right);
         if (nt_FullBlock === null) break;
         if (nt_FullBlock._ipg_end === 0) throw 'repeat of non-consuming rule: FullBlock';
-        self._ipg_start = Math.min(self._ipg_start, right + nt_FullBlock._ipg_start);
-        self._ipg_end = Math.max(self._ipg_end, right + nt_FullBlock._ipg_end);
-        nt_FullBlock._ipg_end += right;
-        nt_FullBlock._ipg_start += right;
+        self._ipg_start = Math.min(self._ipg_start, left + nt_FullBlock._ipg_start);
+        self._ipg_end = Math.max(self._ipg_end, left + nt_FullBlock._ipg_end);
+        nt_FullBlock._ipg_end += left;
+        nt_FullBlock._ipg_start += left;
         self.values.push(nt_FullBlock.block);
-        right = nt_FullBlock._ipg_end;
+        left = nt_FullBlock._ipg_end;
+        right = EOI;
       }
     }
 

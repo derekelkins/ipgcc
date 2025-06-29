@@ -1049,29 +1049,32 @@ function StrSec(input, begin = 0, end = input.length) {
     let nt_Str;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // repeat Str.string
+    // repeat Str[Str.END, EOI].string starting on [0, EOI]
     self.values = [];
-    nt_Str = Str(input, begin + right, begin + EOI);
+    left = 0;
+    right = EOI;
+    nt_Str = Str(input, begin + left, begin + right);
     if (nt_Str !== null) {
       if (nt_Str._ipg_end === 0) throw 'repeat of non-consuming rule: Str';
-      self._ipg_start = Math.min(self._ipg_start, right + nt_Str._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, right + nt_Str._ipg_end);
-      nt_Str._ipg_end += right;
-      nt_Str._ipg_start += right;
-      left = nt_Str._ipg_start;
-      right = nt_Str._ipg_end;
+      self._ipg_start = Math.min(self._ipg_start, left + nt_Str._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_Str._ipg_end);
+      nt_Str._ipg_end += left;
+      nt_Str._ipg_start += left;
+      left = nt_Str._ipg_end;
+      right = EOI;
       self.values.push(nt_Str.string);
 
-      while (right <= EOI) {
-        nt_Str = Str(input, begin + right, begin + EOI);
+      while (left >= 0 && left <= right && right <= EOI) {
+        nt_Str = Str(input, begin + left, begin + right);
         if (nt_Str === null) break;
         if (nt_Str._ipg_end === 0) throw 'repeat of non-consuming rule: Str';
-        self._ipg_start = Math.min(self._ipg_start, right + nt_Str._ipg_start);
-        self._ipg_end = Math.max(self._ipg_end, right + nt_Str._ipg_end);
-        nt_Str._ipg_end += right;
-        nt_Str._ipg_start += right;
+        self._ipg_start = Math.min(self._ipg_start, left + nt_Str._ipg_start);
+        self._ipg_end = Math.max(self._ipg_end, left + nt_Str._ipg_end);
+        nt_Str._ipg_end += left;
+        nt_Str._ipg_start += left;
         self.values.push(nt_Str.string);
-        right = nt_Str._ipg_end;
+        left = nt_Str._ipg_end;
+        right = EOI;
       }
     }
 
@@ -1094,31 +1097,33 @@ function Str(input, begin = 0, end = input.length) {
     let nt_NUL_BYTE;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // repeat U8.value until NUL_BYTE
-    left = right;
+    // repeat U8[U8.END, EOI].value starting on [0, EOI] until NUL_BYTE
+    left = 0;
+    right = EOI;
     self.values = [];
     while (true) {
-      if (EOI < right) break _ipg_alt;
-      nt_NUL_BYTE = NUL_BYTE(input, begin + right, begin + EOI);
+      if (left < 0 || right < left || right > EOI) break _ipg_alt;
+      nt_NUL_BYTE = NUL_BYTE(input, begin + left, begin + right);
       if (nt_NUL_BYTE !== null) {
         if (nt_NUL_BYTE._ipg_end !== 0) {
-          self._ipg_start = Math.min(self._ipg_start, right + nt_NUL_BYTE._ipg_start);
-          self._ipg_end = Math.max(self._ipg_end, right + nt_NUL_BYTE._ipg_end);
+          self._ipg_start = Math.min(self._ipg_start, left + nt_NUL_BYTE._ipg_start);
+          self._ipg_end = Math.max(self._ipg_end, left + nt_NUL_BYTE._ipg_end);
         }
-        nt_NUL_BYTE._ipg_end += right;
-        nt_NUL_BYTE._ipg_start += right;
+        nt_NUL_BYTE._ipg_end += left;
+        nt_NUL_BYTE._ipg_start += left;
         right = nt_NUL_BYTE._ipg_end;
         break;
       }
-      nt_U8 = U8(input, begin + right, begin + EOI);
+      nt_U8 = U8(input, begin + left, begin + right);
       if (nt_U8 === null) break _ipg_alt;
       if (nt_U8._ipg_end === 0) throw 'repeat of non-consuming rule: U8';
-      self._ipg_start = Math.min(self._ipg_start, right + nt_U8._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, right + nt_U8._ipg_end);
-      nt_U8._ipg_end += right;
-      nt_U8._ipg_start += right;
+      self._ipg_start = Math.min(self._ipg_start, left + nt_U8._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_U8._ipg_end);
+      nt_U8._ipg_end += left;
+      nt_U8._ipg_start += left;
       self.values.push(nt_U8.value);
-      right = nt_U8._ipg_end;
+      left = nt_U8._ipg_end;
+      right = EOI;
     }
 
     // { string = decodeAscii(values) }
@@ -1288,29 +1293,32 @@ function NoteSec(input, begin = 0, end = input.length) {
     let nt_NoteSecEntry;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // repeat NoteSecEntry.entry
+    // repeat NoteSecEntry[NoteSecEntry.END, EOI].entry starting on [0, EOI]
     self.values = [];
-    nt_NoteSecEntry = NoteSecEntry(input, begin + right, begin + EOI);
+    left = 0;
+    right = EOI;
+    nt_NoteSecEntry = NoteSecEntry(input, begin + left, begin + right);
     if (nt_NoteSecEntry !== null) {
       if (nt_NoteSecEntry._ipg_end === 0) throw 'repeat of non-consuming rule: NoteSecEntry';
-      self._ipg_start = Math.min(self._ipg_start, right + nt_NoteSecEntry._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, right + nt_NoteSecEntry._ipg_end);
-      nt_NoteSecEntry._ipg_end += right;
-      nt_NoteSecEntry._ipg_start += right;
-      left = nt_NoteSecEntry._ipg_start;
-      right = nt_NoteSecEntry._ipg_end;
+      self._ipg_start = Math.min(self._ipg_start, left + nt_NoteSecEntry._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_NoteSecEntry._ipg_end);
+      nt_NoteSecEntry._ipg_end += left;
+      nt_NoteSecEntry._ipg_start += left;
+      left = nt_NoteSecEntry._ipg_end;
+      right = EOI;
       self.values.push(nt_NoteSecEntry.entry);
 
-      while (right <= EOI) {
-        nt_NoteSecEntry = NoteSecEntry(input, begin + right, begin + EOI);
+      while (left >= 0 && left <= right && right <= EOI) {
+        nt_NoteSecEntry = NoteSecEntry(input, begin + left, begin + right);
         if (nt_NoteSecEntry === null) break;
         if (nt_NoteSecEntry._ipg_end === 0) throw 'repeat of non-consuming rule: NoteSecEntry';
-        self._ipg_start = Math.min(self._ipg_start, right + nt_NoteSecEntry._ipg_start);
-        self._ipg_end = Math.max(self._ipg_end, right + nt_NoteSecEntry._ipg_end);
-        nt_NoteSecEntry._ipg_end += right;
-        nt_NoteSecEntry._ipg_start += right;
+        self._ipg_start = Math.min(self._ipg_start, left + nt_NoteSecEntry._ipg_start);
+        self._ipg_end = Math.max(self._ipg_end, left + nt_NoteSecEntry._ipg_end);
+        nt_NoteSecEntry._ipg_end += left;
+        nt_NoteSecEntry._ipg_start += left;
         self.values.push(nt_NoteSecEntry.entry);
-        right = nt_NoteSecEntry._ipg_end;
+        left = nt_NoteSecEntry._ipg_end;
+        right = EOI;
       }
     }
 

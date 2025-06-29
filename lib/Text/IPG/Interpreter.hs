@@ -224,50 +224,58 @@ interpTerm ctxt = go
                                   fromIntegral l,
                                   fromIntegral r)
                         _ -> Nothing
-        go (Repeat nt es x) = \start (ntbs, bs) ps buf ->
-            let initialEntry =
-                    EnvEntry { -- TODO
-                        start_ = error "Repeat term can't use A.START unless A has already occurred",
-                        end_ = start,
-                        this_ = error "Repeat term can't use A.this unless A has already occurred",
-                        these_ = error "Repeat term can't use A.these unless A has already occurred",
-                        offset_ = 0
-                    }
-                ntbs' = Map.insertWith (\_ old -> old) nt initialEntry ntbs
-            in fmap (\(env', _, end) -> (env', start, end)) (loop [] start (ntbs', bs) ps buf)
-          where loop acc prev env@(ntbs, bs) ps buf =
+        go (Repeat nt es l r x l0 r0) = \start env@(ntbs, bs) ps buf ->
+            let eoi = BS.length buf
+            in case body0 start env ps buf of
+                Nothing -> Just ((ntbs, Map.insert "values" (SEQUENCE []) bs), eoi, 0)
+                Just ((ntbs', bs'), start', end') ->
+                        loop [access ntbs' nt x] start' end' end' (ntbs', bs') ps buf
+          where loop acc minStart maxEnd prev env@(ntbs, bs) ps buf =
                     case body prev env ps buf of
                         Nothing ->
                             Just ((ntbs, Map.insert "values" (SEQUENCE (reverse acc)) bs),
-                                  prev,
-                                  prev)
-                        Just (env'@(ntbs', _), _, end') ->
-                            loop (access ntbs' nt x:acc) end' env' ps buf
-                body = interpNonTerminal ctxt nt es (Ref (End nt)) (Ref EOI)
-        go (RepeatUntil nt1 es1 x nt2 es2) = \start (ntbs, bs) ps buf ->
-            let initialEntry =
-                    EnvEntry { -- TODO
-                        start_ = error "RepeatUntil term can't use A.START unless A has already occurred",
-                        end_ = start,
-                        this_ = error "RepeatUntil term can't use A.this unless A has already occurred",
-                        these_ = error "RepeatUntil term can't use A.these unless A has already occurred",
-                        offset_ = 0
-                    }
-                ntbs' = Map.insertWith (\_ old -> old) nt1 initialEntry ntbs
-            in fmap (\(env', _, end) -> (env', start, end)) (loop [] start (ntbs', bs) ps buf)
-          where loop acc prev env ps buf =
+                                  minStart,
+                                  maxEnd)
+                        Just (env'@(ntbs', _), start', end') ->
+                            loop (access ntbs' nt x:acc)
+                                 (min start' minStart)
+                                 (max end' maxEnd)
+                                 end'
+                                 env'
+                                 ps
+                                 buf
+                body0 = interpNonTerminal ctxt nt es l0 r0
+                body = interpNonTerminal ctxt nt es l r
+        go (RepeatUntil nt1 es1 l r x l0 r0 nt2 es2) = \start env ps buf ->
+            case condition0 start env ps buf of
+                Just ((ntbs', bs'), start', end') ->
+                    Just ((ntbs', Map.insert "values" (SEQUENCE []) bs'), start', end')
+                Nothing ->
+                    case body0 start env ps buf of
+                        Nothing -> Nothing
+                        Just (env'@(ntbs', _), start', end') ->
+                                loop [access ntbs' nt1 x] start' end' end' env' ps buf
+          where loop acc minStart maxEnd prev env ps buf =
                     case condition prev env ps buf of
-                        Just ((ntbs', bs'), _, r) ->
+                        Just ((ntbs', bs'), start', end') ->
                             Just ((ntbs', Map.insert "values" (SEQUENCE (reverse acc)) bs'),
-                                  r,
-                                  r)
+                                  min start' minStart,
+                                  max end' maxEnd)
                         Nothing ->
                             case body prev env ps buf of
                                 Nothing -> Nothing
-                                Just (env'@(ntbs', _), _, end') ->
-                                    loop (access ntbs' nt1 x:acc) end' env' ps buf
-                body = interpNonTerminal ctxt nt1 es1 (Ref (End nt1)) (Ref EOI)
-                condition = interpNonTerminal ctxt nt2 es2 (Ref (End nt1)) (Ref EOI)
+                                Just (env'@(ntbs', _), start', end') ->
+                                    loop (access ntbs' nt1 x:acc)
+                                         (min start' minStart)
+                                         (max end' maxEnd)
+                                         end'
+                                         env'
+                                         ps
+                                         buf
+                body0 = interpNonTerminal ctxt nt1 es1 l0 r0
+                condition0 = interpNonTerminal ctxt nt2 es2 l0 r0
+                body = interpNonTerminal ctxt nt1 es1 l r
+                condition = interpNonTerminal ctxt nt2 es2 l r
 
 access :: HasCallStack => NTBindings a -> NT -> Id -> Value a
 access env nt "this" = BINDINGS (this_ (env !!! nt))

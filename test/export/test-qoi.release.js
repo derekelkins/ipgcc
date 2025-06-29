@@ -222,31 +222,33 @@ function QOIChunks(input, begin = 0, end = input.length, a_state) {
     let nt_EndMarker;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // repeat QOIChunk(state).chunk until EndMarker
-    left = right;
+    // repeat QOIChunk(state)[QOIChunk.END, EOI].chunk starting on [0, EOI] until EndMarker
+    left = 0;
+    right = EOI;
     self.values = [];
     while (true) {
-      if (EOI < right) break _ipg_alt;
-      nt_EndMarker = EndMarker(input, begin + right, begin + EOI);
+      if (left < 0 || right < left || right > EOI) break _ipg_alt;
+      nt_EndMarker = EndMarker(input, begin + left, begin + right);
       if (nt_EndMarker !== null) {
         if (nt_EndMarker._ipg_end !== 0) {
-          self._ipg_start = Math.min(self._ipg_start, right + nt_EndMarker._ipg_start);
-          self._ipg_end = Math.max(self._ipg_end, right + nt_EndMarker._ipg_end);
+          self._ipg_start = Math.min(self._ipg_start, left + nt_EndMarker._ipg_start);
+          self._ipg_end = Math.max(self._ipg_end, left + nt_EndMarker._ipg_end);
         }
-        nt_EndMarker._ipg_end += right;
-        nt_EndMarker._ipg_start += right;
+        nt_EndMarker._ipg_end += left;
+        nt_EndMarker._ipg_start += left;
         right = nt_EndMarker._ipg_end;
         break;
       }
-      nt_QOIChunk = QOIChunk(input, begin + right, begin + EOI, a_state);
+      nt_QOIChunk = QOIChunk(input, begin + left, begin + right, a_state);
       if (nt_QOIChunk === null) break _ipg_alt;
       if (nt_QOIChunk._ipg_end === 0) throw 'repeat of non-consuming rule: QOIChunk';
-      self._ipg_start = Math.min(self._ipg_start, right + nt_QOIChunk._ipg_start);
-      self._ipg_end = Math.max(self._ipg_end, right + nt_QOIChunk._ipg_end);
-      nt_QOIChunk._ipg_end += right;
-      nt_QOIChunk._ipg_start += right;
+      self._ipg_start = Math.min(self._ipg_start, left + nt_QOIChunk._ipg_start);
+      self._ipg_end = Math.max(self._ipg_end, left + nt_QOIChunk._ipg_end);
+      nt_QOIChunk._ipg_end += left;
+      nt_QOIChunk._ipg_start += left;
       self.values.push(nt_QOIChunk.chunk);
-      right = nt_QOIChunk._ipg_end;
+      left = nt_QOIChunk._ipg_end;
+      right = EOI;
     }
 
     return self;

@@ -114,11 +114,11 @@ DynSecEntry
      { value_or_ptr = U64.value };
 
 StrSec
-  -> repeat Str.string
+  -> repeat Str[Str.END, EOI].string starting on [0, EOI]
      { section = values };
 
 Str
-  -> repeat U8.value until NUL_BYTE
+  -> repeat U8[U8.END, EOI].value starting on [0, EOI] until NUL_BYTE
      { string = decodeAscii(values) };
 
 DynSymSec
@@ -138,7 +138,7 @@ DynSymSecEntry
      { st_size = U64.value };
 
 NoteSec
-  -> repeat NoteSecEntry.entry
+  -> repeat NoteSecEntry[NoteSecEntry.END, EOI].entry starting on [0, EOI]
      { section = values };
 
 NoteSecEntry

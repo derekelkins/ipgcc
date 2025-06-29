@@ -1,0 +1,6 @@
+S -> repeat A[0, A.START].value until Z;
+A -> "a"[EOI - 1, EOI] { value = "a" } / "b"[EOI - 1, EOI] { value = "b" };
+Z -> "z"[EOI - 1, EOI];
+
+%postamble_begin
+mmmmmzaaaaba

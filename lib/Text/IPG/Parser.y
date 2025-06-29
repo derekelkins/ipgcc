@@ -9,7 +9,7 @@ import qualified Data.ByteString.Lazy.Char8 as CLBS -- bytestring
 import Data.List ( intersperse ) -- base
 
 import Text.IPG.Core ( Ref(..), MetaTag(..) )
-import Text.IPG.Full ( Grammar(..), Rule(..), Alternative(..), Term(..) )
+import Text.IPG.Full ( Grammar(..), Rule(..), Alternative(..), Term(..), StartingOn(..) )
 import Text.IPG.GenericExp ( Exp(..) )
 import Text.IPG.Lexer (
     alexError, alexGetInput, alexMonadScan, alexSetInput, getCurrentLine, runAlex,
@@ -33,6 +33,8 @@ import Text.IPG.Lexer (
     '%end'  { TokenEndDeclare }
     EOI     { TokenEOI }
     repeat  { TokenRepeat }
+    starting  { TokenStarting }
+    on      { TokenOn }
     until   { TokenUntil }
     START   { TokenStart }
     END     { TokenEnd }
@@ -180,8 +182,17 @@ Term :: { Term' }
     | '{' name '=' AssignTail '}' { makeAssign $2 $4 }
     | '?[' Exp ']' { Guard $2 }
     | for name '=' Exp to Exp do name ArgList '[' Exp ',' Exp ']' { Array $2 $4 $6 $8 $9 $11 $13 }
-    | repeat name ArgList '.' name UntilTail { case $6 of Just (n,es) -> RepeatUntil $2 $3 $5 n es; _ -> Repeat $2 $3 $5 }
-    -- TODO: Liberalize repeat-until syntax.
+    | repeat name ArgList '.' name MaybeStartingOn UntilTail
+        { case $7 of Just (n, es) -> RepeatUntil0 $2 $3 $5 $6 n es; _ -> Repeat0 $2 $3 $5 $6 }
+    | repeat name ArgList '[' Exp ']' '.' name MaybeStartingOn UntilTail
+        { case $10 of Just (n, es) -> RepeatUntil1 $2 $3 $5 $8 $9 n es; _ -> Repeat1 $2 $3 $5 $8 $9 }
+    | repeat name ArgList '[' Exp ',' Exp ']' '.' name MaybeStartingOn UntilTail
+        { case $12 of Just (n, es) -> RepeatUntil2 $2 $3 $5 $7 $10 $11 n es; _ -> Repeat2 $2 $3 $5 $7 $10 $11 }
+
+MaybeStartingOn :: { StartingOn' }
+    : starting on '[' Exp ']' { StartingOn1 $4 }
+    | starting on '[' Exp ',' Exp ']' { StartingOn2 $4 $6 }
+    | {- empty -} { StartingOn0 }
 
 UntilTail :: { Maybe (IdType, [Exp']) }
     : until name ArgList { Just ($2, $3) }
@@ -259,6 +270,7 @@ type Grammar' = Grammar IdType IdType IdType Exp'
 type Rule' = Rule IdType IdType IdType Exp'
 type Alternative' = Alternative IdType IdType IdType Exp'
 type Term' = Term IdType IdType IdType Exp'
+type StartingOn' = StartingOn Exp'
 type Ref' = Ref IdType IdType Exp'
 
 data NameExpTail

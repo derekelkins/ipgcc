@@ -211,62 +211,71 @@ termToJS indent c env z@(Slice x l r)
    <> indent <>   "  self._ipg_end = Math.max(self._ipg_end, right);\n"
    <> indent <>   "}\n\n"
   where lExp = exprToJS c env l; rExp = exprToJS c env r
-termToJS indent c env z@(Repeat nt args x)
+termToJS indent c env z@(Repeat nt args l r x l0 r0)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> indent <>   "self.values = [];\n"
-   <> indent <> [i|nt_#{nt} = #{nt}(input, begin + right, begin + EOI#{argList es});\n|]
+   <> indent <> [i|left = #{l0Exp};\n|]
+   <> indent <> [i|right = #{r0Exp};\n|]
+   <> indent <> [i|nt_#{nt} = #{nt}(input, begin + left, begin + right#{argList es});\n|]
    <> indent <> [i|if (nt_#{nt} !== null) {\n|]
    <> indent <> [i|  if (nt_#{nt}._ipg_end === 0) throw 'repeat of non-consuming rule: #{nt}';\n|]
-   <> indent <> [i|  self._ipg_start = Math.min(self._ipg_start, right + nt_#{nt}._ipg_start);\n|]
-   <> indent <> [i|  self._ipg_end = Math.max(self._ipg_end, right + nt_#{nt}._ipg_end);\n|]
-   <> indent <> [i|  nt_#{nt}._ipg_end += right;\n|]
-   <> indent <> [i|  nt_#{nt}._ipg_start += right;\n|]
-   <> indent <> [i|  left = nt_#{nt}._ipg_start;\n|]
-   <> indent <> [i|  right = nt_#{nt}._ipg_end;\n|]
+   <> indent <> [i|  self._ipg_start = Math.min(self._ipg_start, left + nt_#{nt}._ipg_start);\n|]
+   <> indent <> [i|  self._ipg_end = Math.max(self._ipg_end, left + nt_#{nt}._ipg_end);\n|]
+   <> indent <> [i|  nt_#{nt}._ipg_end += left;\n|]
+   <> indent <> [i|  nt_#{nt}._ipg_start += left;\n|]
+   <> indent <> [i|  left = #{lExp};\n|]
+   <> indent <> [i|  right = #{rExp};\n|]
    <> indent <> [i|  self.values.push(nt_#{nt}.#{x});\n\n|]
 
-   <> indent <>   "  while (right <= EOI) {\n"
-   <> indent <> [i|    nt_#{nt} = #{nt}(input, begin + right, begin + EOI#{argList es});\n|]
+   <> indent <>   "  while (left >= 0 && left <= right && right <= EOI) {\n"
+   <> indent <> [i|    nt_#{nt} = #{nt}(input, begin + left, begin + right#{argList es});\n|]
    <> indent <> [i|    if (nt_#{nt} === null) break;\n|]
    <> indent <> [i|    if (nt_#{nt}._ipg_end === 0) throw 'repeat of non-consuming rule: #{nt}';\n|]
-   <> indent <> [i|    self._ipg_start = Math.min(self._ipg_start, right + nt_#{nt}._ipg_start);\n|]
-   <> indent <> [i|    self._ipg_end = Math.max(self._ipg_end, right + nt_#{nt}._ipg_end);\n|]
-   <> indent <> [i|    nt_#{nt}._ipg_end += right;\n|]
-   <> indent <> [i|    nt_#{nt}._ipg_start += right;\n|]
+   <> indent <> [i|    self._ipg_start = Math.min(self._ipg_start, left + nt_#{nt}._ipg_start);\n|]
+   <> indent <> [i|    self._ipg_end = Math.max(self._ipg_end, left + nt_#{nt}._ipg_end);\n|]
+   <> indent <> [i|    nt_#{nt}._ipg_end += left;\n|]
+   <> indent <> [i|    nt_#{nt}._ipg_start += left;\n|]
    <> indent <> [i|    self.values.push(nt_#{nt}.#{x});\n|]
-   <> indent <> [i|    right = nt_#{nt}._ipg_end;\n|]
+   <> indent <> [i|    left = #{lExp};\n|]
+   <> indent <> [i|    right = #{rExp};\n|]
    <> indent <>   "  }\n"
    <> indent <>   "}\n\n"
   where es = map (exprToJS c env) args
-termToJS indent c env z@(RepeatUntil nt1 args1 x nt2 args2)
+        lExp = exprToJS c env l; rExp = exprToJS c env r
+        l0Exp = exprToJS c env l0; r0Exp = exprToJS c env r0
+termToJS indent c env z@(RepeatUntil nt1 args1 l r x l0 r0 nt2 args2)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> whenDebug c (indent <> [i|_ipg_failedTerm = { term: #{show (pprintTerm z)} };\n|])
-   <> indent <>   "left = right;\n"
+   <> indent <> [i|left = #{l0Exp};\n|]
+   <> indent <> [i|right = #{r0Exp};\n|]
    <> indent <>   "self.values = [];\n"
    <> indent <>   "while (true) {\n"
-   <> indent <>   "  if (EOI < right) break _ipg_alt;\n"
-   <> indent <> [i|  nt_#{nt2} = #{nt2}(input, begin + right, begin + EOI#{argList es2});\n|]
+   <> indent <>   "  if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
+   <> indent <> [i|  nt_#{nt2} = #{nt2}(input, begin + left, begin + right#{argList es2});\n|]
    <> indent <> [i|  if (nt_#{nt2} !== null) {\n|]
    <> indent <> [i|    if (nt_#{nt2}._ipg_end !== 0) {\n|]
-   <> indent <> [i|      self._ipg_start = Math.min(self._ipg_start, right + nt_#{nt2}._ipg_start);\n|]
-   <> indent <> [i|      self._ipg_end = Math.max(self._ipg_end, right + nt_#{nt2}._ipg_end);\n|]
+   <> indent <> [i|      self._ipg_start = Math.min(self._ipg_start, left + nt_#{nt2}._ipg_start);\n|]
+   <> indent <> [i|      self._ipg_end = Math.max(self._ipg_end, left + nt_#{nt2}._ipg_end);\n|]
    <> indent <>   "    }\n"
-   <> indent <> [i|    nt_#{nt2}._ipg_end += right;\n|]
-   <> indent <> [i|    nt_#{nt2}._ipg_start += right;\n|]
+   <> indent <> [i|    nt_#{nt2}._ipg_end += left;\n|]
+   <> indent <> [i|    nt_#{nt2}._ipg_start += left;\n|]
    <> indent <> [i|    right = nt_#{nt2}._ipg_end;\n|]
    <> indent <>   "    break;\n"
    <> indent <>   "  }\n"
-   <> indent <> [i|  nt_#{nt1} = #{nt1}(input, begin + right, begin + EOI#{argList es1});\n|]
+   <> indent <> [i|  nt_#{nt1} = #{nt1}(input, begin + left, begin + right#{argList es1});\n|]
    <> indent <> [i|  if (nt_#{nt1} === null) break _ipg_alt;\n|]
    <> indent <> [i|  if (nt_#{nt1}._ipg_end === 0) throw 'repeat of non-consuming rule: #{nt1}';\n|]
-   <> indent <> [i|  self._ipg_start = Math.min(self._ipg_start, right + nt_#{nt1}._ipg_start);\n|]
-   <> indent <> [i|  self._ipg_end = Math.max(self._ipg_end, right + nt_#{nt1}._ipg_end);\n|]
-   <> indent <> [i|  nt_#{nt1}._ipg_end += right;\n|]
-   <> indent <> [i|  nt_#{nt1}._ipg_start += right;\n|]
+   <> indent <> [i|  self._ipg_start = Math.min(self._ipg_start, left + nt_#{nt1}._ipg_start);\n|]
+   <> indent <> [i|  self._ipg_end = Math.max(self._ipg_end, left + nt_#{nt1}._ipg_end);\n|]
+   <> indent <> [i|  nt_#{nt1}._ipg_end += left;\n|]
+   <> indent <> [i|  nt_#{nt1}._ipg_start += left;\n|]
    <> indent <> [i|  self.values.push(nt_#{nt1}.#{x});\n|]
-   <> indent <> [i|  right = nt_#{nt1}._ipg_end;\n|]
+   <> indent <> [i|  left = #{lExp};\n|]
+   <> indent <> [i|  right = #{rExp};\n|]
    <> indent <>   "}\n\n"
   where es1 = map (exprToJS c env) args1; es2 = map (exprToJS c env) args2
+        lExp = exprToJS c env l; rExp = exprToJS c env r
+        l0Exp = exprToJS c env l0; r0Exp = exprToJS c env r0
 
 alternativeToJS :: Maybe (T, [T]) -> Out -> Context -> Env -> Alternative T T T Expr -> Out
 alternativeToJS instrument indent c env (Alternative ts)
