@@ -807,7 +807,7 @@ function AuthorIdsBlock(input, begin = 0, end = input.length) {
     seq_AuthorId_0_start = 0;
     loopEnd = nt_VarUInt_0.value;
     seq_AuthorId_0 = new Array(loopEnd - seq_AuthorId_0_start);
-    for (self.i = seq_AuthorId_0_start; self.i < loopEnd; self.i++) {
+    for (let i_i = seq_AuthorId_0_start; i_i < loopEnd; i_i++) {
       const left = nt_AuthorId_0._ipg_end;
       const right = EOI;
       if (left < 0 || right < left || right > EOI) break _ipg_alt;
@@ -821,9 +821,8 @@ function AuthorIdsBlock(input, begin = 0, end = input.length) {
       tmp._ipg_start += left;
       nt_AuthorId_0._ipg_end = tmp._ipg_end;
       nt_AuthorId_0._ipg_start = tmp._ipg_start;
-      seq_AuthorId_0[self.i - seq_AuthorId_0_start] = tmp;
+      seq_AuthorId_0[i_i - seq_AuthorId_0_start] = tmp;
     }
-    delete self.i;
     left = nt_AuthorId_0._ipg_start;
     right = nt_AuthorId_0._ipg_end;
 
@@ -1819,8 +1818,8 @@ function SceneGlyphItemBlockValue(input, begin = 0, end = input.length) {
     seq_Rectangle_0_start = 0;
     loopEnd = nt_VarUInt_0.value;
     seq_Rectangle_0 = new Array(loopEnd - seq_Rectangle_0_start);
-    for (self.i = seq_Rectangle_0_start; self.i < loopEnd; self.i++) {
-      const left = nt_VarUInt_0._ipg_end + 32 * self.i;
+    for (let i_i = seq_Rectangle_0_start; i_i < loopEnd; i_i++) {
+      const left = nt_VarUInt_0._ipg_end + 32 * i_i;
       const right = nt_SubBlock_1._ipg_end + nt_SubBlock_1.length;
       if (left < 0 || right < left || right > EOI) break _ipg_alt;
       const tmp = Rectangle(input, begin + left, begin + right);
@@ -1833,9 +1832,8 @@ function SceneGlyphItemBlockValue(input, begin = 0, end = input.length) {
       tmp._ipg_start += left;
       nt_Rectangle_0._ipg_end = tmp._ipg_end;
       nt_Rectangle_0._ipg_start = tmp._ipg_start;
-      seq_Rectangle_0[self.i - seq_Rectangle_0_start] = tmp;
+      seq_Rectangle_0[i_i - seq_Rectangle_0_start] = tmp;
     }
-    delete self.i;
     left = nt_Rectangle_0._ipg_start;
     right = nt_Rectangle_0._ipg_end;
 
@@ -2306,9 +2304,9 @@ function SceneLineItemBlockValue(input, begin = 0, end = input.length, a_version
     seq_Point_0_start = 0;
     loopEnd = nt_SubBlock_1.length / self.pointSize;
     seq_Point_0 = new Array(loopEnd - seq_Point_0_start);
-    for (self.i = seq_Point_0_start; self.i < loopEnd; self.i++) {
-      const left = nt_SubBlock_1._ipg_end + self.pointSize * self.i;
-      const right = nt_SubBlock_1._ipg_end + self.pointSize * (self.i + 1);
+    for (let i_i = seq_Point_0_start; i_i < loopEnd; i_i++) {
+      const left = nt_SubBlock_1._ipg_end + self.pointSize * i_i;
+      const right = nt_SubBlock_1._ipg_end + self.pointSize * (i_i + 1);
       if (left < 0 || right < left || right > EOI) break _ipg_alt;
       const tmp = Point(input, begin + left, begin + right, a_version);
       if (tmp === null) break _ipg_alt;
@@ -2320,9 +2318,8 @@ function SceneLineItemBlockValue(input, begin = 0, end = input.length, a_version
       tmp._ipg_start += left;
       nt_Point_0._ipg_end = tmp._ipg_end;
       nt_Point_0._ipg_start = tmp._ipg_start;
-      seq_Point_0[self.i - seq_Point_0_start] = tmp;
+      seq_Point_0[i_i - seq_Point_0_start] = tmp;
     }
-    delete self.i;
     left = nt_Point_0._ipg_start;
     right = nt_Point_0._ipg_end;
 
@@ -2804,7 +2801,7 @@ function RootTextBlock(input, begin = 0, end = input.length) {
     seq_TextItem_0_start = 0;
     loopEnd = nt_VarUInt_0.value;
     seq_TextItem_0 = new Array(loopEnd - seq_TextItem_0_start);
-    for (self.i = seq_TextItem_0_start; self.i < loopEnd; self.i++) {
+    for (let i_i = seq_TextItem_0_start; i_i < loopEnd; i_i++) {
       const left = nt_TextItem_0._ipg_end;
       const right = nt_SubBlock_2._ipg_end + nt_SubBlock_2.length;
       if (left < 0 || right < left || right > EOI) break _ipg_alt;
@@ -2818,9 +2815,8 @@ function RootTextBlock(input, begin = 0, end = input.length) {
       tmp._ipg_start += left;
       nt_TextItem_0._ipg_end = tmp._ipg_end;
       nt_TextItem_0._ipg_start = tmp._ipg_start;
-      seq_TextItem_0[self.i - seq_TextItem_0_start] = tmp;
+      seq_TextItem_0[i_i - seq_TextItem_0_start] = tmp;
     }
-    delete self.i;
     left = nt_TextItem_0._ipg_start;
     right = nt_TextItem_0._ipg_end;
 
@@ -2910,7 +2906,7 @@ function RootTextBlock(input, begin = 0, end = input.length) {
     seq_TextFormat_0_start = 0;
     loopEnd = nt_VarUInt_1.value;
     seq_TextFormat_0 = new Array(loopEnd - seq_TextFormat_0_start);
-    for (self.i = seq_TextFormat_0_start; self.i < loopEnd; self.i++) {
+    for (let i_i = seq_TextFormat_0_start; i_i < loopEnd; i_i++) {
       const left = nt_TextFormat_0._ipg_end;
       const right = nt_SubBlock_4._ipg_end + nt_SubBlock_4.length;
       if (left < 0 || right < left || right > EOI) break _ipg_alt;
@@ -2924,9 +2920,8 @@ function RootTextBlock(input, begin = 0, end = input.length) {
       tmp._ipg_start += left;
       nt_TextFormat_0._ipg_end = tmp._ipg_end;
       nt_TextFormat_0._ipg_start = tmp._ipg_start;
-      seq_TextFormat_0[self.i - seq_TextFormat_0_start] = tmp;
+      seq_TextFormat_0[i_i - seq_TextFormat_0_start] = tmp;
     }
-    delete self.i;
     left = nt_TextFormat_0._ipg_start;
     right = nt_TextFormat_0._ipg_end;
 

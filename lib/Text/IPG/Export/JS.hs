@@ -23,10 +23,13 @@ type Out = Builder.Builder
 type Expr = Exp T T T
 type Env = Set.Set T
 
-data Context = Context { debugMode :: !Bool }
+data Context = Context {
+    debugMode :: !Bool,
+    iterationVar :: T
+  }
 
 defaultContext :: Context
-defaultContext = Context { debugMode = False }
+defaultContext = Context { debugMode = False, iterationVar = "" }
 
 whenDebug :: Context -> Out -> Out
 whenDebug (Context { debugMode = True }) o = o
@@ -36,8 +39,10 @@ u :: (T, Int) -> Out
 u (nt, n) = Builder.byteString nt <> "_" <> Builder.intDec n
 
 refToJS :: Context -> Env -> Ref T T Expr -> Out
-refToJS _ env (Id f) | f `Set.member` env = [i|a_#{f}|]
-                     | otherwise          = [i|self.#{f}|]
+refToJS c env (Id x)
+    | x == iterationVar c = [i|i_#{x}|]
+    | x `Set.member` env  = [i|a_#{x}|]
+    | otherwise           = [i|self.#{x}|]
 refToJS _ _   (Attr nt "this") = [i|(({_ipg_start,_ipg_end,...o}) => o)(nt_#{u nt})|]
 refToJS _ _   (Attr nt "these") = [i|seq_#{u nt}.map(({_ipg_start,_ipg_end,...o}) => o)|]
 refToJS _ _   (Attr nt f) = [i|nt_#{u nt}.#{f}|]
@@ -170,7 +175,7 @@ termToJS indent c env z@(Array x start end nt args l r)
    <> indent <> [i|seq_#{u nt}_start = #{startExp};\n|]
    <> indent <> [i|loopEnd = #{endExp};\n|]
    <> indent <> [i|seq_#{u nt} = new Array(loopEnd - seq_#{u nt}_start);\n|]
-   <> indent <> [i|for (self.#{x} = seq_#{u nt}_start; self.#{x} < loopEnd; self.#{x}++) {\n|]
+   <> indent <> [i|for (let i_#{x} = seq_#{u nt}_start; i_#{x} < loopEnd; i_#{x}++) {\n|]
    <> indent <> [i|  const left = #{lExp};\n|]
    <> indent <> [i|  const right = #{rExp};\n|]
    <> whenDebug c (indent <> [i|_ipg_failedTerm.left = left; _ipg_failedTerm.right = right;\n|])
@@ -185,13 +190,14 @@ termToJS indent c env z@(Array x start end nt args l r)
    <> indent <>   "  tmp._ipg_start += left;\n"
    <> indent <> [i|  nt_#{u nt}._ipg_end = tmp._ipg_end;\n|] -- Special case
    <> indent <> [i|  nt_#{u nt}._ipg_start = tmp._ipg_start;\n|] -- Special case
-   <> indent <> [i|  seq_#{u nt}[self.#{x} - seq_#{u nt}_start] = tmp;\n|]
+   <> indent <> [i|  seq_#{u nt}[i_#{x} - seq_#{u nt}_start] = tmp;\n|]
    <> indent <>   "}\n"
-   <> indent <> [i|delete self.#{x};\n|]
+   -- <> indent <> [i|delete self.#{x};\n|]
    <> indent <> [i|left = nt_#{u nt}._ipg_start;\n|]
    <> indent <> [i|right = nt_#{u nt}._ipg_end;\n\n|]
   where startExp = exprToJS c env start; endExp = exprToJS' c env 10 end;
-        lExp = exprToJS c env l; rExp = exprToJS c env r; es = map (exprToJS c env) args
+        lExp = exprToJS c' env l; rExp = exprToJS c' env r; es = map (exprToJS c' env) args
+        c' = c { iterationVar = x }
 termToJS indent c env z@(Any x l)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> indent <> [i|left = #{lExp};\n|]

@@ -329,9 +329,9 @@ function ColorTable(input, begin = 0, end = input.length) {
     seq_RGB_0_start = 0;
     loopEnd = EOI / 3;
     seq_RGB_0 = new Array(loopEnd - seq_RGB_0_start);
-    for (self.i = seq_RGB_0_start; self.i < loopEnd; self.i++) {
-      const left = 3 * self.i;
-      const right = 3 * self.i + 3;
+    for (let i_i = seq_RGB_0_start; i_i < loopEnd; i_i++) {
+      const left = 3 * i_i;
+      const right = 3 * i_i + 3;
       if (left < 0 || right < left || right > EOI) break _ipg_alt;
       const tmp = RGB(input, begin + left, begin + right);
       if (tmp === null) break _ipg_alt;
@@ -343,9 +343,8 @@ function ColorTable(input, begin = 0, end = input.length) {
       tmp._ipg_start += left;
       nt_RGB_0._ipg_end = tmp._ipg_end;
       nt_RGB_0._ipg_start = tmp._ipg_start;
-      seq_RGB_0[self.i - seq_RGB_0_start] = tmp;
+      seq_RGB_0[i_i - seq_RGB_0_start] = tmp;
     }
-    delete self.i;
     left = nt_RGB_0._ipg_start;
     right = nt_RGB_0._ipg_end;
 
