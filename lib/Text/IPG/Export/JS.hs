@@ -3,15 +3,16 @@ module Text.IPG.Export.JS ( Context(..), T, defaultContext, toJS, toJSWithContex
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Lazy as LBS -- bytestring
 import qualified Data.ByteString.Builder as Builder -- bytestring
-import Data.Char ( ord ) -- base
 import Data.List ( intersperse ) -- base
 import qualified Data.Set as Set -- containers
 
 import Data.String.Interpolate ( i, __i ) -- string-interpolate
 
-import Text.IPG.Core
+import Text.IPG.Core (
+    Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..),
+    arrayNonTerminals, nonTerminals, )
 import Text.IPG.GenericExp ( Exp(..) )
-import Text.IPG.PPrint ( hexyString, outParen, pprintTerm )
+import Text.IPG.PPrint ( floatToOut, hexyString, outParen, pprintTerm )
 
 -- It's worth noting that the way this export works already supports blackbox parsers.
 -- ANY function that takes a slice and returns an object with the _ipg_start/_ipg_end fields
@@ -59,7 +60,6 @@ exprToJS ctxt env e = exprToJS' ctxt env 0 e
 exprToJS' :: Context -> Env -> Int -> Expr -> Out
 exprToJS' _ _ _ (Int n) = Builder.integerDec n
 exprToJS' _ _ _ (Float n) = floatToOut n
-    where floatToOut = foldMap (Builder.word8 . fromIntegral . ord) . show -- TODO: Crude
 exprToJS' _ _ _ (String s) = hexyString s
 exprToJS' c env p (Add l r) =
     outParen (p > 11) (exprToJS' c env 11 l <> " + " <> exprToJS' c env 12 r)
@@ -192,7 +192,6 @@ termToJS indent c env z@(Array x start end nt args l r)
    <> indent <> [i|  nt_#{u nt}._ipg_start = tmp._ipg_start;\n|] -- Special case
    <> indent <> [i|  seq_#{u nt}[i_#{x} - seq_#{u nt}_start] = tmp;\n|]
    <> indent <>   "}\n"
-   -- <> indent <> [i|delete self.#{x};\n|]
    <> indent <> [i|left = nt_#{u nt}._ipg_start;\n|]
    <> indent <> [i|right = nt_#{u nt}._ipg_end;\n\n|]
   where startExp = exprToJS c env start; endExp = exprToJS' c env 10 end;

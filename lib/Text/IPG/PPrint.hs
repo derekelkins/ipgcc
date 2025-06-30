@@ -2,7 +2,7 @@
 module Text.IPG.PPrint (
     pprint, pprintRule, pprintExpr, pprintAlternative, pprintTerm, pprintRef, pprintMetaTag,
     pprint', pprintRule', pprintAlternative', pprintTerm', pprintRef', pprintNT,
-    hexyString, outParen
+    floatToOut, hexyString, outParen
 ) where
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Builder as Builder -- bytestring
@@ -27,6 +27,9 @@ hexyString s = "\"" <> foldMap go (BS.unpack s) <> "\""
                | otherwise = "\\x" <> paddedHex c
           paddedHex c = if c >= 16 then Builder.word8Hex c else "0" <> Builder.word8Hex c
           isPrintable c = c >= 0x20 && c <= 0x7E
+
+floatToOut :: Double -> Out
+floatToOut = foldMap (Builder.word8 . fromIntegral . ord) . show -- TODO: Crude
 
 pprintMetaTag :: MetaTag -> Out
 pprintMetaTag INSTRUMENT = "%instrument"
@@ -106,7 +109,6 @@ pprintRef' _ (End nt) = pprintNT nt <> ".END"
 pprintExpr :: Int -> Exp T T T -> Out
 pprintExpr _ (Int n) = Builder.integerDec n
 pprintExpr _ (Float n) = floatToOut n
-    where floatToOut = foldMap (Builder.word8 . fromIntegral . ord) . show -- TODO: Crude
 pprintExpr _ (String s) = hexyString s
 pprintExpr p (Add l r) =
     outParen (p > 11) (pprintExpr 11 l <> " + " <> pprintExpr 12 r)

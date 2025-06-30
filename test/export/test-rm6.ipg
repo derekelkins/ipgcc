@@ -239,7 +239,6 @@ SceneTombstoneItemBlock
     -> SceneItemInfo
        { item = makeCrdtSequenceItem(SceneItemInfo.this) };
 
-// TODO: Need an example with this.
 SceneGlyphItemBlock // ItemType == 0x01
     -> SceneItemInfo
        SceneGlyphItemBlockValue
@@ -334,8 +333,6 @@ PointVersions(version)
        { direction = . }
        { pressure = . };
 
-// TODO: Should I still attempt to parse a SubBlock(6) even though we don't parse any value from it?
-// TODO: Need an example with this.
 SceneTextItemBlock // ItemType == 0x05
     -> SceneItemInfo
        { item = makeCrdtSequenceItem(SceneItemInfo.this) };
