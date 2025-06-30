@@ -1,5 +1,6 @@
-S -> repeat A.value;
+S -> repeat A.value until Z;
 A -> "a" { value = "a" } / "b" { value = "b" };
+Z -> "z";
 
 %postamble_begin
 aaaabazmmm

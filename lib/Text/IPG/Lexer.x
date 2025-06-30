@@ -156,7 +156,7 @@ data Token
 
 tokenNonTerminal :: BS.ByteString -> Token
 tokenNonTerminal s = TokenNonTerminal (name, idx)
-    where (name, idxString) = CBS.break ('@' /=) s
+    where (name, idxString) = CBS.break ('@' ==) s
           idx = case I.readDecimal (BS.tail idxString) of Just (n, _) -> fromIntegral n
 
 readInteger :: LBS.ByteString -> Integer

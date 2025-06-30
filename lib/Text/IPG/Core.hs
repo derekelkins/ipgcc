@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveFunctor #-}
 module Text.IPG.Core (
     Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..),
-    nonTerminals, nonArrayNonTerminals, arrayNonTerminals, renumber, rearrange, crushUses
+    nonTerminals, arrayNonTerminals, renumber, rearrange, crushUses
 ) where
 import Data.List ( nub ) -- base
 import qualified Data.Graph as G
@@ -157,13 +157,6 @@ crushTerm f (Slice _ l r) = f l <> f r
 crushTerm f (Repeat _ es l r _ l0 r0) = foldMap f es <> f l <> f r <> f l0 <> f r0
 crushTerm f (RepeatUntil _ es1 l r _ l0 r0 _ es2) =
     foldMap f es1 <> f l <> f r <> f l0 <> f r0 <> foldMap f es2
-
-nonArrayNonTerminals :: (Eq nt) => [Term nt t id e] -> [(nt, Int)]
-nonArrayNonTerminals = nub . foldMap processTerm
-    where processTerm (NonTerminal nt _ _ _) = [nt]
-          processTerm (Repeat nt _ _ _ _ _ _) = [nt]
-          processTerm (RepeatUntil nt1 _ _ _ _ _ _ nt2 _) = [nt1, nt2]
-          processTerm _ = []
 
 nonTerminals :: (Eq nt) => [Term nt t id e] -> [(nt, Int)]
 nonTerminals = nub . foldMap processTerm

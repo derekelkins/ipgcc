@@ -1,0 +1,5 @@
+S -> A { value = lookup("a", A.this) };
+A -> { a = . } { b = . } { c = . };
+
+%postamble_begin
+xyzabc

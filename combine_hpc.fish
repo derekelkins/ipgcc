@@ -8,19 +8,9 @@ if test ! -d "$OUT_DIR"; mkdir $OUT_DIR; end
 
 set COMBINED_TIX "$OUT_DIR/combined.tix"
 
-# TODO: It would be nice not to have to list these.
-set MODULES Text.IPG.Check
-set -a MODULES Text.IPG.Core
-set -a MODULES Text.IPG.Export.JS
-set -a MODULES Text.IPG.Full
-set -a MODULES Text.IPG.GenericExp
-set -a MODULES Text.IPG.Interpreter
-set -a MODULES Text.IPG.Lexer
-set -a MODULES Text.IPG.Parser
-set -a MODULES Text.IPG.PPrint
-set -a MODULES Text.IPG.Simple
-set -a MODULES Text.IPG.TopLevel.FileSplit
-for m in $MODULES; set -a INCLUDED_MODULES "--include=$m"; end
+set MODULES (awk '/exposed-modules/,/^$/ {print $1}' ipgcc.cabal)
+set MODULES $MODULES[2..-2]
+for m in $MODULES; set -a INCLUDED_MODULES "--include=$(string replace ',' '' $m)"; end
 
 set HPC_DIR "$BASE_DIR/build/extra-compilation-artifacts/hpc/vanilla/mix"
 

@@ -1,0 +1,5 @@
+S -> A A@1 A@2 { value = A@1.x };
+A -> { x = *[1] };
+
+%postamble_begin
+abc

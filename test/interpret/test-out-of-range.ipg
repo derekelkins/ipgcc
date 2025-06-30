@@ -1,0 +1,6 @@
+S -> { x = .[100] }
+   / { x = *[100] }
+   / "a" { x = "a" };
+
+%postamble_begin
+abc

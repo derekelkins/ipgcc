@@ -1,0 +1,8 @@
+S
+  -> A@0[0, EOI]
+     A@1[A@0.END, EOI]
+     A@2[A@1.END, EOI]
+     { value = A@1.x };
+
+A
+  -> { x = .[0] };
