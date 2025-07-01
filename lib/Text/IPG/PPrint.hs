@@ -49,10 +49,10 @@ pprintRule = pprintRule' (pprintExpr 0)
 
 pprintRule' :: (e -> Out) -> Rule T T T e -> Out
 pprintRule' ppExp (Rule mts nt [] alts) =
-    foldMap ((<> " ") . pprintMetaTag) mts  <> Builder.byteString nt <> "\n  -> "
+    foldMap ((<> "\n") . pprintMetaTag) mts  <> Builder.byteString nt <> "\n  -> "
  <> mconcat (intersperse "\n   / " (map (pprintAlternative' ppExp) alts)) <> ";"
 pprintRule' ppExp (Rule mts nt args alts) =
-    foldMap ((<> " ") . pprintMetaTag) mts
+    foldMap ((<> "\n") . pprintMetaTag) mts
  <> Builder.byteString nt <> "("
  <> mconcat (intersperse ", " (map Builder.byteString args))
  <> ")\n  -> " <> mconcat (intersperse "\n   / " (map (pprintAlternative' ppExp) alts)) <> ";"

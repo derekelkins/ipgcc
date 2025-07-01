@@ -1,0 +1,5 @@
+_ipg_startsWith can't be the name of a Rule
+Rule A illegally assigns to these
+Rule B illegally assigns to _ipg_start
+Rule C illegally assigns to _ipg_end
+Rule _ipg_startsWith illegally assigns to this

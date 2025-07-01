@@ -1,0 +1,7 @@
+S -> _ipg_startsWith;
+
+_ipg_startsWith -> { this = . };
+
+A -> { these = . };
+B -> { _ipg_start = . };
+C -> { _ipg_end = . };

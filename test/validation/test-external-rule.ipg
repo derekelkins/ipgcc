@@ -1,0 +1,3 @@
+// %declare External %end
+
+S -> External(1, "a");

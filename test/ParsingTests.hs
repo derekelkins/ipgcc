@@ -1,6 +1,8 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Main ( main ) where
 import qualified Data.ByteString.Lazy.Char8 as LBS -- bytestring
 import Data.ByteString.Builder ( toLazyByteString ) -- bytestring
+import Data.List ( intersperse ) -- base
 import System.FilePath ( replaceExtension, takeBaseName ) -- filepath
 
 import Test.Tasty ( TestTree, defaultMain, testGroup ) -- tasty
@@ -12,18 +14,28 @@ import Text.IPG.PPrint ( pprint )
 main :: IO ()
 main = defaultMain =<< goldenTests
 
-parse :: FilePath -> IO LBS.ByteString
-parse f = do
-    results <- parseFile False f
+parse :: Bool -> FilePath -> IO LBS.ByteString
+parse doValidation f = do
+    results <- parseFile doValidation f
     case results of
-        Left err -> return $ LBS.pack (show err)
+        Left err -> return $ LBS.concat (intersperse "\n" (map LBS.pack err))
         Right (_, g, _, _) -> return $ toLazyByteString (pprint g)
 
 goldenTests :: IO TestTree
 goldenTests = do
     ipgFiles <- findByExtension [".ipg"] "test/parsing/"
+    ipgFiles' <- findByExtension [".ipg"] "test/validation/"
     return $ testGroup "Parser tests"
-      [ goldenVsString (takeBaseName ipgFile) goldFile (parse ipgFile)
-      | ipgFile <- ipgFiles
-      , let goldFile = replaceExtension ipgFile ".ipg.golden"
+      [ testGroup "Non-Validating" 
+        [
+        goldenVsString (takeBaseName ipgFile) goldFile (parse False ipgFile)
+        | ipgFile <- ipgFiles
+        , let goldFile = replaceExtension ipgFile ".ipg.golden"
+        ]
+      , testGroup "Validating" 
+        [
+        goldenVsString (takeBaseName ipgFile) goldFile (parse True ipgFile)
+        | ipgFile <- ipgFiles'
+        , let goldFile = replaceExtension ipgFile ".ipg.golden"
+        ]
       ]

@@ -1,0 +1,19 @@
+S 
+  -> A
+     for i = 0 to 3 do B[i, i+1]
+     { a = A(1).y }
+     repeat D.x
+     repeat E.x until F
+     { s = D.START }
+     { e = E.END };
+
+/* Expands to the following hence the "extra" errors.
+S
+  -> A@0[0, EOI]
+     for i = 0 to 3 do B@0[i, i + 1]
+     { a = A@0(1).y }
+     repeat D@0[D@0.END, EOI].x starting on [B@0.END, EOI]
+     repeat E@0[E@0.END, EOI].x starting on [D@0.END, EOI] until F@0
+     { s = D@0.START }
+     { e = E@0.END };
+ */

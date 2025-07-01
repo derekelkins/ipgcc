@@ -47,7 +47,8 @@ U64
   -> { bs = *[0, 8] }
      { value = bs[0] | bs[1] << 8 | bs[2] << 16 | bs[3] << 24 | bs[4] << 32 | bs[5] << 40 | bs[6] << 48 | bs[7] << 56 };
 
-%instrument H
+%instrument
+H
   -> "\x7fELF"[0, 4]
      { ei_class = .[4] }
      { ei_data = .[5] }

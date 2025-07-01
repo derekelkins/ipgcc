@@ -1,0 +1,8 @@
+S ->
+    repeat A.x
+    repeat A.b until B
+    { y = A.c };
+
+A -> { x = . } / { y = . };
+
+B -> "b";

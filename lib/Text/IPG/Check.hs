@@ -53,10 +53,12 @@ validate externalRules (Grammar rules) = foldMap check rules <> basicChecks
       ]
     checkParameters :: (T, (Int, Set.Set T)) -> Maybe [T]
     checkParameters (nt, (_, params))
-        | "EOI" `Set.member` params = Just [[i|Rule #{nt} has illegal parameter name EOI|]]
+        | "EOI" `Set.member` params
+            = Just [[i|Rule #{nt} has illegal parameter name EOI|]] -- This can't happen in parsed input
         | otherwise = Nothing
     checkAttributes :: (T, Set.Set T) -> Maybe [T]
     checkAttributes (nt, attrs)
+            -- The START and END failures can't happen in the output of the parser.
         | "START" `Set.member` attrs = Just [[i|Rule #{nt} illegally assigns to START|]]
         | "END" `Set.member` attrs = Just [[i|Rule #{nt} illegally assigns to END|]]
         | "this" `Set.member` attrs = Just [[i|Rule #{nt} illegally assigns to this|]]
@@ -102,7 +104,7 @@ validate externalRules (Grammar rules) = foldMap check rules <> basicChecks
     checkTerms nt params locals (Repeat (a, _) es l r x l0 r0:ts) =
         (case Map.lookup a parameters of
             Nothing -> if a `Set.member` externalRules then Nothing
-                        else Just [[i|Rule #{a} in rule {nt} is undefined|]]
+                        else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
             Just (n, _) -> if n == length es then Nothing
                             else Just [[i|Arity mismatch when calling #{a} in rule #{nt}|]])
         <> (case Map.lookup a guaranteedAttributes of
@@ -202,7 +204,7 @@ validate externalRules (Grammar rules) = foldMap check rules <> basicChecks
     checkExp nt params locals (Call _ es) = foldMap (checkExp nt params locals) es
     checkExp nt params locals (Ref (Id x)) =
         if x `Set.member` params || x `Set.member` locals then Nothing
-            else Just [[i|#{x} is not yet defined in rule #{nt}|]]
+            else Just [[i|#{x} is not yet defined in rule #{nt}|]] -- This isn't possible as the output of toCore.
     checkExp nt _ _ (Ref (Attr (a, _) x)) =
         case Map.lookup a guaranteedAttributes of
             Nothing -> if a `Set.member` externalRules then Nothing
