@@ -24,17 +24,24 @@ data Alternative nt t id e = Alternative [Term nt t id e]
     deriving ( Functor, Show )
 
 data Term nt t id e
-    = NonTerminal (nt, Int) [e] e e     -- A@n(a_1, ..., a_m)[e_l, e_r]
-    | Terminal t e e                    -- s[e_l, e_r]
-    | id := e                           -- {id = e}
-    | Guard e                           -- ?[e]
-    | Array id e e (nt, Int) [e] e e    -- for id=e_1 to e_2 do A@n(a_1, ..., a_m)[e_l, e_r]
-    | Any id e                          -- {id = .[e]}
-    | Slice id e e                      -- {id = *[l, r]}
-    | Repeat (nt, Int) [e] e e id e e   -- repeat A@n(a_1, ..., a_m)[e_l, e_r].id starting on [e_l0, e_r0]
+    = NonTerminal (nt, Int) [e] e e
+        -- A@n(a_1, ..., a_m)[e_l, e_r]
+    | Terminal t e e
+        -- "foo"[e_l, e_r]
+    | id := e
+        -- { id = e }
+    | Guard e
+        -- ?[ e ]
+    | Array id e e (nt, Int) [e] e e
+        -- for id = e_1 to e_2 do A@n(a_1, ..., a_m)[e_l, e_r]
+    | Any id e
+        -- { id = .[e] }
+    | Slice id e e
+        -- { id = *[l, r] }
+    | Repeat (nt, Int) [e] e e id e e
+        -- repeat A@n(a_1, ..., a_m)[e_l, e_r].id starting on [e_l0, e_r0]
     | RepeatUntil (nt, Int) [e] e e id e e (nt, Int) [e]
-                                        -- repeat A@n(a_1, ..., a_m)[e_l, e_r].id starting on [e_l0, e_r0]
-                                        --     until B@m(b_1, ..., b_k)
+        -- repeat A@n(a_1, ..., a_m)[e_l, e_r].id starting on [e_l0, e_r0] until B@m(b_1, ..., b_k)
   deriving ( Functor, Show )
 
 data Ref nt id e

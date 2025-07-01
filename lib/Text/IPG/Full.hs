@@ -22,36 +22,46 @@ data Alternative nt t id e = Alternative [Term nt t id e]
     deriving ( Functor, Show )
 
 data Term nt t id e
-    = NonTerminal0 (nt, Int) [e]        -- A@n(e_1, ..., e_m)
-    | NonTerminal1 (nt, Int) [e] e      -- A@n(e_1, ..., e_m)[e_l]
-    | NonTerminal2 (nt, Int) [e] e e    -- A@n(e_1, ..., e_m)[e_l, e_r]
-    | Terminal0 t                       -- s
-    | Terminal1 t e                     -- s[e_l]
-    | Terminal2 t e e                   -- s[e_l, e_r]
-    | id := e                           -- {id = e}
-    | Guard e                           -- ?[e]
-    | Array id e e (nt, Int) [e] e e    -- for id=e_1 to e_2 do A@n(e_1, ..., e_m)[e_l, e_r]
-    | Any0 id                           -- {id = .}
-    | Any1 id e                         -- {id = .[e]}
-    | Slice0 id                         -- {id = *}
-    | Slice1 id e                       -- {id = *[e_l]}
-    | Slice2 id e e                     -- {id = *[e_l, e_r]}
+    = NonTerminal0 (nt, Int) [e]
+        -- A@n(e_1, ..., e_m)
+    | NonTerminal1 (nt, Int) [e] e
+        -- A@n(e_1, ..., e_m)[e_l]
+    | NonTerminal2 (nt, Int) [e] e e
+        -- A@n(e_1, ..., e_m)[e_l, e_r]
+    | Terminal0 t
+        -- "foo"
+    | Terminal1 t e
+        -- "foo"[e_l]
+    | Terminal2 t e e
+        -- "foo"[e_l, e_r]
+    | id := e
+        -- { id = e }
+    | Guard e
+        -- ?[ e ]
+    | Array id e e (nt, Int) [e] e e
+        -- for id = e_1 to e_2 do A@n(e_1, ..., e_m)[e_l, e_r]
+    | Any0 id
+        -- { id = . }
+    | Any1 id e
+        -- { id = .[e] }
+    | Slice0 id
+        -- { id = * }
+    | Slice1 id e
+        -- { id = *[e_l] }
+    | Slice2 id e e
+        -- { id = *[e_l, e_r] }
     | Repeat0 (nt, Int) [e] id (StartingOn e)
-                                        -- repeat A@n(a_1, ..., a_m).id starting on [e_l0, e_r0]
+        -- repeat A@n(a_1, ..., a_m).id starting on [e_l0, e_r0]
     | Repeat1 (nt, Int) [e] e id (StartingOn e)
-                                        -- repeat A@n(a_1, ..., a_m)[e_l].id starting on [e_l0, e_r0]
+        -- repeat A@n(a_1, ..., a_m)[e_l].id starting on [e_l0, e_r0]
     | Repeat2 (nt, Int) [e] e e id (StartingOn e)
-                                        -- repeat A@n(a_1, ..., a_m)[e_l, e_r].id starting on [e_l0, e_r0]
+        -- repeat A@n(a_1, ..., a_m)[e_l, e_r].id starting on [e_l0, e_r0]
     | RepeatUntil0 (nt, Int) [e] id (StartingOn e) (nt, Int) [e]
-                                        -- repeat A@n(a_1, ..., a_m).id starting on [e_l0, e_r0]
-                                        --     until B@m(b_1, ..., b_k)
+        -- repeat A@n(a_1, ..., a_m).id starting on [e_l0, e_r0] until B@m(b_1, ..., b_k)
     | RepeatUntil1 (nt, Int) [e] e id (StartingOn e) (nt, Int) [e]
-                                        -- repeat A@n(a_1, ..., a_m)[e_l].id starting on [e_l0, e_r0]
-                                        --     until B@m(b_1, ..., b_k)
+        -- repeat A@n(a_1, ..., a_m)[e_l].id starting on [e_l0, e_r0] until B@m(b_1, ..., b_k)
     | RepeatUntil2 (nt, Int) [e] e e id (StartingOn e) (nt, Int) [e]
-                                        -- repeat A@n(a_1, ..., a_m)[e_l, e_r].id starting on [e_l0, e_r0]
-                                        --     until B@m(b_1, ..., b_k)
-    -- TODO: Switch
+        -- repeat A@n(a_1, ..., a_m)[e_l, e_r].id starting on [e_l0, e_r0] until B@m(b_1, ..., b_k)
   deriving ( Functor, Show )
 
 data StartingOn e
