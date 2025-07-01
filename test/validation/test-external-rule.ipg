@@ -1,3 +1,8 @@
-// %declare External %end
+// %declare ExternalA ExternalB ExternalC ExternalD ExternalE %end
 
-S -> External(1, "a");
+S -> ExternalA(1, "a")
+     { x = ExternalA.z }
+     for i = 0 to 3 do ExternalB[i, i+1]
+     { y = ExternalB(1).y }
+     repeat ExternalC.z
+     repeat ExternalD.z until ExternalE;
