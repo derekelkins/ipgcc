@@ -1,0 +1,29 @@
+S -> A
+     "start"
+     B
+     { x0 = . }
+     repeat A.data
+     repeat A.data until B
+
+     A[10]
+     "start"[10]
+     B
+     { x1 = .[10] }
+     { y1 = *[10] }
+     repeat A[10].data
+     repeat A[20, 30].data starting on [5]
+     repeat A[10].data until B
+     repeat A[20, 30].data starting on [5] until B
+
+     A[20, 30]
+     "start"[20, 30]
+     B
+     { y2 = *[20, 30] }
+     B
+     repeat A[20, 30].data starting on [5, 15]
+     repeat A[20, 30].data until B
+     repeat A[20, 30].data starting on [5, 15] until B
+     B;
+
+A -> { data = * } B;
+B -> "stop";

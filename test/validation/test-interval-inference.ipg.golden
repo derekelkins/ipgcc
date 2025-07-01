@@ -1,0 +1,32 @@
+S
+  -> A@0[0, EOI]
+     "start"[A@0.END, A@0.END + 5]
+     B@0[A@0.END + 5, EOI]
+     { x0 = .[B@0.END] }
+     repeat A@1[A@1.END, EOI].data starting on [B@0.END + 1, EOI]
+     repeat A@2[A@2.END, EOI].data starting on [A@1.END, EOI] until B@1
+     A@3[B@1.END, B@1.END + 10]
+     "start"[A@3.END, A@3.END + 10]
+     B@2[A@3.END + 5, EOI]
+     { x1 = .[10] }
+     { y1 = *[11, 21] }
+     repeat A@4[A@4.END, A@4.END + 10].data starting on [21, EOI]
+     repeat A@5[20, 30].data starting on [A@4.END, A@4.END + 5]
+     repeat A@6[A@6.END, A@6.END + 10].data starting on [A@5.END, EOI] until B@3
+     repeat A@7[20, 30].data starting on [B@3.END, B@3.END + 5] until B@4
+     A@8[20, 30]
+     "start"[20, 30]
+     B@5[25, EOI]
+     { y2 = *[20, 30] }
+     B@6[30, EOI]
+     repeat A@9[20, 30].data starting on [5, 15]
+     repeat A@10[20, 30].data starting on [A@9.END, EOI] until B@7
+     repeat A@11[20, 30].data starting on [5, 15] until B@8
+     B@9[B@8.END, EOI];
+
+A
+  -> { data = *[0, EOI] }
+     B@0[EOI, EOI];
+
+B
+  -> "stop"[0, 4];

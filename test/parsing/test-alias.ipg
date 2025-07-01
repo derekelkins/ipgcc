@@ -1,4 +1,4 @@
-S -> A A@1 A@2 { value = A@1.x };
+S -> A A@10 A@20 A { value = A@10.x };
 A -> { x = . };
 
 %postamble_begin
