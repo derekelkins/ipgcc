@@ -33,9 +33,15 @@ syntax match IPGOperator "\v\*"
 syntax match IPGOperator "\v/"
 highlight link IPGOperator Operator
 
-" TODO: Use the regex from the lexer
-syntax region IPGString start=/\v"/ skip=/\v\\./ end=/\v"/
+syntax match IPGMalformedString /\v"([^"\\]|\\.)*"/
+highlight link IPGMalformedString Error
+
+syntax match IPGString /\v"([^"\\]|\\[0abfnrtv\\"']|\\x[0-9a-fA-F][0-9a-fA-F])*"/ contains=IPGEscape
 highlight link IPGString String
+
+syntax match IPGEscape /\v\\[0abfnrtv\\\"']/ contained
+syntax match IPGEscape /\v\\x[0-9a-fA-F][0-9a-fA-F]/ contained
+highlight link IPGEscape Special
 
 syntax match IPGDeclare /\v\%end/
 syntax match IPGDeclare /\v^\%declare/

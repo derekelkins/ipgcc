@@ -15,9 +15,10 @@ import Text.IPG.GenericExp ( Exp(..) )
 import Text.IPG.PPrint ( floatToOut, hexyString, outParen, pprintTerm )
 
 -- It's worth noting that the way this export works already supports blackbox parsers.
--- ANY function that takes a slice and returns an object with the _ipg_start/_ipg_end fields
--- suitably set can just immediately be referenced. If we assume a blackbox parser will always
--- consume its full input, we can just return _ipg_start = 0, _ipg_end = input.length.
+-- ANY function that takes a buffer and a start and end and returns an object with the
+-- _ipg_start/_ipg_end fields suitably set can just immediately be referenced. If we
+-- assume a blackbox parser will always consume its full input, we can just return
+-- _ipg_start = 0, _ipg_end = end - start.
 
 type T = BS.ByteString
 type Out = Builder.Builder
