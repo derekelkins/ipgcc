@@ -1,0 +1,5 @@
+Junk
+
+%preamble_end
+
+S -> for i = 1 to 10 do A;

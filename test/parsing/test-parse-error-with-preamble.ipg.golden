@@ -1,0 +1,4 @@
+S -> for i = 1 to 10 do A;
+                         ^
+Parse error at line 5, column 26.
+Possible following tokens are: '['

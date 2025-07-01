@@ -1,6 +1,6 @@
 {
 module Text.IPG.Lexer(
-    alexError, alexGetInput, alexMonadScan, alexSetInput, getCurrentLine, runAlex,
+    alexError, alexGetInput, alexMonadScan, alexSetInput, getCurrentLine, runAlex, saveInitialLine,
     Alex, AlexInput, AlexPosn(..), Token(..)
 ) where
 import qualified Data.ByteString as BS -- bytestring
@@ -211,6 +211,13 @@ saveLine input@(_, _, s, _) len = do
     state <- alexGetUserState
     alexSetUserState (state { currentLine = line })
     skip input len
+
+saveInitialLine :: Alex ()
+saveInitialLine = do
+    (_, _, s, _) <- alexGetInput
+    let line = LBS.toStrict (CLBS.takeWhile ('\n' /=) s)
+    state <- alexGetUserState
+    alexSetUserState (state { currentLine = line })
 
 getCurrentLine :: Alex String
 getCurrentLine = do

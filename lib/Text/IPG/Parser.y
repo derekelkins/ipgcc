@@ -12,7 +12,7 @@ import Text.IPG.Core ( Ref(..), MetaTag(..) )
 import Text.IPG.Full ( Grammar(..), Rule(..), Alternative(..), Term(..), StartingOn(..) )
 import Text.IPG.GenericExp ( Exp(..) )
 import Text.IPG.Lexer (
-    alexError, alexGetInput, alexMonadScan, alexSetInput, getCurrentLine, runAlex,
+    alexError, alexGetInput, alexMonadScan, alexSetInput, getCurrentLine, runAlex, saveInitialLine,
     Alex, AlexInput, AlexPosn(..), Token(..) )
 
 -- Decent intro: https://serokell.io/blog/parsing-with-happy
@@ -316,12 +316,13 @@ makeAssign n (Slice2' l r) = Slice2 n l r
 makeAssign n (Assign' e) = n := e
 
 parse :: LBS.ByteString -> Either String (Grammar', [IdType])
-parse input = runAlex input parseIPG
+parse input = runAlex input (saveInitialLine >> parseIPG)
 
 parseWithStartPos :: Int -> Int -> Int -> LBS.ByteString -> Either String (Grammar', [IdType])
 parseWithStartPos n l col input = runAlex input $ do
     (_, c, bs, bpos) <- alexGetInput
     alexSetInput (AlexPn n l col, c, bs, bpos)
+    saveInitialLine
     parseIPG
 
 lexer :: (Token -> Alex a) -> Alex a
