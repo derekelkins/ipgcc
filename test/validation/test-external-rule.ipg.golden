@@ -1,11 +1,7 @@
-Rule ExternalA in rule S is undefined
-Rule ExternalA in rule S is undefined
-Rule ExternalB in rule S is undefined
-Rule ExternalB in rule S is undefined
-Rule ExternalC in rule S is undefined
-Rule ExternalC in rule S is undefined
-Rule ExternalB in rule S is undefined
-Rule ExternalD in rule S is undefined
-Rule ExternalE in rule S is undefined
-Rule ExternalD in rule S is undefined
-Rule ExternalC in rule S is undefined
+S
+  -> ExternalA@0(1, "a")[0, EOI]
+     { x = ExternalA@0.z }
+     for i = 0 to 3 do ExternalB@0[i, i + 1]
+     { y = ExternalB@0(1).y }
+     repeat ExternalC@0[ExternalC@0.END, EOI].z starting on [ExternalB@0.END, EOI]
+     repeat ExternalD@0[ExternalD@0.END, EOI].z starting on [ExternalC@0.END, EOI] until ExternalE@0;

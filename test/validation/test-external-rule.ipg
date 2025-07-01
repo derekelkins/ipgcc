@@ -1,4 +1,4 @@
-// %declare ExternalA ExternalB ExternalC ExternalD ExternalE %end
+%declare ExternalA ExternalB ExternalC ExternalD ExternalE %end
 
 S -> ExternalA(1, "a")
      { x = ExternalA.z }
