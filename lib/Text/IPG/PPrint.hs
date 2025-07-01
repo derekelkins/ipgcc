@@ -109,7 +109,7 @@ pprintRef' _ (End nt) = pprintNT nt <> ".END"
 pprintExpr :: Int -> Exp T T T -> Out
 pprintExpr _ T = "true"
 pprintExpr _ F = "false"
-pprintExpr _ (Int n) = Builder.integerDec n
+pprintExpr _ (Int n) = Builder.int64Dec n
 pprintExpr _ (Float n) = floatToOut n
 pprintExpr _ (String s) = hexyString s
 pprintExpr p (Add l r) =

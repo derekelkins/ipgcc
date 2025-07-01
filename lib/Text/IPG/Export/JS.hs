@@ -60,7 +60,7 @@ exprToJS ctxt env e = exprToJS' ctxt env 0 e
 exprToJS' :: Context -> Env -> Int -> Expr -> Out
 exprToJS' _ _ _ T = "true"
 exprToJS' _ _ _ F = "false"
-exprToJS' _ _ _ (Int n) = Builder.integerDec n
+exprToJS' _ _ _ (Int n) = Builder.int64Dec n
 exprToJS' _ _ _ (Float n) = floatToOut n
 exprToJS' _ _ _ (String s) = hexyString s
 exprToJS' c env p (Add l r) =

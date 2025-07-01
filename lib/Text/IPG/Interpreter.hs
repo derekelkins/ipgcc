@@ -8,6 +8,7 @@ import Control.Applicative ( asum ) -- base
 import Data.Bits ( complement, shift, xor, (.&.), (.|.) ) -- base
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Builder as Builder -- bytestring
+import Data.Int ( Int64 ) -- base
 import Data.List ( (!?), intersperse ) -- base
 import qualified Data.Map as Map -- containers
 import GHC.Stack ( HasCallStack ) -- base
@@ -49,10 +50,10 @@ type NTBindings a = Map.Map (NT, Int) (EnvEntry a)
 type Environment a = (NTBindings a, Bindings a)
 
 data Value a
-    = INT Integer
-    | BOOL Bool
-    | FLOAT Double
-    | STRING Buffer
+    = INT !Int64
+    | BOOL !Bool
+    | FLOAT !Double
+    | STRING !Buffer
     | BINDINGS (Bindings a)
     | SEQUENCE [Value a]
     | OPAQUE a
@@ -66,7 +67,7 @@ asJSON :: Value a -> Builder.Builder
 asJSON (STRING s) = hexyString s
 asJSON (BOOL True) = "true"
 asJSON (BOOL False) = "false"
-asJSON (INT n) = Builder.integerDec n
+asJSON (INT n) = Builder.int64Dec n
 asJSON (FLOAT d) = Builder.doubleDec d
 asJSON (SEQUENCE xs) = "[" <> mconcat (intersperse ", " (map asJSON xs)) <> "]"
 asJSON (BINDINGS xs) = "{" <> mconcat (intersperse ", " (map process (Map.toList xs))) <> "}"

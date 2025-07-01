@@ -1,12 +1,13 @@
 module Text.IPG.GenericExp ( Exp(..), crushRef, mapRef, simplify, simplifyExp ) where
 import Data.Bits ( shift, complement, xor, (.&.), (.|.) ) -- base
+import Data.Int ( Int64 ) -- base
 
 import Text.IPG.Core ( Grammar, Ref )
 
 data Exp nt t id
     = T
     | F
-    | Int Integer
+    | Int Int64
     | Float Double
     | String t
     | Add (Exp nt t id) (Exp nt t id)

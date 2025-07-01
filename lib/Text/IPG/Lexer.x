@@ -116,7 +116,7 @@ data Token
     | TokenFor
     | TokenTo
     | TokenDo
-    | TokenInt !Integer
+    | TokenInt !Int64
     | TokenDouble !Double
     | TokenString BS.ByteString
     | TokenNonTerminal (BS.ByteString, Int)
@@ -163,10 +163,10 @@ tokenNonTerminal s = TokenNonTerminal (name, idx)
     where (name, idxString) = CBS.break ('@' ==) s
           idx = case I.readDecimal (BS.tail idxString) of Just (n, _) -> fromIntegral n
 
-readInteger :: LBS.ByteString -> Integer
+readInteger :: LBS.ByteString -> Int64
 readInteger bs = case I.readDecimal (LBS.toStrict bs) of Just (n, _) -> n
 
-readHex :: LBS.ByteString -> Integer
+readHex :: LBS.ByteString -> Int64
 readHex bs = case I.readHexadecimal (LBS.toStrict (LBS.drop 2 bs)) of Just (n, _) -> n
 
 readDouble :: LBS.ByteString -> Double
