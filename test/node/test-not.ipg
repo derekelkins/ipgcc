@@ -1,0 +1,5 @@
+S -> ?[ !false ] ?[ !(!true) ];
+
+%postamble_begin
+
+console.log(JSON.stringify(S(""), null, 2));

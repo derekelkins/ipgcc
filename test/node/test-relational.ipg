@@ -1,0 +1,35 @@
+S -> { xI = 1 } { yI = 2 } { xF = 3.2 } { yF = 5.4 } { xS = "abc" } { yS = "xyz" }
+     LT(xI, yI, xF, yF, xS, yS) { lt = LT.this }
+     LTE(xI, yI, xF, yF, xS, yS) { lte = LTE.this }
+     GT(xI, yI, xF, yF, xS, yS) { gt = GT.this }
+     GTE(xI, yI, xF, yF, xS, yS) { gte = GTE.this }
+     NE(xI, yI, xF, yF, xS, yS) { ne = NE.this };
+
+LT(xI, yI, xF, yF, xS, yS)
+    -> { a1 = xI < yI } { a2 = 1 < 2 } { a3 = !(xI < xI) } { a4 = !(1 < 1) } { a5 = !(yI < xI) }
+       { b1 = xF < yF } { b2 = 3.2 < 5.4 } { b3 = !(xF < xF) } { b4 = !(3.2 < 3.2) } { b5 = !(yF < xF) }
+       { c1 = xS < yS } { c2 = "abc" < "xyz" } { c3 = !(xS < xS) } { c4 = !("abc" < "abc") } { c5 = !(yS < xS) };
+
+LTE(xI, yI, xF, yF, xS, yS)
+    -> { a1 = xI <= yI } { a2 = 1 <= 2 } { a3 = xI <= xI } { a4 = 1 <= 1 } { a5 = !(yI <= xI) }
+       { b1 = xF <= yF } { b2 = 3.2 <= 5.4 } { b3 = xF <= xF } { b4 = 3.2 <= 3.2 } { b5 = !(yF <= xF) }
+       { c1 = xS <= yS } { c2 = "abc" <= "xyz" } { c3 = xS <= xS } { c4 = "abc" <= "abc" } { c5 = !(yS <= xS) };
+
+GT(xI, yI, xF, yF, xS, yS)
+    -> { a1 = !(xI > yI) } { a2 = !(1 > 2) } { a3 = !(xI > xI) } { a4 = !(1 > 1) } { a5 = yI > xI }
+       { b1 = !(xF > yF) } { b2 = !(3.2 > 5.4) } { b3 = !(xF > xF) } { b4 = !(3.2 > 3.2) } { b5 = yF > xF }
+       { c1 = !(xS > yS) } { c2 = !("abc" > "xyz") } { c3 = !(xS > xS) } { c4 = !("abc" > "abc") } { c5 = yS > xS };
+
+GTE(xI, yI, xF, yF, xS, yS)
+    -> { a1 = !(xI >= yI) } { a2 = !(1 >= 2) } { a3 = xI >= xI } { a4 = 1 >= 1 } { a5 = yI >= xI }
+       { b1 = !(xF >= yF) } { b2 = !(3.2 >= 5.4) } { b3 = xF >= xF } { b4 = 3.2 >= 3.2 } { b5 = yF >= xF }
+       { c1 = !(xS >= yS) } { c2 = !("abc" >= "xyz") } { c3 = xS >= xS } { c4 = "abc" >= "abc" } { c5 = yS >= xS };
+
+NE(xI, yI, xF, yF, xS, yS)
+    -> { a1 = xI != yI } { a2 = 1 != 2 } { a3 = !(xI != xI) } { a4 = !(1 != 1) }
+       { b1 = xF != yF } { b2 = 3.2 != 5.4 } { b3 = !(xF != xF) } { b4 = !(3.2 != 3.2) }
+       { c1 = xS != yS } { c2 = "abc" != "xyz" } { c3 = !(xS != xS) } { c4 = !("abc" != "abc") };
+
+%postamble_begin
+
+console.log(JSON.stringify(S(""), null, 2));

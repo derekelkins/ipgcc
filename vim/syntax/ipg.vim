@@ -2,7 +2,7 @@ if exists("b:current_syntax")
     finish
 endif
 
-syntax keyword IPGKeyword EOI where repeat until START END for to do starting on
+syntax keyword IPGKeyword EOI where repeat until START END for to do starting on true false
 highlight link IPGKeyword Keyword
 
 syntax match IPGDelimiter "?\[\|:\|?\|(\|)\|\[\|\]\|,\|;\|{\|}"

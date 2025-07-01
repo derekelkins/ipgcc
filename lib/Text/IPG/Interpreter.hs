@@ -292,7 +292,9 @@ access env nt x = case this_ (env !!! nt) of bs -> bs !!! x
 
 eval :: HasCallStack => Context a -> Int -> Environment a -> Parameters a -> Exp' -> Value a
 eval ctxt eoi (env, bs) ps = go
-    where go (Int n) = INT n
+    where go T = BOOL True
+          go F = BOOL False
+          go (Int n) = INT n
           go (Float f) = FLOAT f
           go (String s) = STRING s
           go (Add l r) = add (go l) (go r)

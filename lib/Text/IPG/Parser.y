@@ -34,6 +34,8 @@ import Text.IPG.Lexer (
     EOI     { TokenEOI }
     repeat  { TokenRepeat }
     starting  { TokenStarting }
+    true    { TokenTrue }
+    false   { TokenFalse }
     on      { TokenOn }
     until   { TokenUntil }
     START   { TokenStart }
@@ -216,7 +218,9 @@ AssignTail :: { AssignTail }
     | Exp  { Assign' $1 }
 
 Exp :: { Exp' }
-    : int { Int $1 }
+    : true { T }
+    | false { F }
+    | int { Int $1 }
     | double { Float $1 }
     | string { String $1 }
     | Exp '+' Exp { Add $1 $3 }

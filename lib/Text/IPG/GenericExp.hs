@@ -4,7 +4,9 @@ import Data.Bits ( shift, complement, xor, (.&.), (.|.) ) -- base
 import Text.IPG.Core ( Grammar, Ref )
 
 data Exp nt t id
-    = Int Integer
+    = T
+    | F
+    | Int Integer
     | Float Double
     | String t
     | Add (Exp nt t id) (Exp nt t id)
@@ -36,6 +38,8 @@ data Exp nt t id
   deriving ( Show )
 
 mapRef :: (Ref nt id (Exp nt t id) -> Ref nt' id (Exp nt' t id)) -> Exp nt t id -> Exp nt' t id
+mapRef _ T = T
+mapRef _ F = F
 mapRef f (Not l) = Not (mapRef f l)
 mapRef f (Neg l) = Neg (mapRef f l)
 mapRef f (BitwiseNeg l) = BitwiseNeg (mapRef f l)
@@ -67,6 +71,8 @@ mapRef _ (Float n) = Float n
 mapRef _ (String s) = String s
 
 crushRef :: (Monoid m) => (Ref nt id (Exp nt t id) -> m) -> Exp nt t id -> m
+crushRef _ T = mempty
+crushRef _ F = mempty
 crushRef f (Not l) = crushRef f l
 crushRef f (Neg l) = crushRef f l
 crushRef f (BitwiseNeg l) = crushRef f l
@@ -99,6 +105,8 @@ simplify :: (Ord t) => Grammar nt t id (Exp nt t id) -> Grammar nt t id (Exp nt 
 simplify = fmap simplifyExp
 
 simplifyExp :: (Ord t) => Exp nt t id -> Exp nt t id
+simplifyExp T = T
+simplifyExp F = F
 simplifyExp (Int n) = Int n
 simplifyExp (Float n) = Float n
 simplifyExp (String s) = String s
@@ -157,12 +165,20 @@ simplifyExp (BitwiseNeg l) = bneg (simplifyExp l)
           bneg x = BitwiseNeg x
 simplifyExp (Not l) = Not (simplifyExp l)
 simplifyExp (And l r) = and' (simplifyExp l) (simplifyExp r)
-    where and' (Int x) y = if x /= 0 then y else Int 0
-          and' x (Int y) = if y /= 0 then x else Int 0
+    where and' (Int x) y = if x /= 0 then y else F
+          and' x (Int y) = if y /= 0 then x else F
+          and' T y = y
+          and' F _ = F
+          and' x T = x
+          and' _ F = F
           and' x y = And x y
 simplifyExp (Or l r) = or' (simplifyExp l) (simplifyExp r)
-    where or' (Int x) y = if x == 0 then y else Int 1
-          or' x (Int y) = if y == 0 then x else Int 1
+    where or' (Int x) y = if x == 0 then y else T
+          or' x (Int y) = if y == 0 then x else T
+          or' F y = y
+          or' T _ = T
+          or' x F = x
+          or' _ T = T
           or' x y = Or x y
 simplifyExp (BitwiseAnd l r) = band (simplifyExp l) (simplifyExp r)
     where band (Int x) (Int y) = Int (x .&. y)
@@ -180,37 +196,39 @@ simplifyExp (RSh l r) = rsh (simplifyExp l) (simplifyExp r)
     where rsh (Int x) (Int y) = Int (shift x (-fromIntegral y))
           rsh x y = RSh x y
 simplifyExp (LessThan l r) = lessThan (simplifyExp l) (simplifyExp r)
-    where lessThan (Int x) (Int y) = Int (if x < y then 1 else 0)
-          lessThan (Float x) (Float y) = Int (if x < y then 1 else 0)
-          lessThan (String x) (String y) = Int (if x < y then 1 else 0)
+    where lessThan (Int x) (Int y) = if x < y then T else F
+          lessThan (Float x) (Float y) = if x < y then T else F
+          lessThan (String x) (String y) = if x < y then T else F
           lessThan x y = LessThan x y
 simplifyExp (LTE l r) = lte (simplifyExp l) (simplifyExp r)
-    where lte (Int x) (Int y) = Int (if x <= y then 1 else 0)
-          lte (Float x) (Float y) = Int (if x <= y then 1 else 0)
-          lte (String x) (String y) = Int (if x <= y then 1 else 0)
+    where lte (Int x) (Int y) = if x <= y then T else F
+          lte (Float x) (Float y) = if x <= y then T else F
+          lte (String x) (String y) = if x <= y then T else F
           lte x y = LTE x y
 simplifyExp (GreaterThan l r) = greaterThan (simplifyExp l) (simplifyExp r)
-    where greaterThan (Int x) (Int y) = Int (if x > y then 1 else 0)
-          greaterThan (Float x) (Float y) = Int (if x > y then 1 else 0)
-          greaterThan (String x) (String y) = Int (if x > y then 1 else 0)
+    where greaterThan (Int x) (Int y) = if x > y then T else F
+          greaterThan (Float x) (Float y) = if x > y then T else F
+          greaterThan (String x) (String y) = if x > y then T else F
           greaterThan x y = GreaterThan x y
 simplifyExp (GTE l r) = gte (simplifyExp l) (simplifyExp r)
-    where gte (Int x) (Int y) = Int (if x >= y then 1 else 0)
-          gte (Float x) (Float y) = Int (if x >= y then 1 else 0)
-          gte (String x) (String y) = Int (if x >= y then 1 else 0)
+    where gte (Int x) (Int y) = if x >= y then T else F
+          gte (Float x) (Float y) = if x >= y then T else F
+          gte (String x) (String y) = if x >= y then T else F
           gte x y = GTE x y
 simplifyExp (Equal l r) = equal (simplifyExp l) (simplifyExp r)
-    where equal (Int x) (Int y) = Int (if x == y then 1 else 0)
-          equal (Float x) (Float y) = Int (if x == y then 1 else 0)
-          equal (String x) (String y) = Int (if x == y then 1 else 0)
+    where equal (Int x) (Int y) = if x == y then T else F
+          equal (Float x) (Float y) = if x == y then T else F
+          equal (String x) (String y) = if x == y then T else F
           equal x y = Equal x y
 simplifyExp (NotEqual l r) = notEqual (simplifyExp l) (simplifyExp r)
-    where notEqual (Int x) (Int y) = Int (if x /= y then 1 else 0)
-          notEqual (Float x) (Float y) = Int (if x /= y then 1 else 0)
-          notEqual (String x) (String y) = Int (if x /= y then 1 else 0)
+    where notEqual (Int x) (Int y) = if x /= y then T else F
+          notEqual (Float x) (Float y) = if x /= y then T else F
+          notEqual (String x) (String y) = if x /= y then T else F
           notEqual x y = NotEqual x y
 simplifyExp (If b t e) = if_ (simplifyExp b) (simplifyExp t) (simplifyExp e)
     where if_ (Int x) y z = if x == 0 then z else y
+          if_ T y _ = y
+          if_ F _ z = z
           if_ x y z = If x y z
 simplifyExp (Call t es) = Call t (map simplifyExp es)
 simplifyExp (At e ix) = At (simplifyExp e) (simplifyExp ix)

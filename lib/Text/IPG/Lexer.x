@@ -47,6 +47,8 @@ tokens :-
 <0>    repeat  { token $ \_ _ -> TokenRepeat }
 <0>    starting
                { token $ \_ _ -> TokenStarting }
+<0>    true    { token $ \_ _ -> TokenTrue }
+<0>    false   { token $ \_ _ -> TokenFalse }
 <0>    on      { token $ \_ _ -> TokenOn }
 <0>    until   { token $ \_ _ -> TokenUntil }
 <0>    START   { token $ \_ _ -> TokenStart }
@@ -105,6 +107,8 @@ data Token
     | TokenEndDeclare
     | TokenRepeat
     | TokenStarting
+    | TokenTrue
+    | TokenFalse
     | TokenOn
     | TokenUntil
     | TokenStart

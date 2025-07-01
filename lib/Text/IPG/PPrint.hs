@@ -107,6 +107,8 @@ pprintRef' _ (Start nt) = pprintNT nt <> ".START"
 pprintRef' _ (End nt) = pprintNT nt <> ".END"
 
 pprintExpr :: Int -> Exp T T T -> Out
+pprintExpr _ T = "true"
+pprintExpr _ F = "false"
 pprintExpr _ (Int n) = Builder.integerDec n
 pprintExpr _ (Float n) = floatToOut n
 pprintExpr _ (String s) = hexyString s

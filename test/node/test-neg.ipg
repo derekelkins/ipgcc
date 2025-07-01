@@ -1,0 +1,9 @@
+S -> { x = 3 } { y = -2.5 }
+     ?[ x == 3 ]
+     ?[ y == -2.5 ]
+     ?[ x == -(-3) ]
+     ?[ -y == 2.5 ];
+
+%postamble_begin
+
+console.log(JSON.stringify(S(""), null, 2));
