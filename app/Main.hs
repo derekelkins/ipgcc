@@ -5,7 +5,7 @@ import qualified Data.ByteString.Char8 as CBS -- bytestring
 import qualified Data.ByteString.Lazy.Char8 as LBS -- bytestring
 import qualified Data.ByteString.Builder as Builder -- bytestring
 import qualified Data.Map as Map -- containers
-import System.IO ( IOMode(..), hPutStrLn, openFile, stderr, stdout ) -- base
+import System.IO ( IOMode(..), hClose, hPutStrLn, openFile, stderr, stdout ) -- base
 
 import qualified Options.Applicative as Opt -- optparse-applicative
 
@@ -81,6 +81,7 @@ main = do
                         LBS.hPutStrLn h (toJSWithContext
                             (defaultContext { debugMode = debugModeFlag opts }) core)
                         LBS.hPutStr h postamble
+    hClose h
 
 externalFuncs :: Map.Map NT ([Value a] -> Value a)
 externalFuncs = Map.fromList [
