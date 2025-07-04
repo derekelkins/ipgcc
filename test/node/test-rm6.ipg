@@ -367,10 +367,7 @@ RootTextBlock
          ExpectEmpty[ExpectEmpty.END, innerEnd2]
        ExpectEmpty[ExpectEmpty.END, outerEnd]
 
-       SubBlock(3)
-         Float64[SubBlock.length] { xPosition = Float64.value }
-         Float64[Float64.END, SubBlock.END + SubBlock.length] { yPosition = Float64.value }
-       ExpectEmpty[ExpectEmpty.END, SubBlock.END + SubBlock.length]
+       Float64Pair(3) { xPosition = Float64Pair.fst } { yPosition = Float64Pair.snd }
 
        TaggedFloat32(4) { width = TaggedFloat32.value };
 
@@ -508,8 +505,9 @@ Float64Pair(expectedIndex)
          Float64[SubBlock.length]
          { fst = Float64.value }
          Float64[Float64.END, SubBlock.END + SubBlock.length]
-         { value = makePair(fst, Float64.value) }
-       ExpectEmpty[Float64.END, SubBlock.END + SubBlock.length];
+         { snd = Float64.value }
+       ExpectEmpty[Float64.END, SubBlock.END + SubBlock.length]
+       { value = makePair(fst, snd) };
 
 // I indent terms following a SubBlock to suggest their nesting level.
 SubBlock(expectedIndex) -> Length4Tag(expectedIndex) U32 { length = U32.value };
