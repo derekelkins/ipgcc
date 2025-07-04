@@ -40,23 +40,7 @@ function getTwoPi() {
   return 2*Math.pi;
 }
 
-function lwwBool(id, value) {
-  return { id, value };
-}
-
-function lwwU8(id, value) {
-  return { id, value };
-}
-
-function lwwFloat32(id, value) {
-  return { id, value };
-}
-
-function lwwCrdtId(id, value) {
-  return { id, value };
-}
-
-function lwwString(id, value) {
+function lww(id, value) {
   return { id, value };
 }
 
@@ -70,6 +54,10 @@ function makePair(fst, snd) {
 
 function makeStringWithFormat(s, fmt) {
   return { s, fmt };
+}
+
+function makeExtendedContentRect(timestamp, value) {
+  return { timestamp, value };
 }
 
 function processTextItemValue(value) {
@@ -148,20 +136,20 @@ HeaderV6 -> "reMarkable .lines file, version=6          ";
 Blocks -> repeat FullBlock.block;
 
 FullBlock
-     -> MainBlockInfo
-        Block(MainBlockInfo.blockType, MainBlockInfo.currentVersion)[MainBlockInfo.length]
-        Bytes[Block.END, MainBlockInfo.END + MainBlockInfo.length]
-        { block = makeBlock(MainBlockInfo.this, Block.data, Bytes.value) }; 
+    -> MainBlockInfo
+       Block(MainBlockInfo.blockType, MainBlockInfo.currentVersion)[MainBlockInfo.length]
+       Bytes[Block.END, MainBlockInfo.END + MainBlockInfo.length]
+       { block = makeBlock(MainBlockInfo.this, Block.data, Bytes.value) };
 
 MainBlockInfo
-     -> U32 { length = U32.value } // Relative to after the MainBlockInfo.
-        U8 ?[ check(U8.value == 0, "unknown value is non-zero") ] // The purpose of this is not understood.
-        { minVersion = . }
-        ?[ check(minVersion >= 0, "minVersion < 0") ]
-        { currentVersion = . }
-        ?[ check(currentVersion >= 0 && minVersion <= currentVersion,
-                 "currentVersion not between 0 and minVersion") ]
-        { blockType = . };
+    -> U32 { length = U32.value } // Relative to after the MainBlockInfo.
+       U8 ?[ check(U8.value == 0, "unknown value is non-zero") ] // The purpose of this is not understood.
+       { minVersion = . }
+       ?[ check(minVersion >= 0, "minVersion < 0") ]
+       { currentVersion = . }
+       ?[ check(currentVersion >= 0 && minVersion <= currentVersion,
+                "currentVersion not between 0 and minVersion") ]
+       { blockType = . };
 
 Block(blockType, version)
     -> ?[ blockType == 0x00 ] MigrationInfoBlock { data = MigrationInfoBlock.this }
@@ -225,7 +213,11 @@ SceneInfo
     -> LWWID(1) { currentLayer = LWWID.value }
        OptionalLWWBool(2) { backgroundVisible = OptionalLWWBool.value }
        OptionalLWWBool(3) { rootDocumentVisible = OptionalLWWBool.value }
-       OptionalIntPair(4) { paperSize = OptionalIntPair.value };
+       OptionalIntPair(4) { obsoletePaperSize = OptionalIntPair.value } // Seems replaced.
+       OptionalIntPair(5) { paperSize = OptionalIntPair.value }
+       OptionalLWWRectangle(6) { extendedContentRect = OptionalLWWRectangle.value }
+       OptionalFloat64Pair(7) { paperSizeF = OptionalFloat64Pair.value }
+       OptionalLWWFloat64Pair(8) { lwwPaperSizeF = OptionalLWWFloat64Pair.value };
 
 SceneItemInfo
     -> TaggedId(1) { parentId = TaggedId.value }
@@ -260,6 +252,18 @@ SceneGlyphItemBlockValue
        ExpectEmpty[ExpectEmpty.END, outerEnd]
        { value = makeSceneGlyItemBlockValue(start, length, colorId, text, rectangles) }
      / { value = getNull() };
+
+OptionalLWWRectangle(expectedIndex)
+    -> LWWRectangle(expectedIndex) { value = LWWRectangle.value }
+     / { value = getNull() };
+
+LWWRectangle(expectedIndex)
+    -> SubBlock(expectedIndex)
+         TaggedId(1)[SubBlock.length]
+         SubBlock@2(2)
+           Rectangle { value = lww(TaggedId.value, Rectangle.this) }
+         ExpectEmpty[Rectangle.END, SubBlock@2.END + SubBlock@2.length]
+       ExpectEmpty[ExpectEmpty.END, SubBlock.END + SubBlock.length];
 
 Rectangle
     -> Float64 { x = Float64.value }
@@ -399,7 +403,7 @@ TextFormat
          "\x11" // Source is unsure about this.
          { formatCode = . }
        ExpectEmpty[SubBlock.END + 2, SubBlock.END + SubBlock.length]
-       { value = lwwU8(timestamp, formatCode < 0 || formatCode > 7 ? 1 : formatCode) };
+       { value = lww(timestamp, formatCode < 0 || formatCode > 7 ? 1 : formatCode) };
 
 UnknownBlock -> { data = * };
 
@@ -408,78 +412,101 @@ OptionalLWWBool(expectedIndex)
      / { value = getNull() };
 
 LWWBool(expectedIndex)
-     -> SubBlock(expectedIndex)
-          TaggedId(1)[SubBlock.length]
-          TaggedBool(2)[TaggedId.END, SubBlock.END + SubBlock.length]
-          { value = lwwBool(TaggedId.value, TaggedBool.value) }
-        ExpectEmpty[TaggedBool.END, SubBlock.END + SubBlock.length];
+    -> SubBlock(expectedIndex)
+         TaggedId(1)[SubBlock.length]
+         TaggedBool(2)[TaggedId.END, SubBlock.END + SubBlock.length]
+         { value = lww(TaggedId.value, TaggedBool.value) }
+       ExpectEmpty[TaggedBool.END, SubBlock.END + SubBlock.length];
 
 OptionalLWWU8(expectedIndex)
     -> LWWU8(expectedIndex) { value = LWWU8.value }
      / { value = getNull() };
 
 LWWU8(expectedIndex)
-     -> SubBlock(expectedIndex)
-          TaggedId(1)[SubBlock.length]
-          TaggedU8(2)[TaggedId.END, SubBlock.END + SubBlock.length]
-          { value = lwwU8(TaggedId.value, TaggedU8.value) }
-        ExpectEmpty[TaggedU8.END, SubBlock.END + SubBlock.length];
+    -> SubBlock(expectedIndex)
+         TaggedId(1)[SubBlock.length]
+         TaggedU8(2)[TaggedId.END, SubBlock.END + SubBlock.length]
+         { value = lww(TaggedId.value, TaggedU8.value) }
+       ExpectEmpty[TaggedU8.END, SubBlock.END + SubBlock.length];
 
 OptionalLWWFloat32(expectedIndex)
     -> LWWFloat32(expectedIndex) { value = LWWFloat32.value }
      / { value = getNull() };
 
 LWWFloat32(expectedIndex)
-     -> SubBlock(expectedIndex)
-          TaggedId(1)[SubBlock.length]
-          TaggedFloat32(2)[TaggedId.END, SubBlock.END + SubBlock.length]
-          { value = lwwFloat32(TaggedId.value, TaggedFloat32.value) }
-        ExpectEmpty[TaggedFloat32.END, SubBlock.END + SubBlock.length];
+    -> SubBlock(expectedIndex)
+         TaggedId(1)[SubBlock.length]
+         TaggedFloat32(2)[TaggedId.END, SubBlock.END + SubBlock.length]
+         { value = lww(TaggedId.value, TaggedFloat32.value) }
+       ExpectEmpty[TaggedFloat32.END, SubBlock.END + SubBlock.length];
 
 OptionalLWWID(expectedIndex)
     -> LWWID(expectedIndex) { value = LWWID.value }
      / { value = getNull() };
 
 LWWID(expectedIndex)
-     -> SubBlock(expectedIndex)
-          TaggedId(1)[SubBlock.length]
-          { timestamp = TaggedId.value }
-          TaggedId(2)[TaggedId.END, SubBlock.END + SubBlock.length]
-          { value = lwwCrdtId(timestamp, TaggedId.value) }
-        ExpectEmpty[TaggedId.END, SubBlock.END + SubBlock.length];
+    -> SubBlock(expectedIndex)
+         TaggedId(1)[SubBlock.length]
+         { timestamp = TaggedId.value }
+         TaggedId(2)[TaggedId.END, SubBlock.END + SubBlock.length]
+         { value = lww(timestamp, TaggedId.value) }
+       ExpectEmpty[TaggedId.END, SubBlock.END + SubBlock.length];
 
 LWWString(expectedIndex)
-     -> SubBlock(expectedIndex)
-          TaggedId(1)[SubBlock.length]
-          String(2)[TaggedId.END, SubBlock.END + SubBlock.length]
-          { value = lwwString(TaggedId.value, String.value) }
-        ExpectEmpty[String.END, SubBlock.END + SubBlock.length];
+    -> SubBlock(expectedIndex)
+         TaggedId(1)[SubBlock.length]
+         String(2)[TaggedId.END, SubBlock.END + SubBlock.length]
+         { value = lww(TaggedId.value, String.value) }
+       ExpectEmpty[String.END, SubBlock.END + SubBlock.length];
 
 String(expectedIndex)
-     -> SubBlock(expectedIndex)
-          VarUInt[SubBlock.length]
-          Bool[VarUInt.END, SubBlock.END + SubBlock.length]
-          ?[ check(Bool.value, "String flag unset") ] // The guess is this is an isAscii flag.
-          ?[ check(Bool.END + VarUInt.value <= SubBlock.END + SubBlock.length, "String: Overfull block") ]
-          Bytes[VarUInt.value]
-          { value = decodeAscii(Bytes.value) }
-        ExpectEmpty[Bytes.END, SubBlock.END + SubBlock.length];
+    -> SubBlock(expectedIndex)
+         VarUInt[SubBlock.length]
+         Bool[VarUInt.END, SubBlock.END + SubBlock.length]
+         ?[ check(Bool.value, "String flag unset") ] // The guess is this is an isAscii flag.
+         ?[ check(Bool.END + VarUInt.value <= SubBlock.END + SubBlock.length, "String: Overfull block") ]
+         Bytes[VarUInt.value]
+         { value = decodeAscii(Bytes.value) }
+       ExpectEmpty[Bytes.END, SubBlock.END + SubBlock.length];
 
 OptionalU32(expectedIndex)
-     -> TaggedU32(expectedIndex) { value = TaggedU32.value }
-      / { value = getNull() };
+    -> TaggedU32(expectedIndex) { value = TaggedU32.value }
+     / { value = getNull() };
 
 OptionalIntPair(expectedIndex)
     -> IntPair(expectedIndex) { value = IntPair.value }
      / { value = getNull() };
 
 IntPair(expectedIndex)
-     -> SubBlock(expectedIndex)
-          U32[SubBlock.length]
-          { fst = U32.value }
-          U32[U32.END, SubBlock.END + SubBlock.length]
-          { value = makePair(fst, U32.value) }
-        ExpectEmpty[U32.END, SubBlock.END + SubBlock.length];
+    -> SubBlock(expectedIndex)
+         U32[SubBlock.length]
+         { fst = U32.value }
+         U32[U32.END, SubBlock.END + SubBlock.length]
+         { value = makePair(fst, U32.value) }
+       ExpectEmpty[U32.END, SubBlock.END + SubBlock.length];
+
+OptionalLWWFloat64Pair(expectedIndex)
+    -> LWWFloat64Pair(expectedIndex) { value = LWWFloat64Pair.value }
+     / { value = getNull() };
+
+LWWFloat64Pair(expectedIndex)
+    -> SubBlock(expectedIndex)
+         TaggedId(1)[SubBlock.length]
+         Float64Pair(2)[TaggedId.END, SubBlock.END + SubBlock.length]
+         { value = lww(TaggedId.value, Float64Pair.value) }
+       ExpectEmpty[Float64Pair.END, SubBlock.END + SubBlock.length];
+
+OptionalFloat64Pair(expectedIndex)
+    -> Float64Pair(expectedIndex) { value = Float64Pair.value }
+     / { value = getNull() };
+
+Float64Pair(expectedIndex)
+    -> SubBlock(expectedIndex)
+         Float64[SubBlock.length]
+         { fst = Float64.value }
+         Float64[Float64.END, SubBlock.END + SubBlock.length]
+         { value = makePair(fst, Float64.value) }
+       ExpectEmpty[Float64.END, SubBlock.END + SubBlock.length];
 
 // I indent terms following a SubBlock to suggest their nesting level.
 SubBlock(expectedIndex) -> Length4Tag(expectedIndex) U32 { length = U32.value };
@@ -518,9 +545,9 @@ Byte8Tag(expectedIndex) -> Tag(expectedIndex, 0x8); // Byte8
 Length4Tag(expectedIndex) -> Tag(expectedIndex, 0xC); // Length4
 
 Tag(expectedIndex, expectedTagType)
-     -> VarUInt 
-        ?[ expectedIndex == (VarUInt.value >> 4) ]
-        ?[ expectedTagType == (VarUInt.value & 0x0F) ];
+    -> VarUInt
+       ?[ expectedIndex == (VarUInt.value >> 4) ]
+       ?[ expectedTagType == (VarUInt.value & 0x0F) ];
 
 // This is used to detect and deal with underfull blocks.
 ExpectEmpty
