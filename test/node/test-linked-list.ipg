@@ -1,0 +1,13 @@
+const fs = require("node:fs");
+
+%preamble_end
+
+U16 -> { lo = . } { hi = . } { value = lo | (hi << 8) };
+
+Node -> U16 { value = U16.value } U16 { next = U16.value };
+
+LinkedList -> repeat Node[Node.next, Node.next + 4].value;
+
+%postamble_begin
+
+console.log(JSON.stringify(LinkedList(fs.readFileSync("./test/node/samples/linked-list.bin")), null, 2));
