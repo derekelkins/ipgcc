@@ -14,6 +14,10 @@ type Exp' = Exp T T T
 type Grammar' = Grammar T T T Exp'
 type Term' = Term T T T Exp'
 
+u :: (T, Int) -> String
+u (nt, -1) = [i|#{nt}|]
+u (nt, n) = [i|#{nt}@#{show n}|]
+
 -- Things to check:
 --   - Referenced rules are defined or declared as external
 --   - Attributes are defined before use
@@ -68,40 +72,42 @@ validate externalRules (Grammar rules) = foldMap check rules <> basicChecks
         | otherwise = Nothing
 
     check (Rule _ nt params alts) =
-        foldMap (\(Alternative ts) -> checkTerms nt (Set.fromList params) Set.empty ts) alts
-    checkTerms :: T -> Set.Set T -> Set.Set T -> [Term'] -> Maybe [T]
-    checkTerms _ _ _ [] = Nothing
-    checkTerms nt params locals (NonTerminal (a, _) es l r:ts) =
+        foldMap (\(Alternative ts) ->
+            checkTerms nt (Set.fromList params) Set.empty Set.empty ts) alts
+    checkTerms :: T -> Set.Set T -> Set.Set T -> Set.Set (T, Int) -> [Term'] -> Maybe [T]
+    checkTerms _ _ _ _ [] = Nothing
+    checkTerms nt params locals nts (NonTerminal nt'@(a, _) es l r:ts) =
         (case Map.lookup a parameters of
             Nothing -> if a `Set.member` externalRules then Nothing
                         else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
             Just (n, _) -> if n == length es then Nothing
                             else Just [[i|Arity mismatch when calling #{a} in rule #{nt}|]])
-        <> foldMap (checkExp nt params locals) es
-        <> checkExp nt params locals l
-        <> checkExp nt params locals r
-        <> checkTerms nt params locals ts
-    checkTerms nt params locals (Terminal _ l r:ts) =
-           checkExp nt params locals l
-        <> checkExp nt params locals r
-        <> checkTerms nt params locals ts
-    checkTerms nt params locals ((x := e):ts) =
-           checkExp nt params locals e
-        <> checkTerms nt params locals' ts
+        <> foldMap (checkExp nt params locals nts) es
+        <> checkExp nt params locals nts l
+        <> checkExp nt params locals nts r
+        <> checkTerms nt params locals nts' ts
+      where nts' = Set.insert nt' nts
+    checkTerms nt params locals nts (Terminal _ l r:ts) =
+           checkExp nt params locals nts l
+        <> checkExp nt params locals nts r
+        <> checkTerms nt params locals nts ts
+    checkTerms nt params locals nts ((x := e):ts) =
+           checkExp nt params locals nts e
+        <> checkTerms nt params locals' nts ts
       where locals' = Set.insert x locals
-    checkTerms nt params locals (Any x e:ts) =
-           checkExp nt params locals e
-        <> checkTerms nt params locals' ts
+    checkTerms nt params locals nts (Any x e:ts) =
+           checkExp nt params locals nts e
+        <> checkTerms nt params locals' nts ts
       where locals' = Set.insert x locals
-    checkTerms nt params locals (Slice x l r:ts) =
-           checkExp nt params locals l
-        <> checkExp nt params locals r
-        <> checkTerms nt params locals' ts
+    checkTerms nt params locals nts (Slice x l r:ts) =
+           checkExp nt params locals nts l
+        <> checkExp nt params locals nts r
+        <> checkTerms nt params locals' nts ts
       where locals' = Set.insert x locals
-    checkTerms nt params locals (Guard e:ts) =
-            checkExp nt params locals e
-        <> checkTerms nt params locals ts
-    checkTerms nt params locals (Repeat (a, _) es l r x l0 r0:ts) =
+    checkTerms nt params locals nts (Guard e:ts) =
+            checkExp nt params locals nts e
+        <> checkTerms nt params locals nts ts
+    checkTerms nt params locals nts (Repeat nt'@(a, _) es l r x l0 r0:ts) =
         (case Map.lookup a parameters of
             Nothing -> if a `Set.member` externalRules then Nothing
                         else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
@@ -111,14 +117,15 @@ validate externalRules (Grammar rules) = foldMap check rules <> basicChecks
                 Nothing -> Nothing -- Already checked this case
                 Just attrs -> if x `Set.member` attrs then Nothing
                                 else Just [[i|#{x} isn't a guaranteed attribute on #{a} in rule #{nt}|]])
-        <> foldMap (checkExp nt params locals) es
-        <> checkExp nt params locals l
-        <> checkExp nt params locals r
-        <> checkExp nt params locals l0
-        <> checkExp nt params locals r0
-        <> checkTerms nt params locals' ts
+        <> foldMap (checkExp nt params locals nts') es
+        <> checkExp nt params locals nts' l
+        <> checkExp nt params locals nts' r
+        <> checkExp nt params locals nts l0
+        <> checkExp nt params locals nts r0
+        <> checkTerms nt params locals' nts' ts
       where locals' = Set.insert "values" locals
-    checkTerms nt params locals (RepeatUntil (a, _) es1 l r x l0 r0 (b, _) es2:ts) =
+            nts' = Set.insert nt' nts
+    checkTerms nt params locals nts (RepeatUntil nt1'@(a, _) es1 l r x l0 r0 nt2'@(b, _) es2:ts) =
         (case Map.lookup a parameters of
             Nothing -> if a `Set.member` externalRules then Nothing
                         else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
@@ -133,95 +140,106 @@ validate externalRules (Grammar rules) = foldMap check rules <> basicChecks
                             else Just [[i|Rule #{b} in rule #{nt} is undefined|]]
                 Just (n, _) -> if n == length es2 then Nothing
                                 else Just [[i|Arity mismatch when calling #{b} in rule #{nt}|]])
-        <> foldMap (checkExp nt params locals) es1
-        <> foldMap (checkExp nt params locals) es2
-        <> checkExp nt params locals l
-        <> checkExp nt params locals r
-        <> checkExp nt params locals l0
-        <> checkExp nt params locals r0
-        <> checkTerms nt params locals' ts
+        <> foldMap (checkExp nt params locals nts') es1
+        <> foldMap (checkExp nt params locals nts') es2
+        <> checkExp nt params locals nts' l
+        <> checkExp nt params locals nts' r
+        <> checkExp nt params locals nts l0
+        <> checkExp nt params locals nts r0
+        <> checkTerms nt params locals' nts'' ts
       where locals' = Set.insert "values" locals
-    checkTerms nt params locals (Array x s e (a, _) es l r:ts) =
+            nts' = Set.insert nt1' nts
+            nts'' = Set.insert nt2' nts'
+    checkTerms nt params locals nts (Array x s e nt'@(a, _) es l r:ts) =
         (case Map.lookup a parameters of
             Nothing -> if a `Set.member` externalRules then Nothing
                         else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
             Just (n, _) -> if n == length es then Nothing
                             else Just [[i|Arity mismatch when calling #{a} in rule #{nt}|]])
-        <> checkExp nt params locals s
-        <> checkExp nt params locals e
-        <> foldMap (checkExp nt params' locals) es
-        <> checkExp nt params' locals l
-        <> checkExp nt params' locals r
-        <> checkTerms nt params locals ts
+        <> checkExp nt params locals nts s
+        <> checkExp nt params locals nts e
+        <> foldMap (checkExp nt params' locals nts') es
+        <> checkExp nt params' locals nts' l
+        <> checkExp nt params' locals nts' r
+        <> checkTerms nt params locals nts' ts
       where params' = Set.insert x params
-    checkExp :: T -> Set.Set T -> Set.Set T -> Exp' -> Maybe [T]
-    checkExp nt params locals (Add l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (Sub l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (Mul l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (Div l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (Mod l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (Exp l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (And l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (Or l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (BitwiseAnd l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (BitwiseXor l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (BitwiseOr l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (LSh l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (RSh l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (LessThan l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (LTE l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (GreaterThan l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (GTE l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (Equal l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (NotEqual l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (At l r) =
-        checkExp nt params locals l <> checkExp nt params locals r
-    checkExp nt params locals (Neg l) = checkExp nt params locals l
-    checkExp nt params locals (BitwiseNeg l) = checkExp nt params locals l
-    checkExp nt params locals (Not l) = checkExp nt params locals l
-    checkExp nt params locals (If b t e) =
-        checkExp nt params locals b <> checkExp nt params locals t
-            <> checkExp nt params locals e
-    checkExp nt params locals (Call _ es) = foldMap (checkExp nt params locals) es
-    checkExp nt params locals (Ref (Id x)) =
+            nts' = Set.insert nt' nts
+    checkExp :: T -> Set.Set T -> Set.Set T -> Set.Set (T, Int) -> Exp' -> Maybe [T]
+    checkExp nt params locals nts (Add l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (Sub l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (Mul l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (Div l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (Mod l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (Exp l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (And l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (Or l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (BitwiseAnd l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (BitwiseXor l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (BitwiseOr l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (LSh l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (RSh l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (LessThan l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (LTE l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (GreaterThan l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (GTE l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (Equal l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (NotEqual l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (At l r) =
+        checkExp nt params locals nts l <> checkExp nt params locals nts r
+    checkExp nt params locals nts (Neg l) = checkExp nt params locals nts l
+    checkExp nt params locals nts (BitwiseNeg l) = checkExp nt params locals nts l
+    checkExp nt params locals nts (Not l) = checkExp nt params locals nts l
+    checkExp nt params locals nts (If b t e) =
+        checkExp nt params locals nts b <> checkExp nt params locals nts t
+            <> checkExp nt params locals nts e
+    checkExp nt params locals nts (Call _ es) = foldMap (checkExp nt params locals nts) es
+    checkExp nt params locals _ (Ref (Id x)) =
         if x `Set.member` params || x `Set.member` locals then Nothing
             else Just [[i|#{x} is not yet defined in rule #{nt}|]] -- This isn't possible as the output of toCore.
-    checkExp nt _ _ (Ref (Attr (a, _) x)) =
-        case Map.lookup a guaranteedAttributes of
-            Nothing -> if a `Set.member` externalRules then Nothing
-                        else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
-            Just attrs -> if x `Set.member` attrs then Nothing
-                            else Just [[i|#{x} isn't a guaranteed attribute on #{a} in rule #{nt}|]]
-    checkExp nt params locals (Ref (Index (a, _) e x)) =
+    checkExp nt _ _ nts (Ref (Attr nt'@(a, _) x)) =
         (case Map.lookup a guaranteedAttributes of
             Nothing -> if a `Set.member` externalRules then Nothing
                         else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
             Just attrs -> if x `Set.member` attrs then Nothing
                             else Just [[i|#{x} isn't a guaranteed attribute on #{a} in rule #{nt}|]])
-        <> checkExp nt params locals e
-    checkExp nt _ _ (Ref (Start (a, _))) =
-        if a `Map.member` parameters || a `Set.member` externalRules then Nothing
-            else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
-    checkExp nt _ _ (Ref (End (a, _))) =
-        if a `Map.member` parameters || a `Set.member` externalRules then Nothing
-            else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
-    checkExp _ _ _ _ = Nothing
+        <> if nt' `Set.member` nts  then Nothing
+               else Just [[i|Alias #{u nt'} in rule #{nt} is undefined|]]
+    checkExp nt params locals nts (Ref (Index nt'@(a, _) e x)) =
+        (case Map.lookup a guaranteedAttributes of
+            Nothing -> if a `Set.member` externalRules then Nothing
+                        else Just [[i|Rule #{a} in rule #{nt} is undefined|]]
+            Just attrs -> if x `Set.member` attrs then Nothing
+                            else Just [[i|#{x} isn't a guaranteed attribute on #{a} in rule #{nt}|]])
+        <> checkExp nt params locals nts e
+        <> if nt' `Set.member` nts  then Nothing
+               else Just [[i|Alias #{u nt'} in rule #{nt} is undefined|]]
+    checkExp nt _ _ nts (Ref (Start nt'@(a, _))) =
+        (if a `Map.member` parameters || a `Set.member` externalRules then Nothing
+            else Just [[i|Rule #{a} in rule #{nt} is undefined|]])
+        <> if nt' `Set.member` nts  then Nothing
+                else Just [[i|Alias #{u nt'} in rule #{nt} is undefined|]]
+    checkExp nt _ _ nts (Ref (End nt'@(a, _))) =
+        (if a `Map.member` parameters || a `Set.member` externalRules then Nothing
+            else Just [[i|Rule #{a} in rule #{nt} is undefined|]])
+        <> if nt' `Set.member` nts  then Nothing
+                else Just [[i|Alias #{u nt'} in rule #{nt} is undefined|]]
+    checkExp _ _ _ _ _ = Nothing

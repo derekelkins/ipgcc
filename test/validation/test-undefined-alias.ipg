@@ -1,0 +1,15 @@
+S -> A
+     for i = 0 to 3 do B[i, i+1]
+     { a = A@10(1).y }
+     { b = B@15.y }
+     repeat D.x
+     repeat E.x until F
+     { s = D@10.START }
+     { e = E@10.END }
+     { e = F@10.END };
+
+A -> "a" { y = "a" };
+B -> "b" { y = "b" };
+D -> "d" { x = "d" };
+E -> "e" { x = "e" };
+F -> "f";
