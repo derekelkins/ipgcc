@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 module Main ( main ) where
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Char8 as CBS -- bytestring

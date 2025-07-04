@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 module Main ( main ) where
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Lazy as LBS -- bytestring
@@ -48,4 +49,3 @@ goldenTests = do
       | ipgFile <- ipgFiles
       , let goldFile = replaceExtension ipgFile ".ipg.json"
       ]
-
