@@ -165,45 +165,7 @@ validate externalRules (Grammar rules) = foldMap check rules <> basicChecks
       where params' = Set.insert x params
             nts' = Set.insert nt' nts
     checkExp :: T -> Set.Set T -> Set.Set T -> Set.Set (T, Int) -> Exp' -> Maybe [T]
-    checkExp nt params locals nts (Add l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (Sub l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (Mul l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (Div l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (Mod l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (Exp l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (And l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (Or l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (BitwiseAnd l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (BitwiseXor l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (BitwiseOr l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (LSh l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (RSh l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (LessThan l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (LTE l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (GreaterThan l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (GTE l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (Equal l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (NotEqual l r) =
-        checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (At l r) =
+    checkExp nt params locals nts (Bin _ l r) =
         checkExp nt params locals nts l <> checkExp nt params locals nts r
     checkExp nt params locals nts (Neg l) = checkExp nt params locals nts l
     checkExp nt params locals nts (BitwiseNeg l) = checkExp nt params locals nts l

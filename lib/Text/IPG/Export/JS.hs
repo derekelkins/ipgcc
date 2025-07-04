@@ -11,7 +11,7 @@ import Data.String.Interpolate ( i, __i ) -- string-interpolate
 import Text.IPG.Core (
     Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..),
     arrayNonTerminals, nonTerminals, )
-import Text.IPG.GenericExp ( Exp(..) )
+import Text.IPG.GenericExp ( BinOp(..), Exp(..) )
 import Text.IPG.PPrint ( floatToOut, hexyString, outParen, pprintTerm )
 
 -- It's worth noting that the way this export works already supports blackbox parsers.
@@ -64,47 +64,47 @@ exprToJS' _ _ _ F = "false"
 exprToJS' _ _ _ (Int n) = Builder.int64Dec n
 exprToJS' _ _ _ (Float n) = floatToOut n
 exprToJS' _ _ _ (String s) = hexyString s
-exprToJS' c env p (Add l r) =
+exprToJS' c env p (Bin Add l r) =
     outParen (p > 11) (exprToJS' c env 11 l <> " + " <> exprToJS' c env 12 r)
-exprToJS' c env p (Sub l r) =
+exprToJS' c env p (Bin Sub l r) =
     outParen (p > 11) (exprToJS' c env 11 l <> " - " <> exprToJS' c env 12 r)
-exprToJS' c env p (Mul l r) =
+exprToJS' c env p (Bin Mul l r) =
     outParen (p > 12) (exprToJS' c env 12 l <> " * " <> exprToJS' c env 13 r)
-exprToJS' c env p (Div l r) =
+exprToJS' c env p (Bin Div l r) =
     outParen (p > 12) (exprToJS' c env 12 l <> " / " <> exprToJS' c env 13 r)
-exprToJS' c env p (Mod l r) =
+exprToJS' c env p (Bin Mod l r) =
     outParen (p > 12) (exprToJS' c env 12 l <> " % " <> exprToJS' c env 13 r)
-exprToJS' c env p (Exp l r) =
+exprToJS' c env p (Bin Exp l r) =
     outParen (p > 13) (exprToJS' c env 14 l <> " ** " <> exprToJS' c env 13 r)
 exprToJS' c env p (Neg e) =
     outParen (p > 14) ("-" <> exprToJS' c env 15 e)
 exprToJS' c env p (BitwiseNeg e) =
     outParen (p > 14) ("~" <> exprToJS' c env 15 e)
-exprToJS' c env p (And l r) =
+exprToJS' c env p (Bin And l r) =
     outParen (p > 4) (exprToJS' c env 4 l <> " && " <> exprToJS' c env 5 r)
-exprToJS' c env p (Or l r) =
+exprToJS' c env p (Bin Or l r) =
     outParen (p > 3)  (exprToJS' c env 3 l <> " || " <> exprToJS' c env 4 r)
-exprToJS' c env p (BitwiseAnd l r) =
+exprToJS' c env p (Bin BitwiseAnd l r) =
     outParen (p > 7) (exprToJS' c env 7 l <> " & " <> exprToJS' c env 8 r)
-exprToJS' c env p (BitwiseXor l r) =
+exprToJS' c env p (Bin BitwiseXor l r) =
     outParen (p > 6)  (exprToJS' c env 6 l <> " ^ " <> exprToJS' c env 7 r)
-exprToJS' c env p (BitwiseOr l r) =
+exprToJS' c env p (Bin BitwiseOr l r) =
     outParen (p > 5)  (exprToJS' c env 5 l <> " | " <> exprToJS' c env 6 r)
-exprToJS' c env p (LSh l r) =
+exprToJS' c env p (Bin LSh l r) =
     outParen (p > 10) (exprToJS' c env 10 l <> " << " <> exprToJS' c env 11 r)
-exprToJS' c env p (RSh l r) =
+exprToJS' c env p (Bin RSh l r) =
     outParen (p > 10) (exprToJS' c env 10 l <> " >> " <> exprToJS' c env 11 r)
-exprToJS' c env p (LessThan l r) =
+exprToJS' c env p (Bin LessThan l r) =
     outParen (p > 9) (exprToJS' c env 9 l <> " < " <> exprToJS' c env 10 r)
-exprToJS' c env p (LTE l r) =
+exprToJS' c env p (Bin LTE l r) =
     outParen (p > 9) (exprToJS' c env 9 l <> " <= " <> exprToJS' c env 10 r)
-exprToJS' c env p (GreaterThan l r) =
+exprToJS' c env p (Bin GreaterThan l r) =
     outParen (p > 9) (exprToJS' c env 9 l <> " > " <> exprToJS' c env 10 r)
-exprToJS' c env p (GTE l r) =
+exprToJS' c env p (Bin GTE l r) =
     outParen (p > 9) (exprToJS' c env 9 l <> " >= " <> exprToJS' c env 10 r)
-exprToJS' c env p (Equal l r) =
+exprToJS' c env p (Bin Equal l r) =
     outParen (p > 8) (exprToJS' c env 8 l <> " == " <> exprToJS' c env 9 r)
-exprToJS' c env p (NotEqual l r) =
+exprToJS' c env p (Bin NotEqual l r) =
     outParen (p > 8) (exprToJS' c env 8 l <> " != " <> exprToJS' c env 9 r)
 exprToJS' c env p (Not l) =
     outParen (p > 14) ("!" <> exprToJS' c env 15 l)
@@ -113,7 +113,7 @@ exprToJS' c env p (If b t e) =
         (exprToJS' c env 2 b <> " ? " <> exprToJS' c env 3 t <> " : " <> exprToJS' c env 3 e)
 exprToJS' c env _ (Call t es) =
     Builder.byteString t <> "(" <> mconcat (intersperse ", " $ map (exprToJS' c env 0) es) <> ")"
-exprToJS' c env p (At l r) =
+exprToJS' c env p (Bin At l r) =
     outParen (p > 17) (exprToJS' c env 17 l <> "[" <> exprToJS' c env 0 r <> "]")
 exprToJS' c env _ (Ref r) = refToJS c env r
 

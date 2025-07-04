@@ -10,7 +10,7 @@ import Data.Char ( ord ) -- base
 import Data.List ( intersperse ) -- base
 
 import Text.IPG.Core ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..) )
-import Text.IPG.GenericExp ( Exp(..) )
+import Text.IPG.GenericExp ( BinOp(..), Exp(..) )
 
 type T = BS.ByteString
 type Out = Builder.Builder
@@ -112,47 +112,47 @@ pprintExpr _ F = "false"
 pprintExpr _ (Int n) = Builder.int64Dec n
 pprintExpr _ (Float n) = floatToOut n
 pprintExpr _ (String s) = hexyString s
-pprintExpr p (Add l r) =
+pprintExpr p (Bin Add l r) =
     outParen (p > 11) (pprintExpr 11 l <> " + " <> pprintExpr 12 r)
-pprintExpr p (Sub l r) =
+pprintExpr p (Bin Sub l r) =
     outParen (p > 11) (pprintExpr 11 l <> " - " <> pprintExpr 12 r)
-pprintExpr p (Mul l r) =
+pprintExpr p (Bin Mul l r) =
     outParen (p > 12) (pprintExpr 12 l <> " * " <> pprintExpr 13 r)
-pprintExpr p (Div l r) =
+pprintExpr p (Bin Div l r) =
     outParen (p > 12) (pprintExpr 12 l <> " / " <> pprintExpr 13 r)
-pprintExpr p (Mod l r) =
+pprintExpr p (Bin Mod l r) =
     outParen (p > 12) (pprintExpr 12 l <> " % " <> pprintExpr 13 r)
-pprintExpr p (Exp l r) =
+pprintExpr p (Bin Exp l r) =
     outParen (p > 13) (pprintExpr 14 l <> " ** " <> pprintExpr 13 r)
 pprintExpr p (Neg e) =
     outParen (p > 14) ("-" <> pprintExpr 15 e)
 pprintExpr p (BitwiseNeg e) =
     outParen (p > 14) ("~" <> pprintExpr 15 e)
-pprintExpr p (And l r) =
+pprintExpr p (Bin And l r) =
     outParen (p > 4) (pprintExpr 4 l <> " && " <> pprintExpr 5 r)
-pprintExpr p (Or l r) =
+pprintExpr p (Bin Or l r) =
     outParen (p > 3)  (pprintExpr 3 l <> " || " <> pprintExpr 4 r)
-pprintExpr p (BitwiseAnd l r) =
+pprintExpr p (Bin BitwiseAnd l r) =
     outParen (p > 7) (pprintExpr 7 l <> " & " <> pprintExpr 8 r)
-pprintExpr p (BitwiseXor l r) =
+pprintExpr p (Bin BitwiseXor l r) =
     outParen (p > 6)  (pprintExpr 6 l <> " ^ " <> pprintExpr 7 r)
-pprintExpr p (BitwiseOr l r) =
+pprintExpr p (Bin BitwiseOr l r) =
     outParen (p > 5)  (pprintExpr 5 l <> " | " <> pprintExpr 6 r)
-pprintExpr p (LSh l r) =
+pprintExpr p (Bin LSh l r) =
     outParen (p > 10) (pprintExpr 10 l <> " << " <> pprintExpr 11 r)
-pprintExpr p (RSh l r) =
+pprintExpr p (Bin RSh l r) =
     outParen (p > 10) (pprintExpr 10 l <> " >> " <> pprintExpr 11 r)
-pprintExpr p (LessThan l r) =
+pprintExpr p (Bin LessThan l r) =
     outParen (p > 9) (pprintExpr 9 l <> " < " <> pprintExpr 10 r)
-pprintExpr p (LTE l r) =
+pprintExpr p (Bin LTE l r) =
     outParen (p > 9) (pprintExpr 9 l <> " <= " <> pprintExpr 10 r)
-pprintExpr p (GreaterThan l r) =
+pprintExpr p (Bin GreaterThan l r) =
     outParen (p > 9) (pprintExpr 9 l <> " > " <> pprintExpr 10 r)
-pprintExpr p (GTE l r) =
+pprintExpr p (Bin GTE l r) =
     outParen (p > 9) (pprintExpr 9 l <> " >= " <> pprintExpr 10 r)
-pprintExpr p (Equal l r) =
+pprintExpr p (Bin Equal l r) =
     outParen (p > 8) (pprintExpr 8 l <> " == " <> pprintExpr 9 r)
-pprintExpr p (NotEqual l r) =
+pprintExpr p (Bin NotEqual l r) =
     outParen (p > 8) (pprintExpr 8 l <> " != " <> pprintExpr 9 r)
 pprintExpr p (Not l) =
     outParen (p > 14) ("!" <> pprintExpr 15 l)
@@ -161,6 +161,6 @@ pprintExpr p (If b t e) =
         (pprintExpr 2 b <> " ? " <> pprintExpr 3 t <> " : " <> pprintExpr 3 e)
 pprintExpr _ (Call t es) =
     Builder.byteString t <> "(" <> mconcat (intersperse ", " $ map (pprintExpr 0) es) <> ")"
-pprintExpr p (At l r) =
+pprintExpr p (Bin At l r) =
     outParen (p > 17) (pprintExpr 17 l <> "[" <> pprintExpr 0 r <> "]")
 pprintExpr _ (Ref r) = pprintRef r

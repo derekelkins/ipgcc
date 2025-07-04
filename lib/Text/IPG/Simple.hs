@@ -20,7 +20,7 @@ type Grammar' = Core.Grammar T T T P.Exp'
 helper :: ExpHelpers P.IdType P.IdType P.IdType P.Exp'
 helper = ExpHelpers {
     len = E.Int . fromIntegral . BS.length,
-    add = E.Add,
+    add = E.Bin E.Add,
     num = E.Int . fromIntegral,
     ref = E.Ref,
     mapRef = E.mapRef,

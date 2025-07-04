@@ -10,7 +10,7 @@ import Data.List ( intersperse ) -- base
 
 import Text.IPG.Core ( Ref(..), MetaTag(..) )
 import Text.IPG.Full ( Grammar(..), Rule(..), Alternative(..), Term(..), StartingOn(..) )
-import Text.IPG.GenericExp ( Exp(..) )
+import Text.IPG.GenericExp ( BinOp(..), Exp(..) )
 import Text.IPG.Lexer (
     alexError, alexGetInput, alexMonadScan, alexSetInput, getCurrentLine, runAlex, saveInitialLine,
     Alex, AlexInput, AlexPosn(..), Token(..) )
@@ -223,31 +223,31 @@ Exp :: { Exp' }
     | int { Int $1 }
     | double { Float $1 }
     | string { String $1 }
-    | Exp '+' Exp { Add $1 $3 }
-    | Exp '-' Exp { Sub $1 $3 }
+    | Exp '+' Exp { Bin Add $1 $3 }
+    | Exp '-' Exp { Bin Sub $1 $3 }
     | '-' Exp %prec NEG { Neg $2 }
     | '+' Exp %prec PLUS { $2 }
-    | Exp '*' Exp { Mul $1 $3 }
-    | Exp '/' Exp { Div $1 $3 }
-    | Exp '%' Exp { Mod $1 $3 }
-    | Exp '**' Exp { Exp $1 $3 }
-    | Exp '&&' Exp { And $1 $3 }
-    | Exp '||' Exp { Or $1 $3 }
-    | Exp '&' Exp { BitwiseAnd $1 $3 }
-    | Exp '^' Exp { BitwiseXor $1 $3 }
-    | Exp '|' Exp { BitwiseOr $1 $3 }
-    | Exp '<<' Exp { LSh $1 $3 }
-    | Exp '>>' Exp { RSh $1 $3 }
-    | Exp '<' Exp { LessThan $1 $3 }
-    | Exp '<=' Exp { LTE $1 $3 }
-    | Exp '>' Exp { GreaterThan $1 $3 }
-    | Exp '>=' Exp { GTE $1 $3 }
-    | Exp '==' Exp { Equal $1 $3 }
-    | Exp '!=' Exp { NotEqual $1 $3 }
+    | Exp '*' Exp { Bin Mul $1 $3 }
+    | Exp '/' Exp { Bin Div $1 $3 }
+    | Exp '%' Exp { Bin Mod $1 $3 }
+    | Exp '**' Exp { Bin Exp $1 $3 }
+    | Exp '&&' Exp { Bin And $1 $3 }
+    | Exp '||' Exp { Bin Or $1 $3 }
+    | Exp '&' Exp { Bin BitwiseAnd $1 $3 }
+    | Exp '^' Exp { Bin BitwiseXor $1 $3 }
+    | Exp '|' Exp { Bin BitwiseOr $1 $3 }
+    | Exp '<<' Exp { Bin LSh $1 $3 }
+    | Exp '>>' Exp { Bin RSh $1 $3 }
+    | Exp '<' Exp { Bin LessThan $1 $3 }
+    | Exp '<=' Exp { Bin LTE $1 $3 }
+    | Exp '>' Exp { Bin GreaterThan $1 $3 }
+    | Exp '>=' Exp { Bin GTE $1 $3 }
+    | Exp '==' Exp { Bin Equal $1 $3 }
+    | Exp '!=' Exp { Bin NotEqual $1 $3 }
     | '!' Exp { Not $2 }
     | '~' Exp { BitwiseNeg $2 }
     | Exp '?' Exp ':' Exp { If $1 $3 $5 }
-    | Exp '[' Exp ']' { At $1 $3 }
+    | Exp '[' Exp ']' { Bin At $1 $3 }
     | '(' Exp ')' { $2 }
     | EOI { Ref EOI }
     | nt '.' START { makeExp $1 Start' }
