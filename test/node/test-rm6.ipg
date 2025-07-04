@@ -44,8 +44,13 @@ function lww(id, value) {
   return { id, value };
 }
 
+function asHex(bs) {
+    return bs.toString("hex");
+    // return bs.toHex(); // Browser
+}
+
 function makeCrdtId(part1, part2) {
-  return { part1, part2 };
+  return `${part1}:${part2}`;
 }
 
 function makePair(fst, snd) {
@@ -118,7 +123,7 @@ function makeSceneLineItemBlockValue(
 }
 
 function checkRootTextBlockId(blockId) {
-  return check(blockId.part1 === 0 && blockId.part2 === 0, "Expect root text block to have RootId");
+  return check(blockId === "0:0", "Expect root text block to have RootId");
 }
 
 %preamble_end
@@ -135,7 +140,7 @@ FullBlock
     -> MainBlockInfo
        Block(MainBlockInfo.blockType, MainBlockInfo.currentVersion)[MainBlockInfo.length]
        Bytes[Block.END, MainBlockInfo.END + MainBlockInfo.length]
-       { block = makeBlock(MainBlockInfo.this, Block.data, Bytes.value) };
+       { block = makeBlock(MainBlockInfo.this, Block.data, asHex(Bytes.value)) };
 
 MainBlockInfo
     -> U32 { length = U32.value } // Relative to after the MainBlockInfo.
@@ -171,10 +176,12 @@ AuthorId
     -> SubBlock(0)
          VarUInt[SubBlock.length]
          ?[ check(VarUInt.value == 16, "Expect UUID to have length 16") ]
-         { uuid = *[VarUInt.value] }
+         UUID[VarUInt.value] { uuid = UUID.value }
          U16[VarUInt.END + VarUInt.value, SubBlock.END + SubBlock.length]
          { authorId = U16.value }
        ExpectEmpty[U16.END, SubBlock.END + SubBlock.length];
+
+UUID -> { bs = *[16] } { value = asHex(bs) };
 
 MigrationInfoBlock
     -> TaggedId(1) { migrationId = TaggedId.value }

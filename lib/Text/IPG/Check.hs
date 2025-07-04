@@ -15,7 +15,7 @@ type Grammar' = Grammar T T T Exp'
 type Term' = Term T T T Exp'
 
 u :: (T, Int) -> String
-u (nt, -1) = [i|#{nt}|]
+u (nt, -1) = [i|#{nt}|] -- Shouldn't happen as output of toCore.
 u (nt, n) = [i|#{nt}@#{show n}|]
 
 -- Things to check:
