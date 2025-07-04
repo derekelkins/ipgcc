@@ -1,0 +1,31 @@
+S -> { xI = 2 } { yI = 3 } { xF = 2.4 } { yF = 3.9 } { zI = 0 } { zF = 0.0 }
+     A(xI, yI, zI, -1) { thisIII = A.this }
+     A(xI, yI, zF, -1) { thisIIF = A.this }
+     A(xI, yF, zI, -1.9) { thisIFI = A.this }
+     A(xI, yF, zF, -1.9) { thisIFF = A.this }
+     A(xF, yI, zI, -0.6000000000000001) { thisFII = A.this }
+     A(xF, yI, zF, -0.6000000000000001) { thisFIF = A.this }
+     A(xF, yF, zI, -1.5) { thisFFI = A.this }
+     A(xF, yF, zF, -1.5) { thisFFF = A.this }
+
+     { zIxI = 0 - xI == -xI }
+     { xIzI = xI - 0 == xI }
+     { zIxF = 0 - xF == -xF }
+     { xFzI = xF - 0 == xF }
+
+     { zFxI = 0.0 - xI == -xI }
+     { xIzF = xI - 0.0 == xI }
+     { zFxF = 0.0 - xF == -xF }
+     { xFzF = xF - 0.0 == xF }
+
+     { xIyI = xI - yI == 2 - 3 }
+     { xIyF = xI - yF == 2 - 3.9 }
+     { xFyI = xF - yI == 2.4 - 3 }
+     { xFyF = xF - yF == 2.4 - 3.9 };
+     
+A(x, y, z, exy)
+    -> { xy = x - y == exy } { xz = x - z == x } { zx = z - x == -x };
+
+%postamble_begin
+
+console.log(JSON.stringify(S(""), null, 2));

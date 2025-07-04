@@ -1,0 +1,68 @@
+{
+  "_ipg_start": 0,
+  "_ipg_end": 0,
+  "xI": 2,
+  "yI": 3,
+  "xF": 2.4,
+  "yF": 3.9,
+  "zI": 0,
+  "zF": 0,
+  "thisIII": {
+    "xy": true,
+    "xz": true,
+    "zx": true
+  },
+  "thisIIF": {
+    "xy": true,
+    "xz": true,
+    "zx": true
+  },
+  "thisIFI": {
+    "xy": true,
+    "xz": true,
+    "zx": true
+  },
+  "thisIFF": {
+    "xy": true,
+    "xz": true,
+    "zx": true
+  },
+  "thisFII": {
+    "xy": true,
+    "xz": true,
+    "zx": true
+  },
+  "thisFIF": {
+    "xy": true,
+    "xz": true,
+    "zx": true
+  },
+  "thisFFI": {
+    "xy": true,
+    "xz": true,
+    "zx": true
+  },
+  "thisFFF": {
+    "xy": true,
+    "xz": true,
+    "zx": true
+  },
+  "zIxI": true,
+  "xIzI": true,
+  "zIxF": true,
+  "xFzI": true,
+  "zFxI": true,
+  "xIzF": true,
+  "zFxF": true,
+  "xFzF": true,
+  "xIyI": true,
+  "xIyF": true,
+  "xFyI": true,
+  "xFyF": true,
+  "assoc1I": true,
+  "assoc2I": true,
+  "assoc3I": true,
+  "assoc1F": true,
+  "assoc2F": true,
+  "assoc3F": true
+}

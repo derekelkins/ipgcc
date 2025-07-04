@@ -1,0 +1,35 @@
+S -> { xI = 2 } { yI = 3 } { xF = 2.4 } { yF = 3.9 } { zI = 0 } { zF = 0.0 }
+     A(xI, yI, zI, 5) { thisIII = A.this }
+     A(xI, yI, zF, 5) { thisIIF = A.this }
+     A(xI, yF, zI, 5.9) { thisIFI = A.this }
+     A(xI, yF, zF, 5.9) { thisIFF = A.this }
+     A(xF, yI, zI, 5.4) { thisFII = A.this }
+     A(xF, yI, zF, 5.4) { thisFIF = A.this }
+     A(xF, yF, zI, 6.3) { thisFFI = A.this }
+     A(xF, yF, zF, 6.3) { thisFFF = A.this }
+
+     { zIxI = 0 + xI == xI }
+     { xIzI = xI + 0 == xI }
+     { zIxF = 0 + xF == xF }
+     { xFzI = xF + 0 == xF }
+
+     { zFxI = 0.0 + xI == xI }
+     { xIzF = xI + 0.0 == xI }
+     { zFxF = 0.0 + xF == xF }
+     { xFzF = xF + 0.0 == xF }
+
+     { xIyI = xI + yI == 2 + 3 }
+     { xIyF = xI + yF == 2 + 3.9 }
+     { xFyI = xF + yI == 2.4 + 3 }
+     { xFyF = xF + yF == 2.4 + 3.9 }
+
+     { assoc1I = (xI + 5) + 7 == xI + (5 + 7) }
+     { assoc2I = (5 + 7) + xI == 5 + (7 + xI) }
+     { assoc3I = (xI - 5) + 7 == xI + (7 - 5) }
+
+     { assoc1F = (xF + 5) + 7 == xF + (5 + 7) }
+     { assoc2F = (5 + 7) + xF == 5 + (7 + xF) }
+     { assoc3F = (xF - 5) + 7 == xF + (7 - 5) };
+     
+A(x, y, z, exy)
+    -> { xy = x + y == exy } { xz = x + z == x } { zx = z + x == x };
