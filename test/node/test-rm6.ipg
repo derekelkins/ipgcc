@@ -56,10 +56,6 @@ function makeStringWithFormat(s, fmt) {
   return { s, fmt };
 }
 
-function makeExtendedContentRect(timestamp, value) {
-  return { timestamp, value };
-}
-
 function processTextItemValue(value) {
   if (value.fmt !== null) {
     return value.fmt;
