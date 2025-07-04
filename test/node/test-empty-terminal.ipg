@@ -1,0 +1,5 @@
+S -> "abc" "" "xyz";
+
+%postamble_begin
+
+console.log(JSON.stringify(S("abcxyz"), null, 2));

@@ -1,0 +1,4 @@
+S -> "abc" "" "xyz";
+
+%postamble_begin
+abcxyz

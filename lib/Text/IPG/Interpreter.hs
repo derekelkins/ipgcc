@@ -169,6 +169,13 @@ interpNonTerminal ctxt nt args e_l e_r = \_ env@(ntbs, bs) ps buf ->
 interpTerm :: (HasCallStack) => Context a -> Term' -> Int -> InterpFunc a
 interpTerm ctxt = go
   where go (NonTerminal nt args e_l e_r) = interpNonTerminal ctxt nt args e_l e_r
+        go (Terminal "" e_l e_r) = \_ env ps buf ->
+            let eoi = BS.length buf
+            in case (eval ctxt eoi env ps e_l, eval ctxt eoi env ps e_r) of
+                (INT l, INT r) ->
+                    case slice (fromIntegral l) (fromIntegral r) buf of
+                        Just _ -> Just (env, eoi, 0)
+                        _ -> Nothing
         go (Terminal t e_l e_r) = \_ env ps buf ->
             let eoi = BS.length buf
             in case (eval ctxt eoi env ps e_l, eval ctxt eoi env ps e_r) of
