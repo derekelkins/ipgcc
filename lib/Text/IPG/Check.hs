@@ -167,9 +167,7 @@ validate externalRules (Grammar rules) = foldMap check rules <> basicChecks
     checkExp :: T -> Set.Set T -> Set.Set T -> Set.Set (T, Int) -> Exp' -> Maybe [T]
     checkExp nt params locals nts (Bin _ l r) =
         checkExp nt params locals nts l <> checkExp nt params locals nts r
-    checkExp nt params locals nts (Neg l) = checkExp nt params locals nts l
-    checkExp nt params locals nts (BitwiseNeg l) = checkExp nt params locals nts l
-    checkExp nt params locals nts (Not l) = checkExp nt params locals nts l
+    checkExp nt params locals nts (Un _ l) = checkExp nt params locals nts l
     checkExp nt params locals nts (If b t e) =
         checkExp nt params locals nts b <> checkExp nt params locals nts t
             <> checkExp nt params locals nts e

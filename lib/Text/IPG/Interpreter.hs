@@ -14,7 +14,7 @@ import qualified Data.Map as Map -- containers
 import GHC.Stack ( HasCallStack ) -- base
 
 import Text.IPG.Core ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..) )
-import Text.IPG.GenericExp ( BinOp(..), Exp(..) )
+import Text.IPG.GenericExp ( UnOp(..), BinOp(..), Exp(..) )
 import Text.IPG.PPrint ( hexyString )
 
 (!!!) :: (HasCallStack, Ord k, Show k) => Map.Map k v -> k -> v
@@ -325,12 +325,12 @@ eval ctxt eoi (env, bs) ps = go
                     exp' (FLOAT x) (INT y) = FLOAT (x ^ y)
                     exp' (INT x) (FLOAT y) = FLOAT (fromIntegral x ** y)
                     exp' (INT x) (INT y) = INT (x ^ y)
-          go (Neg l) = neg (go l)
+          go (Un Neg l) = neg (go l)
               where neg (INT x) = INT (-x)
                     neg (FLOAT x) = FLOAT (-x)
-          go (BitwiseNeg l) = bneg (go l)
+          go (Un BitwiseNeg l) = bneg (go l)
               where bneg (INT x) = INT (complement x)
-          go (Not l) = not' (go l)
+          go (Un Not l) = not' (go l)
               where not' (BOOL b) = BOOL (not b)
                     not' (INT n) = BOOL (n == 0)
           go (Bin And l r) = and' (go l) (go r)

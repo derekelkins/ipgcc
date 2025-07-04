@@ -1,8 +1,12 @@
-module Text.IPG.GenericExp ( BinOp(..), Exp(..), crushRef, mapRef, simplify, simplifyExp ) where
+module Text.IPG.GenericExp (
+    UnOp(..), BinOp(..), Exp(..), crushRef, mapRef, simplify, simplifyExp
+) where
 import Data.Bits ( shift, complement, xor, (.&.), (.|.) ) -- base
 import Data.Int ( Int64 ) -- base
 
 import Text.IPG.Core ( Grammar, Ref )
+
+data UnOp = Not | Neg | BitwiseNeg deriving ( Eq, Ord, Show )
 
 data BinOp
     = Add
@@ -33,9 +37,7 @@ data Exp nt t id
     | Int Int64
     | Float Double
     | String t
-    | Neg (Exp nt t id)
-    | BitwiseNeg (Exp nt t id)
-    | Not (Exp nt t id)
+    | Un UnOp (Exp nt t id)
     | Bin BinOp (Exp nt t id) (Exp nt t id)
     | If (Exp nt t id) (Exp nt t id) (Exp nt t id)
     | Call t [Exp nt t id]
@@ -45,9 +47,7 @@ data Exp nt t id
 mapRef :: (Ref nt id (Exp nt t id) -> Ref nt' id (Exp nt' t id)) -> Exp nt t id -> Exp nt' t id
 mapRef _ T = T
 mapRef _ F = F
-mapRef f (Not l) = Not (mapRef f l)
-mapRef f (Neg l) = Neg (mapRef f l)
-mapRef f (BitwiseNeg l) = BitwiseNeg (mapRef f l)
+mapRef f (Un op l) = Un op (mapRef f l)
 mapRef f (Bin op l r) = Bin op (mapRef f l) (mapRef f r)
 mapRef f (If b t e) = If (mapRef f b) (mapRef f t) (mapRef f e)
 mapRef f (Call t es) = Call t (map (mapRef f) es)
@@ -59,9 +59,7 @@ mapRef _ (String s) = String s
 crushRef :: (Monoid m) => (Ref nt id (Exp nt t id) -> m) -> Exp nt t id -> m
 crushRef _ T = mempty
 crushRef _ F = mempty
-crushRef f (Not l) = crushRef f l
-crushRef f (Neg l) = crushRef f l
-crushRef f (BitwiseNeg l) = crushRef f l
+crushRef f (Un _ l) = crushRef f l
 crushRef f (Bin _ l r) = crushRef f l <> crushRef f r
 crushRef f (If b t e) = crushRef f b <> crushRef f t <> crushRef f e
 crushRef f (Call _ es) = foldMap (crushRef f) es
@@ -89,10 +87,10 @@ simplifyExp (Bin Add l r) = add (simplifyExp l) (simplifyExp r)
           add (Float x) (Float y) = Float (x + y)
           add x y = Bin Add x y
 simplifyExp (Bin Sub l r) = sub (simplifyExp l) (simplifyExp r)
-    where sub (Int 0) y = simplifyExp (Neg y)
+    where sub (Int 0) y = simplifyExp (Un Neg y)
           sub x (Int 0) = x
           sub (Int x) (Int y) = Int (x - y)
-          sub (Float 0) y = simplifyExp (Neg y)
+          sub (Float 0) y = simplifyExp (Un Neg y)
           sub x (Float 0) = x
           sub (Float x) (Float y) = Float (x - y)
           sub x y = Bin Sub x y
@@ -110,6 +108,7 @@ simplifyExp (Bin Mul l r) = mul (simplifyExp l) (simplifyExp r)
           mul x y = Bin Mul x y
 simplifyExp (Bin Div l r) = div' (simplifyExp l) (simplifyExp r)
     where div' (Float x) (Float y) = Float (x / y)
+          div' x (Int 1) = x
           div' x (Float 1) = x
           div' x y = Bin Div x y
 simplifyExp (Bin Mod l r) = mod' (simplifyExp l) (simplifyExp r)
@@ -121,16 +120,16 @@ simplifyExp (Bin Exp l r) = exp' (simplifyExp l) (simplifyExp r)
           exp' _ (Int 0) = Int 1
           exp' x (Int 1) = x
           exp' x y = Bin Exp x y
-simplifyExp (Neg l) = neg (simplifyExp l)
+simplifyExp (Un Neg l) = neg (simplifyExp l)
     where neg (Int x) = Int (-x)
           neg (Float x) = Float (-x)
-          neg (Neg x) = x
-          neg x = Neg x
-simplifyExp (BitwiseNeg l) = bneg (simplifyExp l)
+          neg (Un Neg x) = x
+          neg x = Un Neg x
+simplifyExp (Un BitwiseNeg l) = bneg (simplifyExp l)
     where bneg (Int x) = Int (complement x)
-          bneg (BitwiseNeg x) = x
-          bneg x = BitwiseNeg x
-simplifyExp (Not l) = Not (simplifyExp l)
+          bneg (Un BitwiseNeg x) = x
+          bneg x = Un BitwiseNeg x
+simplifyExp (Un Not l) = Un Not (simplifyExp l)
 simplifyExp (Bin And l r) = and' (simplifyExp l) (simplifyExp r)
     where and' (Int x) y = if x /= 0 then y else F
           and' x (Int y) = if y /= 0 then x else F

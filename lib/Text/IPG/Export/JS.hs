@@ -11,7 +11,7 @@ import Data.String.Interpolate ( i, __i ) -- string-interpolate
 import Text.IPG.Core (
     Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..),
     arrayNonTerminals, nonTerminals, )
-import Text.IPG.GenericExp ( BinOp(..), Exp(..) )
+import Text.IPG.GenericExp ( UnOp(..), BinOp(..), Exp(..) )
 import Text.IPG.PPrint ( floatToOut, hexyString, outParen, pprintTerm )
 
 -- It's worth noting that the way this export works already supports blackbox parsers.
@@ -76,9 +76,9 @@ exprToJS' c env p (Bin Mod l r) =
     outParen (p > 12) (exprToJS' c env 12 l <> " % " <> exprToJS' c env 13 r)
 exprToJS' c env p (Bin Exp l r) =
     outParen (p > 13) (exprToJS' c env 14 l <> " ** " <> exprToJS' c env 13 r)
-exprToJS' c env p (Neg e) =
+exprToJS' c env p (Un Neg e) =
     outParen (p > 14) ("-" <> exprToJS' c env 15 e)
-exprToJS' c env p (BitwiseNeg e) =
+exprToJS' c env p (Un BitwiseNeg e) =
     outParen (p > 14) ("~" <> exprToJS' c env 15 e)
 exprToJS' c env p (Bin And l r) =
     outParen (p > 4) (exprToJS' c env 4 l <> " && " <> exprToJS' c env 5 r)
@@ -106,7 +106,7 @@ exprToJS' c env p (Bin Equal l r) =
     outParen (p > 8) (exprToJS' c env 8 l <> " == " <> exprToJS' c env 9 r)
 exprToJS' c env p (Bin NotEqual l r) =
     outParen (p > 8) (exprToJS' c env 8 l <> " != " <> exprToJS' c env 9 r)
-exprToJS' c env p (Not l) =
+exprToJS' c env p (Un Not l) =
     outParen (p > 14) ("!" <> exprToJS' c env 15 l)
 exprToJS' c env p (If b t e) =
     outParen (p > 2)

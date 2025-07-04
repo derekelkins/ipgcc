@@ -10,7 +10,7 @@ import Data.List ( intersperse ) -- base
 
 import Text.IPG.Core ( Ref(..), MetaTag(..) )
 import Text.IPG.Full ( Grammar(..), Rule(..), Alternative(..), Term(..), StartingOn(..) )
-import Text.IPG.GenericExp ( BinOp(..), Exp(..) )
+import Text.IPG.GenericExp ( UnOp(..), BinOp(..), Exp(..) )
 import Text.IPG.Lexer (
     alexError, alexGetInput, alexMonadScan, alexSetInput, getCurrentLine, runAlex, saveInitialLine,
     Alex, AlexInput, AlexPosn(..), Token(..) )
@@ -225,7 +225,7 @@ Exp :: { Exp' }
     | string { String $1 }
     | Exp '+' Exp { Bin Add $1 $3 }
     | Exp '-' Exp { Bin Sub $1 $3 }
-    | '-' Exp %prec NEG { Neg $2 }
+    | '-' Exp %prec NEG { Un Neg $2 }
     | '+' Exp %prec PLUS { $2 }
     | Exp '*' Exp { Bin Mul $1 $3 }
     | Exp '/' Exp { Bin Div $1 $3 }
@@ -244,8 +244,8 @@ Exp :: { Exp' }
     | Exp '>=' Exp { Bin GTE $1 $3 }
     | Exp '==' Exp { Bin Equal $1 $3 }
     | Exp '!=' Exp { Bin NotEqual $1 $3 }
-    | '!' Exp { Not $2 }
-    | '~' Exp { BitwiseNeg $2 }
+    | '!' Exp { Un Not $2 }
+    | '~' Exp { Un BitwiseNeg $2 }
     | Exp '?' Exp ':' Exp { If $1 $3 $5 }
     | Exp '[' Exp ']' { Bin At $1 $3 }
     | '(' Exp ')' { $2 }

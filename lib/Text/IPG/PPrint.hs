@@ -10,7 +10,7 @@ import Data.Char ( ord ) -- base
 import Data.List ( intersperse ) -- base
 
 import Text.IPG.Core ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..) )
-import Text.IPG.GenericExp ( BinOp(..), Exp(..) )
+import Text.IPG.GenericExp ( UnOp(..), BinOp(..), Exp(..) )
 
 type T = BS.ByteString
 type Out = Builder.Builder
@@ -124,9 +124,9 @@ pprintExpr p (Bin Mod l r) =
     outParen (p > 12) (pprintExpr 12 l <> " % " <> pprintExpr 13 r)
 pprintExpr p (Bin Exp l r) =
     outParen (p > 13) (pprintExpr 14 l <> " ** " <> pprintExpr 13 r)
-pprintExpr p (Neg e) =
+pprintExpr p (Un Neg e) =
     outParen (p > 14) ("-" <> pprintExpr 15 e)
-pprintExpr p (BitwiseNeg e) =
+pprintExpr p (Un BitwiseNeg e) =
     outParen (p > 14) ("~" <> pprintExpr 15 e)
 pprintExpr p (Bin And l r) =
     outParen (p > 4) (pprintExpr 4 l <> " && " <> pprintExpr 5 r)
@@ -154,7 +154,7 @@ pprintExpr p (Bin Equal l r) =
     outParen (p > 8) (pprintExpr 8 l <> " == " <> pprintExpr 9 r)
 pprintExpr p (Bin NotEqual l r) =
     outParen (p > 8) (pprintExpr 8 l <> " != " <> pprintExpr 9 r)
-pprintExpr p (Not l) =
+pprintExpr p (Un Not l) =
     outParen (p > 14) ("!" <> pprintExpr 15 l)
 pprintExpr p (If b t e) =
     outParen (p > 2)
