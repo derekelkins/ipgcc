@@ -1,0 +1,8 @@
+String -> Quote repeat Char.value until Quote;
+
+Char -> { value = . };
+
+Quote -> "\"";
+
+%postamble_begin
+"foobar"

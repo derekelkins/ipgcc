@@ -1,0 +1,23 @@
+Exp
+  -> Term "+" Exp { value = Term.value + Exp.value }
+   / Term { value = Term.value };
+
+Term
+  -> Factor "*" Term { value = Factor.value * Term.value }
+   / Factor { value = Factor.value };
+
+Factor
+  -> "(" Exp ")" { value = Exp.value }
+   / "0" { value = 0 }
+   / "1" { value = 1 }
+   / "2" { value = 2 }
+   / "3" { value = 3 }
+   / "4" { value = 4 }
+   / "5" { value = 5 }
+   / "6" { value = 6 }
+   / "7" { value = 7 }
+   / "8" { value = 8 }
+   / "9" { value = 9 };
+
+%postamble_begin
+1+2*(3+4)

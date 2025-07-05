@@ -1,0 +1,36 @@
+Factor
+  -> "("[0, 1]
+     Exp@0[1, EOI]
+     ")"[Exp@0.END, Exp@0.END + 1]
+     { value = Exp@0.value }
+   / Number@0[0, EOI]
+     { value = Number@0.value };
+
+Number
+  -> Digit@0[0, EOI]
+     { leadingDigit = Digit@0.value }
+     ?[ leadingDigit != 0 ]
+     repeat Digit@1[Digit@1.END, EOI].value starting on [Digit@0.END, EOI]
+     { value = digitsToNum(leadingDigit, Digit@1.values) };
+
+Digit
+  -> "0"[0, 1]
+     { value = 0 }
+   / "1"[0, 1]
+     { value = 1 }
+   / "2"[0, 1]
+     { value = 2 }
+   / "3"[0, 1]
+     { value = 3 }
+   / "4"[0, 1]
+     { value = 4 }
+   / "5"[0, 1]
+     { value = 5 }
+   / "6"[0, 1]
+     { value = 6 }
+   / "7"[0, 1]
+     { value = 7 }
+   / "8"[0, 1]
+     { value = 8 }
+   / "9"[0, 1]
+     { value = 9 };

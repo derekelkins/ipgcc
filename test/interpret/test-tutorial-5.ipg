@@ -1,0 +1,13 @@
+String -> Quote RepeatCharUntilQuote { values = RepeatCharUntilQuote.values };
+
+RepeatCharUntilQuote
+  -> Quote { values = nil() }
+   / Char RepeatCharUntilQuote
+     { values = cons(Char.value, RepeatCharUntilQuote.values) };
+
+Char -> { value = . };
+
+Quote -> "\"";
+
+%postamble_begin
+"foobar"

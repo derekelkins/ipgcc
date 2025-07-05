@@ -1,0 +1,13 @@
+S -> Forward[0, EOI]
+     { forward = Forward.values }
+     Backward[0, EOI] 
+     { backward = Backward.values };
+
+Forward -> repeat A.x;
+A -> "a" { x = "a" };
+
+Backward -> repeat B[0, B.START].x;
+B -> "z"[EOI - 1, EOI] { x = "z" };
+
+%postamble_begin
+aaammmzzzz
