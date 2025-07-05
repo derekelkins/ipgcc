@@ -76,6 +76,10 @@ usual `xs[i]` syntax. To make it relatively generic, it doesn't support things l
 JavaScript's array or object literal notation nor field selection. The intent is that
 you can wrap any back-end specific code in a function and call that.
 
+You can name constants to be used across many rules via `const SOME_CONST = e;` where
+`e` is an expression. This expression can't use `EOI` or refer to any rules. It can
+refer to other constants including constants declared later.
+
 ### Attributes
 
 Of course, to do anything interesting we need something for the expressions to manipulate.
@@ -252,10 +256,12 @@ Parameterized rules are allowed as well. For example:
 
 <small>test/interpret/test-tutorial-6.ipg</small>
 ```
+const BASE = 10;
+
 Number -> Digit ?[ Digit.value != 0 ] Decimal(Digit.value) { value = Decimal.value };
 
 Decimal(accumulator)
-  -> Digit Decimal(10*accumulator + Digit.value) { value = Decimal.value }
+  -> Digit Decimal(BASE*accumulator + Digit.value) { value = Decimal.value }
    / { value = accumulator };
 ```
 

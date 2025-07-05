@@ -238,7 +238,7 @@ termToJS indent c env z@(Repeat nt args l r x l0 r0)
    <> indent <> [i|  nt_#{u nt}._ipg_start += left;\n|]
    <> indent <> [i|  left = #{lExp};\n|]
    <> indent <> [i|  right = #{rExp};\n|]
-   <> indent <> [i|  self.values.push(nt_#{u nt}.#{x});\n\n|]
+   <> indent <> [i|  self.values.push(#{xAttr});\n\n|]
 
    <> indent <>   "  while (left >= 0 && left <= right && right <= EOI) {\n"
    <> indent <> [i|    nt_#{u nt} = #{fst nt}(input, begin + left, begin + right#{argList es});\n|]
@@ -248,7 +248,7 @@ termToJS indent c env z@(Repeat nt args l r x l0 r0)
    <> indent <> [i|    self._ipg_end = Math.max(self._ipg_end, left + nt_#{u nt}._ipg_end);\n|]
    <> indent <> [i|    nt_#{u nt}._ipg_end += left;\n|]
    <> indent <> [i|    nt_#{u nt}._ipg_start += left;\n|]
-   <> indent <> [i|    self.values.push(nt_#{u nt}.#{x});\n|]
+   <> indent <> [i|    self.values.push(#{xAttr});\n|]
    <> indent <> [i|    left = #{lExp};\n|]
    <> indent <> [i|    right = #{rExp};\n|]
    <> indent <>   "  }\n"
@@ -256,6 +256,7 @@ termToJS indent c env z@(Repeat nt args l r x l0 r0)
   where es = map (exprToJS c env) args
         lExp = exprToJS c env l; rExp = exprToJS c env r
         l0Exp = exprToJS c env l0; r0Exp = exprToJS c env r0
+        xAttr = refToJS c env (Attr nt x)
 termToJS indent c env z@(RepeatUntil nt1 args1 l r x l0 r0 nt2 args2)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> whenDebug c (indent <> [i|_ipg_failedTerm = { term: #{show (pprintTerm z)} };\n|])
@@ -282,13 +283,14 @@ termToJS indent c env z@(RepeatUntil nt1 args1 l r x l0 r0 nt2 args2)
    <> indent <> [i|  self._ipg_end = Math.max(self._ipg_end, left + nt_#{u nt1}._ipg_end);\n|]
    <> indent <> [i|  nt_#{u nt1}._ipg_end += left;\n|]
    <> indent <> [i|  nt_#{u nt1}._ipg_start += left;\n|]
-   <> indent <> [i|  self.values.push(nt_#{u nt1}.#{x});\n|]
+   <> indent <> [i|  self.values.push(#{xAttr});\n|]
    <> indent <> [i|  left = #{lExp};\n|]
    <> indent <> [i|  right = #{rExp};\n|]
    <> indent <>   "}\n\n"
   where es1 = map (exprToJS c env) args1; es2 = map (exprToJS c env) args2
         lExp = exprToJS c env l; rExp = exprToJS c env r
         l0Exp = exprToJS c env l0; r0Exp = exprToJS c env r0
+        xAttr = refToJS c env (Attr nt1 x)
 
 alternativeToJS :: Maybe (T, [T]) -> Out -> Context -> Env -> Alternative T T T Expr -> Out
 alternativeToJS instrument indent c env (Alternative ts)

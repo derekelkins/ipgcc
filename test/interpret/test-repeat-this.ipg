@@ -1,0 +1,6 @@
+Records -> repeat Record.this;
+
+Record -> { a = . } { b = . };
+
+%postamble_begin
+abcdef

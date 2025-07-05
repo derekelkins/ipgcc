@@ -1,0 +1,7 @@
+Records -> repeat Record.this;
+
+Record -> { a = . } { b = . };
+
+%postamble_begin
+
+console.log(JSON.stringify(Records("abcdef"), null, 2));
