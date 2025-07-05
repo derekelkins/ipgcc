@@ -1,6 +1,6 @@
 {
 module Text.IPG.Parser (
-    IdType, NT, Exp', Grammar', Rule', Alternative', Term', Ref',
+    IdType, NT, Exp', Grammar', Rule', Const', Alternative', Term', Ref',
     parseIPG, parse, parseWithStartPos,
 ) where
 import qualified Data.ByteString as BS -- bytestring
@@ -34,6 +34,7 @@ import Text.IPG.Lexer (
     EOI     { TokenEOI }
     repeat  { TokenRepeat }
     starting  { TokenStarting }
+    const   { TokenConst }
     true    { TokenTrue }
     false   { TokenFalse }
     on      { TokenOn }
@@ -140,16 +141,17 @@ Declarations :: { [IdType] }
     | name { [$1] }
 
 Grammar :: { Grammar' }
-    : Rules { Grammar (reverse $1) }
+    : RuleOrConsts { Grammar (reverse $1) }
 
-Rules :: { [Rule'] }
-    : Rules ';' Rule { $3 : $1 }
-    | Rules ';' { $1 }
-    | Rule { [$1] }
+RuleOrConsts :: { [Either Rule' Const'] }
+    : RuleOrConsts ';' RuleOrConst { $3 : $1 }
+    | RuleOrConsts ';' { $1 }
+    | RuleOrConst { [$1] }
     | {- empty -} { [] }
 
-Rule :: { Rule' }
-    : MaybeInstrument name ParamList '->' Alternatives { Rule $1 $2 $3 (reverse $5) }
+RuleOrConst :: { Either Rule' Const' }
+    : MaybeInstrument name ParamList '->' Alternatives { Left (Rule $1 $2 $3 (reverse $5)) }
+    | const name '=' Exp { Right ($2, $4) }
 
 MaybeInstrument :: { [MetaTag] }
     : '%instrument' { [INSTRUMENT] }
@@ -282,6 +284,7 @@ type NT = (IdType, Int)
 type Exp' = Exp IdType IdType IdType
 type Grammar' = Grammar IdType IdType IdType Exp'
 type Rule' = Rule IdType IdType IdType Exp'
+type Const' = (IdType, Exp')
 type Alternative' = Alternative IdType IdType IdType Exp'
 type Term' = Term IdType IdType IdType Exp'
 type StartingOn' = StartingOn Exp'

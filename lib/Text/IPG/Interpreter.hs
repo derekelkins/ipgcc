@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 module Text.IPG.Interpreter (
     Bindings, Buffer, Id, NT, Value(..),
     asJSON, asJSON', interpret, interpretStartingWith,
@@ -8,6 +9,7 @@ import Control.Applicative ( asum ) -- base
 import Data.Bits ( complement, shift, xor, (.&.), (.|.) ) -- base
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Builder as Builder -- bytestring
+import Data.Either ( lefts, partitionEithers ) -- base
 import Data.Int ( Int64 ) -- base
 import Data.List ( (!?), intersperse ) -- base
 import qualified Data.Map as Map -- containers
@@ -80,6 +82,7 @@ type ExternalFuncs a = Map.Map NT (ExternalFunc a)
 
 data Context a = Context {
     ruleFuncs :: Map.Map NT ([Id], InterpFunc a),
+    constants :: Map.Map Id (Value a),
     externalFuncs :: ExternalFuncs a }
 
 type Exp' = Exp NT T Id
@@ -95,7 +98,8 @@ interpret
     -> [Value a]
     -> Buffer
     -> Maybe (Bindings a, Int, Int)
-interpret g@(Grammar (Rule _ startRule _ _:_)) efs = interpretStartingWith g efs startRule
+interpret g@(Grammar ruleOrConsts) efs = interpretStartingWith g efs startRule
+    where (Rule _ startRule _ _:_) = lefts ruleOrConsts
 
 interpretStartingWith
     :: (HasCallStack)
@@ -105,14 +109,17 @@ interpretStartingWith
     -> [Value a]
     -> Buffer
     -> Maybe (Bindings a, Int, Int)
-interpretStartingWith (Grammar rules) efs startRule args =
+interpretStartingWith (Grammar ruleOrConsts) efs startRule args =
     let (params, body) = ruleFuncs ctxt !!! startRule
         args' = Map.fromList (zip params args)
     in fmap (\((_, bindings), s, e) -> (bindings, s, e)) . body (Map.empty, Map.empty) args'
   where ctxt = Context {
           ruleFuncs = Map.fromList (map (\rule@(Rule _ nt _ _) -> (nt, buildFunc rule)) rules),
+          constants = Map.fromList (map (fmap eval') consts),
           externalFuncs = efs }
         buildFunc = buildInterpFunc ctxt -- Go, go knot tying.
+        eval' = eval ctxt (error "EOI in const") (Map.empty, Map.empty) Map.empty
+        (rules, consts) = partitionEithers ruleOrConsts
 
 buildInterpFunc :: (HasCallStack) => Context a -> Rule' -> ([Id], InterpFunc a)
 buildInterpFunc ctxt (Rule _ _ args alts) =
@@ -410,7 +417,11 @@ eval ctxt eoi (env, bs) ps = go
           go (Bin At l x) = at' (go l) (go x)
               where at' (SEQUENCE bs') (INT ix) = bs' !!. fromIntegral ix
                     at' (STRING bs') (INT ix) = INT (fromIntegral (BS.index bs' (fromIntegral ix)))
-          go (Ref (Id x)) = case Map.lookup x ps of Nothing -> bs !!! x; Just v -> v
+          go (Ref (Id x)) = case Map.lookup x ps of
+                                Nothing -> case Map.lookup x bs of
+                                                Nothing -> constants ctxt !!! x
+                                                Just v -> v
+                                Just v -> v
           go (Ref (Attr nt x)) = access env nt x
           go (Ref (Index nt e x)) = index (go e) (these_ ee)
               where ee = env !!! nt

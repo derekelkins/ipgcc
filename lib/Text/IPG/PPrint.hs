@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Text.IPG.PPrint (
     pprint, pprintRule, pprintExpr, pprintAlternative, pprintTerm, pprintRef, pprintMetaTag,
-    pprint', pprintRule', pprintAlternative', pprintTerm', pprintRef', pprintNT,
+    pprint', pprintRule', pprintConst', pprintAlternative', pprintTerm', pprintRef', pprintNT,
     floatToOut, hexyString, outParen
 ) where
 import qualified Data.ByteString as BS -- bytestring
@@ -42,7 +42,11 @@ pprint :: Grammar T T T (Exp T T T) -> Out
 pprint = pprint' (pprintExpr 0)
 
 pprint' :: (e -> Out) -> Grammar T T T e -> Out
-pprint' ppExp (Grammar rules) = mconcat (intersperse "\n\n" (map (pprintRule' ppExp) rules))
+pprint' ppExp (Grammar rules) =
+    mconcat (intersperse "\n\n" (map (either (pprintRule' ppExp) (pprintConst' ppExp)) rules))
+
+pprintConst' :: (e -> Out) -> (T, e) -> Out
+pprintConst' ppExp (n, e) = "const " <> Builder.byteString n <> " = " <> ppExp e <> ";"
 
 pprintRule :: Rule T T T (Exp T T T) -> Out
 pprintRule = pprintRule' (pprintExpr 0)

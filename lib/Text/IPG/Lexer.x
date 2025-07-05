@@ -1,4 +1,5 @@
 {
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 module Text.IPG.Lexer(
     alexError, alexGetInput, alexMonadScan, alexSetInput, getCurrentLine, runAlex, saveInitialLine,
     Alex, AlexInput, AlexPosn(..), Token(..)
@@ -47,6 +48,7 @@ tokens :-
 <0>    repeat  { token $ \_ _ -> TokenRepeat }
 <0>    starting
                { token $ \_ _ -> TokenStarting }
+<0>    const   { token $ \_ _ -> TokenConst }
 <0>    true    { token $ \_ _ -> TokenTrue }
 <0>    false   { token $ \_ _ -> TokenFalse }
 <0>    on      { token $ \_ _ -> TokenOn }
@@ -107,6 +109,7 @@ data Token
     | TokenEndDeclare
     | TokenRepeat
     | TokenStarting
+    | TokenConst
     | TokenTrue
     | TokenFalse
     | TokenOn
@@ -161,7 +164,7 @@ data Token
 tokenNonTerminal :: BS.ByteString -> Token
 tokenNonTerminal s = TokenNonTerminal (name, idx)
     where (name, idxString) = CBS.break ('@' ==) s
-          idx = case I.readDecimal (BS.tail idxString) of Just (n, _) -> fromIntegral n
+          idx = case I.readDecimal (BS.tail idxString) of Just (n, _) -> n
 
 readInteger :: LBS.ByteString -> Int64
 readInteger bs = case I.readDecimal (LBS.toStrict bs) of Just (n, _) -> n

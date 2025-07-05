@@ -27,11 +27,12 @@ type Env = Set.Set T
 
 data Context = Context {
     debugMode :: !Bool,
+    constants :: Set.Set T,
     iterationVar :: T
   }
 
 defaultContext :: Context
-defaultContext = Context { debugMode = False, iterationVar = "" }
+defaultContext = Context { debugMode = False, constants = Set.empty, iterationVar = "" }
 
 whenDebug :: Context -> Out -> Out
 whenDebug (Context { debugMode = True }) o = o
@@ -44,7 +45,8 @@ refToJS :: Context -> Env -> Ref T T Expr -> Out
 refToJS c env (Id x)
     | x == iterationVar c = [i|i_#{x}|]
     | x `Set.member` env  = [i|a_#{x}|]
-    | otherwise           = [i|self.#{x}|]
+    | not (x `Set.member` constants c) = [i|self.#{x}|]
+    | otherwise = [i|#{x}|]
 refToJS _ _   (Attr nt "this") = [i|(({_ipg_start,_ipg_end,...o}) => o)(nt_#{u nt})|]
 refToJS _ _   (Attr nt "these") = [i|seq_#{u nt}.map(({_ipg_start,_ipg_end,...o}) => o)|]
 refToJS _ _   (Attr nt f) = [i|nt_#{u nt}.#{f}|]
@@ -311,6 +313,9 @@ alternativeToJS instrument indent c env (Alternative ts)
                                 [i|    console.error({#{nt}: self#{paramList args}});\n|]
         debuggingPostamble = whenDebug c (indent <> "_ipg_failTreeStack.pop();\n")
 
+constToJS :: Context -> (T, Expr) -> Out
+constToJS c (n, e) = [i|const #{n} = #{exprToJS c Set.empty e};\n|]
+
 ruleToJS :: Context -> Rule T T T Expr -> Out
 ruleToJS c (Rule mt nt args alts) =
     [__i|
@@ -342,7 +347,7 @@ ruleToJS c (Rule mt nt args alts) =
           |]
 
 toJSWithContext :: Context -> Grammar T T T Expr -> LBS.ByteString
-toJSWithContext c (Grammar rules) = Builder.toLazyByteString $
+toJSWithContext c (Grammar ruleOrConsts) = Builder.toLazyByteString $
     [__i|
       function _ipg_startsWith(s, l, r, prefix) {
         if (r - l < prefix.length) return false;
@@ -357,7 +362,10 @@ toJSWithContext c (Grammar rules) = Builder.toLazyByteString $
       const _ipg_failTreeRoot = { children: [] };
       const _ipg_failTreeStack = [_ipg_failTreeRoot];\n
     |]
-   <> foldMap (ruleToJS c) rules
+   <> foldMap (either (ruleToJS c') (constToJS c')) ruleOrConsts
+  where c' = c {
+                constants = foldMap (either (const Set.empty) (Set.singleton . fst)) ruleOrConsts
+             }
 
 toJS :: Grammar T T T Expr -> LBS.ByteString
 toJS = toJSWithContext defaultContext

@@ -1,12 +1,14 @@
 {-# LANGUAGE OverloadedStrings, QuasiQuotes #-}
 module Text.IPG.Check ( validate ) where
+import Data.Either ( partitionEithers ) -- base
+import Data.List ( group, sort ) -- base
 import qualified Data.Set as Set -- containers
 import qualified Data.Map as Map -- containers
 
 import Data.String.Interpolate ( i ) -- string-interpolate
 
 import Text.IPG.Core ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..) )
-import Text.IPG.GenericExp ( Exp(..) )
+import Text.IPG.GenericExp ( crushRef, Exp(..) )
 import Text.IPG.Parser ( IdType )
 
 type T = IdType
@@ -27,9 +29,16 @@ u (nt, n) = [i|#{nt}@#{show n}|]
 --   - START, END, this, these should not occur in the LHS of assignments
 --      (TODO: Be more discerning about `these`.)
 --   - Rules invoked with the proper arities
+--   - No two rules have the same head non-terminal.
+--   - consts don't use EOI
+--   - consts don't refer to rules
 validate :: Set.Set T -> Grammar' -> Maybe [T]
-validate externalRules (Grammar rules) = foldMap check rules <> basicChecks
+validate externalRules (Grammar ruleOrConsts) =
+    foldMap checkConsts consts <> foldMap check rules <> basicChecks
   where
+    (rules, consts) = partitionEithers ruleOrConsts
+    constNames = Set.fromList (map fst consts)
+
     possibleAttributes' =
         Map.fromList (map (\(Rule _ nt _ alts) -> (nt, Set.unions (map attrInAlt alts))) rules)
     guaranteedAttributes' =
@@ -53,7 +62,10 @@ validate externalRules (Grammar rules) = foldMap check rules <> basicChecks
           || "_ipg_startsWith" `Map.member` parameters then
             Just ["_ipg_startsWith can't be the name of a Rule"] else Nothing,
         foldMap checkParameters (Map.toList parameters),
-        foldMap checkAttributes (Map.toList possibleAttributes')
+        foldMap checkAttributes (Map.toList possibleAttributes'),
+        foldMap (\(nt:rest) ->
+                    if null rest then Nothing else Just [[i|#{nt} occurs as head multiple times|]])
+            (group (sort (map (\(Rule _ nt _ _) -> nt) rules)))
       ]
     checkParameters :: (T, (Int, Set.Set T)) -> Maybe [T]
     checkParameters (nt, (_, params))
@@ -71,9 +83,25 @@ validate externalRules (Grammar rules) = foldMap check rules <> basicChecks
         | "_ipg_end" `Set.member` attrs = Just [[i|Rule #{nt} illegally assigns to _ipg_end|]]
         | otherwise = Nothing
 
+    checkConsts (n, e) = crushRef checkConstRef e
+        where locals = Set.delete n constNames
+              checkConstRef :: Ref T T Exp' -> Maybe [T]
+              checkConstRef (Id x) | x `Set.member` locals = Nothing
+                                   | otherwise = Just [[i|Unknown constant #{x} in const #{n}|]]
+              checkConstRef (Attr (nt, _) _) =
+                Just [[i|Invalid reference to rule #{nt} in const #{n}|]]
+              checkConstRef (Index (nt, _) _ _) =
+                Just [[i|Invalid reference to rule #{nt} in const #{n}|]]
+              checkConstRef (Start (nt, _)) =
+                Just [[i|Invalid reference to rule #{nt} in const #{n}|]]
+              checkConstRef (End (nt, _)) =
+                Just [[i|Invalid reference to rule #{nt} in const #{n}|]]
+              checkConstRef EOI = Just [[i|Invalid use of EOI in const #{n}|]]
+
     check (Rule _ nt params alts) =
         foldMap (\(Alternative ts) ->
-            checkTerms nt (Set.fromList params) Set.empty Set.empty ts) alts
+            checkTerms nt (Set.fromList params) constNames Set.empty ts) alts
+
     checkTerms :: T -> Set.Set T -> Set.Set T -> Set.Set (T, Int) -> [Term'] -> Maybe [T]
     checkTerms _ _ _ _ [] = Nothing
     checkTerms nt params locals nts (NonTerminal nt'@(a, _) es l r:ts) =

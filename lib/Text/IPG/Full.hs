@@ -10,8 +10,12 @@ import qualified Data.Set as Set -- containers
 
 import qualified Text.IPG.Core as Core
 
-newtype Grammar nt t id e = Grammar [Rule nt t id e]
-    deriving ( Functor, Show )
+newtype Grammar nt t id e = Grammar [Either (Rule nt t id e) (id, e)]
+    deriving ( Show )
+
+instance Functor (Grammar nt t id) where
+    fmap f (Grammar ruleOrConsts) =
+        Grammar (map (either (Left . fmap f) (Right . fmap f)) ruleOrConsts)
 
 -- A(a_1, ..., a_m) -> alt_1 / ... / alt_n;
 data Rule nt t id e = Rule [Core.MetaTag] nt [id] [Alternative nt t id e]
@@ -84,7 +88,7 @@ toCore
     => ExpHelpers nt t id e
     -> Grammar nt t id e
     -> Core.Grammar nt t id e
-toCore h (Grammar rules) = Core.Grammar (map (toCoreRule h) rules)
+toCore h (Grammar rules) = Core.Grammar (map (either (Left . toCoreRule h) Right) rules)
 
 toCoreRule
     :: (Ord id, Ord nt, Show nt)

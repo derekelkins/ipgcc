@@ -12,8 +12,12 @@ import qualified Data.Set as Set -- containers
 data MetaTag = INSTRUMENT -- %instrument
     deriving ( Eq, Ord, Show )
 
-newtype Grammar nt t id e = Grammar [Rule nt t id e]
-    deriving ( Functor, Show )
+newtype Grammar nt t id e = Grammar [Either (Rule nt t id e) (id, e)]
+    deriving ( Show )
+
+instance Functor (Grammar nt t id) where
+    fmap f (Grammar ruleOrConsts) =
+        Grammar (map (either (Left . fmap f) (Right . fmap f)) ruleOrConsts)
 
 -- A(a_1, ..., a_m) -> alt_1 / ... / alt_n;
 data Rule nt t id e = Rule [MetaTag] nt [id] [Alternative nt t id e]
