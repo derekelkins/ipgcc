@@ -26,7 +26,7 @@ are included into the final output as-is.
 Starting with the parts similar to PEGs or CFGs, a grammar consists of a series
 of rules written as:
 
-```
+```ipg
 R -> A1 / A2 / A3;
 ```
 
@@ -35,7 +35,7 @@ are alternatives which are space separated sequences of terms which we'll go int
 more detail later. Unlike CFGs, a non-terminal can only be the head of one rule.
 In other words,
 
-```
+```ipg
 R -> A1;
 R -> A2;
 R -> A3;
@@ -49,7 +49,7 @@ that succeeds is chosen.
 Terminals are represented by literal strings. So to recreate a standard example:
 
 <small>test/interpret/test-tutorial-1.ipg</small>
-```
+```ipg
 Exp -> Term "+" Exp / Term;
 Term -> Factor "*" Term / Factor;
 Factor -> "(" Exp ")"
@@ -93,7 +93,7 @@ it also defines the attribute `y`).
 
 Attributes are scoped to an alternative, so:
 
-```
+```ipg
 S -> { x = 10 } / { y = 2 * x };
 ```
 
@@ -104,7 +104,7 @@ However, only attributes that are defined in every alternative are available.
 Expanding the earlier example to return a result, we have:
 
 <small>test/interpret/test-tutorial-2.ipg</small>
-```
+```ipg
 Exp
   -> Term "+" Exp { value = Term.value + Exp.value }
    / Term { value = Term.value };
@@ -142,7 +142,7 @@ The order of the terms is not necessarily the
 order in which the terms will be evaluated. Instead, they will follow data
 dependencies. That means, something silly like:
 
-```
+```ipg
 Exp
   -> Term { value = Term.value + Exp.value } "+" Exp 
    / { value = Term.value } Term;
@@ -153,7 +153,7 @@ aren't allowed and there are also some implicit dependencies which we'll talk
 about shortly. Also, some ambiguous cases will be resolved by assuming you
 intend the most recently preceding relevant term. For example, in:
 
-```
+```ipg
 S1 -> Exp Exp { result = Exp.value } Exp;
 S2 -> Exp { result = Exp.value } Exp Exp;
 ```
@@ -175,7 +175,7 @@ to a non-terminal name to disambiguate. No space is allowed between the non-term
 the `@` and the number. For example, `S1` and `S2` *do* mean the same thing in the
 following example.
 
-```
+```ipg
 S1 -> Exp Exp@1 { result = Exp@1.value } Exp;
 S2 -> Exp { result = Exp@1.value } Exp@1 Exp;
 ```
@@ -197,7 +197,7 @@ If we wanted to handle many digits in our expression parser, we could rewrite `F
 as:
 
 <small>test/parsing/test-tutorial-3.ipg</small>
-```
+```ipg
 Factor
   -> "(" Exp ")" { value = Exp.value }
    / Number { value = Number.value };
@@ -230,7 +230,7 @@ parser succeeds.
 For example:
 
 <small>test/interpret/test-tutorial-4.ipg</small>
-```
+```ipg
 String -> Quote repeat Char.value until Quote;
 
 Char -> { value = . };
@@ -241,7 +241,7 @@ Quote -> "\"";
 `repeat A.x until B` behaves like invoking the rule `R` defined as:
 
 <small>test/interpret/test-tutorial-5.ipg</small>
-```
+```ipg
 R -> B { values = nil() }
    / A R { values = cons(A.x, R.values) };
 ```
@@ -255,7 +255,7 @@ since `Char` matches quotation marks too.
 Parameterized rules are allowed as well. For example:
 
 <small>test/interpret/test-tutorial-6.ipg</small>
-```
+```ipg
 const BASE = 10;
 
 Number -> Digit ?[ Digit.value != 0 ] Decimal(Digit.value) { value = Decimal.value };
@@ -271,7 +271,7 @@ external functions.
 Note, for the purpose of checking whether different rules have the same head,
 the parameter list doesn't matter. That is,
 
-```
+```ipg
 R(a, b, c) -> A;
 R(x) -> A;
 ```
@@ -305,13 +305,13 @@ Let's see some examples.
 
 If the string "hello" should occur at offset 5 of the input, we could match it via:
 
-```
+```ipg
 S -> "hello"[5, 10];
 ```
 
 Since terminals only need to match a *prefix* of their input, we could use:
 
-```
+```ipg
 S -> "hello"[5, EOI];
 ```
 
@@ -329,7 +329,7 @@ the content actually parsed by a rule. For example, let's say at offset 5 we had
 either the string "hello " followed by a name or "hi " followed by a name. We
 could parse that with:
 
-```
+```ipg
 S -> Salutation[5, EOI] Name[Salutation.END, EOI];
 
 Salutation -> "hello " / "hi ";
@@ -339,7 +339,7 @@ In fact, this pattern of `R[Prev.END, EOI]` where `Prev` is the term preceding t
 one is very common and is what would be inferred by the system. That means the above
 `S` rule is equivalent to simply:
 
-```
+```ipg
 S -> Salutation[5, EOI] Name;
 ```
 
@@ -347,7 +347,7 @@ As another bit of interval inference, if we only give one value in the interval,
 is interpreted as a length relative to the `END` of the previous term. So if we knew
 the `Name` was at most 10 bytes, we could write either of the following equivalent rules:
 
-```
+```ipg
 S1 -> Salutation[5, EOI] Name[Salutation.END, Salutation.END + 10];
 S2 -> Salutation[5, EOI] Name[10];
 ```
@@ -360,7 +360,7 @@ intervals, every term (except attribute definitions) had a data dependency on th
 prior term which led to a left-to-right order. With explicit intervals, the parsing can
 happen in different orders. An at abstract example, the following two rules are equivalent:
 
-```
+```ipg
 S1 -> A[0, B.START] B[0, EOI];
 S2 -> B[0, EOI] A[0, B.START];
 S3 -> B A[0, B.START];
@@ -390,7 +390,7 @@ A common pattern in binary formats is the "type-length-value" pattern where ther
 a field which specifies the type of a value followed by a length then followed by the
 value. This is easily parsed as follows:
 
-```
+```ipg
 TLV
   -> Type { type = Type.tag }
      Length { length = Length.value }
@@ -403,7 +403,7 @@ following TLV entries.
 To make the above example a bit more concrete, let's give plausible definitions to
 `Type`, `Length`, and `Value`.
 
-```
+```ipg
 Type -> { tag = . };
 
 Length -> { lo = . } { hi = . } { value = (hi << 8) | lo };
@@ -437,7 +437,7 @@ The full form of `repeat A.x until B` is similarly `repeat A[l, r].x starting on
 These `repeat` forms are quite powerful. For example, in:
 
 <small>test/interpret/test-tutorial-7.ipg</small>
-```
+```ipg
 Forward -> repeat A.x;
 A -> "a" { x = "a" };
 
@@ -455,7 +455,7 @@ throughout the file in any order but the output will be in the order of the link
 list.
 
 <small>test/interpret/test-linked-list.ipg</small>
-```
+```ipg
 U16 -> { lo = . } { hi = . } { value = (hi << 8) | lo };
 
 Node -> U16 { value = U16.value} U16 { next = U16.value };
@@ -480,7 +480,7 @@ A common pattern in binary files is a "directory"-like pattern where one data st
 describes the location of other data structures. Typically, there is a count of the
 number of entries somewhere. `for`-loops facilitate this case. The syntax is:
 
-```
+```ipg
 for i = s to e do A[l, r]
 ```
 
@@ -502,7 +502,7 @@ the actual sections as provided by the section headers parsed in the first `for`
 Notice how the sections could be anywhere in the file in any order. Indeed, they can
 overlap with each other or the section headers.
 
-```
+```ipg
 ELF
   -> H[0, 128]
      for i = 0 to H.e_shnum do SH[H.e_shoff + i*H.e_shentsize, H.e_shoff + (i + 1)*H.e_shentsize]
@@ -514,7 +514,7 @@ ELF
 `R(s, e)[0, EOI]` where R is the following parameterized rule (assuming `end` is not
 free in `l` or `r`):
 
-```
+```ipg
 R(i, end)
   -> ?[ i < end ] A[l, r] R(i + 1, end)[0, EOI] { these = cons(A.this, R.these) }
    / { these = nil() };       
@@ -581,8 +581,26 @@ One could imagine a different organization of the parser where each section is
 parsed immediately following the parsing of the corresponding section header entry.
 This would be awkward to do in IPG. To do this the "actual" starting offset of
 the section header could be passed down as a parameter while the section header
-parser is given the full interval.
+parser is given the full interval. `DirectoriesRecursive` in the ISO9660 parser
+illustrates this pattern. The top-level parser invokes it with the full interval,
+i.e. `[0, EOI]`, and it passes that interval down into its recursive calls.
+
+<small>test/node/test-iso9660.ipg</small>
+```ipg
+DirectoriesRecursive(logicalBlockSize, node)
+    -> { offset = logicalBlockSize * get(node, "locationOfExtent") }
+       { record = node }
+       DirectoryRecords[offset, offset + get(node, "dataLength")]
+       for i = 2 to length(DirectoryRecords.values) do // First two records are '.' and '..'.
+         DirectoriesRecursive(logicalBlockSize, DirectoryRecords.values[i])[0, EOI]
+       { children = DirectoriesRecursive.these };
+
+DirectoryRecords -> repeat DirectoryRecord.this;
+```
 
 While it wouldn't be hard to add some mechanism to have absolute intervals, I
 don't *think* this is that significant a limitation in practice, and the benefits
-of *not* having absolute offsets seem pretty nice.
+of *not* having absolute offsets seem pretty nice. While I "work around" the lack
+of absolute offsets in the excerpt above, ISO9660 provides other mechanisms for
+listing the files that doesn't require this recursive traversal. This is also
+illustrated in the full ISO9660 grammar.
