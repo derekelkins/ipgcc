@@ -21,6 +21,7 @@ data Options = Options {
     inFile :: Maybe String,
     outFile :: Maybe String,
     exportType :: !ExportType,
+    leaveExtraFieldsFlag :: !Bool,
     noValidation :: !Bool,
     debugModeFlag :: !Bool,
     interpretFlag :: !Bool
@@ -43,6 +44,9 @@ options = Opt.info (Options
          <> Opt.short 't'
          <> Opt.help "Export type. JS or CORE. Default JS."
          <> Opt.value JS)
+    <*> Opt.switch (
+            Opt.long "leave-extra-fields"
+         <> Opt.help "Don't strip internal fields in JS export.")
     <*> Opt.switch (
             Opt.long "no-validation"
          <> Opt.help "Disable validating the IPG input.")
@@ -80,7 +84,10 @@ main = do
                       else do
                         LBS.hPutStrLn h preamble
                         LBS.hPutStrLn h (toJSWithContext
-                            (defaultContext { debugMode = debugModeFlag opts }) core)
+                            (defaultContext {
+                                debugMode = debugModeFlag opts,
+                                leaveExtraFields = leaveExtraFieldsFlag opts
+                            }) core)
                         LBS.hPutStr h postamble
     hClose h
 

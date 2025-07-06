@@ -27,12 +27,18 @@ type Env = Set.Set T
 
 data Context = Context {
     debugMode :: !Bool,
+    leaveExtraFields :: !Bool,
     constants :: Set.Set T,
     iterationVar :: T
   }
 
 defaultContext :: Context
-defaultContext = Context { debugMode = False, constants = Set.empty, iterationVar = "" }
+defaultContext = Context {
+    debugMode = False,
+    leaveExtraFields = False,
+    constants = Set.empty,
+    iterationVar = ""
+  }
 
 whenDebug :: Context -> Out -> Out
 whenDebug (Context { debugMode = True }) o = o
@@ -47,11 +53,17 @@ refToJS c env (Id x)
     | x `Set.member` env  = [i|a_#{x}|]
     | not (x `Set.member` constants c) = [i|self.#{x}|]
     | otherwise = [i|#{x}|]
-refToJS _ _   (Attr nt "this") = [i|(({_ipg_start,_ipg_end,...o}) => o)(nt_#{u nt})|]
-refToJS _ _   (Attr nt "these") = [i|seq_#{u nt}.map(({_ipg_start,_ipg_end,...o}) => o)|]
+refToJS c _   (Attr nt "this")
+    | leaveExtraFields c = [i|nt_#{u nt}|] -- Probably still need to clone
+    | otherwise = [i|(({_ipg_start,_ipg_end,...o}) => o)(nt_#{u nt})|]
+refToJS c _   (Attr nt "these")
+    | leaveExtraFields c = [i|seq_#{u nt}|] -- Probably still need to clone
+    | otherwise = [i|seq_#{u nt}.map(({_ipg_start,_ipg_end,...o}) => o)|]
 refToJS _ _   (Attr nt f) = [i|nt_#{u nt}.#{f}|]
-refToJS c env (Index nt e "this") =
-    [i|(({_ipg_start,_ipg_end,...o}) => o)(seq_#{u nt}[#{exprToJS c env e} - seq_#{u nt}_start])|]
+refToJS c env (Index nt e "this")
+    | leaveExtraFields c = -- Probably still need to clone
+        [i|(({_ipg_start,_ipg_end,...o}) => o)(seq_#{u nt}[#{exprToJS c env e} - seq_#{u nt}_start])|]
+    | otherwise = [i|seq_#{u nt}[#{exprToJS c env e} - seq_#{u nt}_start]|]
 refToJS c env (Index nt e f) = [i|seq_#{u nt}[#{exprToJS c env e} - seq_#{u nt}_start].#{f}|]
 refToJS _ _   EOI = "EOI";
 refToJS _ _   (Start nt) = [i|nt_#{u nt}._ipg_start|]
