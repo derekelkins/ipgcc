@@ -179,7 +179,7 @@ termToJS indent c env z@(Array x start end nt args l r)
    <> indent <> [i|nt_#{u nt} = { _ipg_end: right, _ipg_start: left };\n|] -- Special case
    <> indent <> [i|seq_#{u nt}_start = #{startExp};\n|]
    <> indent <> [i|loopEnd = #{endExp};\n|]
-   <> indent <> [i|seq_#{u nt} = new Array(loopEnd - seq_#{u nt}_start);\n|]
+   <> indent <> [i|seq_#{u nt} = new Array(Math.max(0, loopEnd - seq_#{u nt}_start));\n|]
    <> indent <> [i|for (let i_#{x} = seq_#{u nt}_start; i_#{x} < loopEnd; i_#{x}++) {\n|]
    <> indent <> [i|  const left = #{lExp};\n|]
    <> indent <> [i|  const right = #{rExp};\n|]

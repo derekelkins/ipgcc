@@ -417,6 +417,7 @@ eval ctxt eoi (env, bs) ps = go
           go (Bin At l x) = at' (go l) (go x)
               where at' (SEQUENCE bs') (INT ix) = bs' !!. fromIntegral ix
                     at' (STRING bs') (INT ix) = INT (fromIntegral (BS.index bs' (fromIntegral ix)))
+                    at' (BINDINGS bs') (STRING x') = bs' !!! x'
           go (Ref (Id x)) = case Map.lookup x ps of
                                 Nothing -> case Map.lookup x bs of
                                                 Nothing -> constants ctxt !!! x

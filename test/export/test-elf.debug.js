@@ -70,7 +70,7 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     nt_SH_0 = { _ipg_end: right, _ipg_start: left };
     seq_SH_0_start = 0;
     loopEnd = nt_H_0.e_shnum;
-    seq_SH_0 = new Array(loopEnd - seq_SH_0_start);
+    seq_SH_0 = new Array(Math.max(0, loopEnd - seq_SH_0_start));
     for (let i_i = seq_SH_0_start; i_i < loopEnd; i_i++) {
       const left = nt_H_0.e_shoff + i_i * nt_H_0.e_shentsize;
       const right = nt_H_0.e_shoff + (i_i + 1) * nt_H_0.e_shentsize;
@@ -96,7 +96,7 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     nt_Sec_0 = { _ipg_end: right, _ipg_start: left };
     seq_Sec_0_start = 1;
     loopEnd = nt_H_0.e_shnum;
-    seq_Sec_0 = new Array(loopEnd - seq_Sec_0_start);
+    seq_Sec_0 = new Array(Math.max(0, loopEnd - seq_Sec_0_start));
     for (let i_i = seq_Sec_0_start; i_i < loopEnd; i_i++) {
       const left = seq_SH_0[i_i - seq_SH_0_start].sh_offset;
       const right = seq_SH_0[i_i - seq_SH_0_start].sh_offset + seq_SH_0[i_i - seq_SH_0_start].sh_size;
@@ -1145,7 +1145,7 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     nt_DynSecEntry_0 = { _ipg_end: right, _ipg_start: left };
     seq_DynSecEntry_0_start = 0;
     loopEnd = EOI / 16;
-    seq_DynSecEntry_0 = new Array(loopEnd - seq_DynSecEntry_0_start);
+    seq_DynSecEntry_0 = new Array(Math.max(0, loopEnd - seq_DynSecEntry_0_start));
     for (let i_i = seq_DynSecEntry_0_start; i_i < loopEnd; i_i++) {
       const left = 16 * i_i;
       const right = 16 * (i_i + 1);
@@ -1384,7 +1384,7 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     nt_DynSymSecEntry_0 = { _ipg_end: right, _ipg_start: left };
     seq_DynSymSecEntry_0_start = 0;
     loopEnd = EOI / 24;
-    seq_DynSymSecEntry_0 = new Array(loopEnd - seq_DynSymSecEntry_0_start);
+    seq_DynSymSecEntry_0 = new Array(Math.max(0, loopEnd - seq_DynSymSecEntry_0_start));
     for (let i_i = seq_DynSymSecEntry_0_start; i_i < loopEnd; i_i++) {
       const left = 24 * i_i;
       const right = 24 * (i_i + 1);
@@ -1825,7 +1825,7 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     nt_RelAddEndSecEntry_0 = { _ipg_end: right, _ipg_start: left };
     seq_RelAddEndSecEntry_0_start = 0;
     loopEnd = EOI / 24;
-    seq_RelAddEndSecEntry_0 = new Array(loopEnd - seq_RelAddEndSecEntry_0_start);
+    seq_RelAddEndSecEntry_0 = new Array(Math.max(0, loopEnd - seq_RelAddEndSecEntry_0_start));
     for (let i_i = seq_RelAddEndSecEntry_0_start; i_i < loopEnd; i_i++) {
       const left = 24 * i_i;
       const right = 24 * (i_i + 1);
@@ -1966,7 +1966,7 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     nt_RelSecEntry_0 = { _ipg_end: right, _ipg_start: left };
     seq_RelSecEntry_0_start = 0;
     loopEnd = EOI / 16;
-    seq_RelSecEntry_0 = new Array(loopEnd - seq_RelSecEntry_0_start);
+    seq_RelSecEntry_0 = new Array(Math.max(0, loopEnd - seq_RelSecEntry_0_start));
     for (let i_i = seq_RelSecEntry_0_start; i_i < loopEnd; i_i++) {
       const left = 16 * i_i;
       const right = 16 * (i_i + 1);

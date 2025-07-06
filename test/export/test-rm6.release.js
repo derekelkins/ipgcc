@@ -806,7 +806,7 @@ function AuthorIdsBlock(input, begin = 0, end = input.length) {
     nt_AuthorId_0 = { _ipg_end: right, _ipg_start: left };
     seq_AuthorId_0_start = 0;
     loopEnd = nt_VarUInt_0.value;
-    seq_AuthorId_0 = new Array(loopEnd - seq_AuthorId_0_start);
+    seq_AuthorId_0 = new Array(Math.max(0, loopEnd - seq_AuthorId_0_start));
     for (let i_i = seq_AuthorId_0_start; i_i < loopEnd; i_i++) {
       const left = nt_AuthorId_0._ipg_end;
       const right = EOI;
@@ -1817,7 +1817,7 @@ function SceneGlyphItemBlockValue(input, begin = 0, end = input.length) {
     nt_Rectangle_0 = { _ipg_end: right, _ipg_start: left };
     seq_Rectangle_0_start = 0;
     loopEnd = nt_VarUInt_0.value;
-    seq_Rectangle_0 = new Array(loopEnd - seq_Rectangle_0_start);
+    seq_Rectangle_0 = new Array(Math.max(0, loopEnd - seq_Rectangle_0_start));
     for (let i_i = seq_Rectangle_0_start; i_i < loopEnd; i_i++) {
       const left = nt_VarUInt_0._ipg_end + 32 * i_i;
       const right = nt_SubBlock_1._ipg_end + nt_SubBlock_1.length;
@@ -2303,7 +2303,7 @@ function SceneLineItemBlockValue(input, begin = 0, end = input.length, a_version
     nt_Point_0 = { _ipg_end: right, _ipg_start: left };
     seq_Point_0_start = 0;
     loopEnd = nt_SubBlock_1.length / self.pointSize;
-    seq_Point_0 = new Array(loopEnd - seq_Point_0_start);
+    seq_Point_0 = new Array(Math.max(0, loopEnd - seq_Point_0_start));
     for (let i_i = seq_Point_0_start; i_i < loopEnd; i_i++) {
       const left = nt_SubBlock_1._ipg_end + self.pointSize * i_i;
       const right = nt_SubBlock_1._ipg_end + self.pointSize * (i_i + 1);
@@ -2800,7 +2800,7 @@ function RootTextBlock(input, begin = 0, end = input.length) {
     nt_TextItem_0 = { _ipg_end: right, _ipg_start: left };
     seq_TextItem_0_start = 0;
     loopEnd = nt_VarUInt_0.value;
-    seq_TextItem_0 = new Array(loopEnd - seq_TextItem_0_start);
+    seq_TextItem_0 = new Array(Math.max(0, loopEnd - seq_TextItem_0_start));
     for (let i_i = seq_TextItem_0_start; i_i < loopEnd; i_i++) {
       const left = nt_TextItem_0._ipg_end;
       const right = nt_SubBlock_2._ipg_end + nt_SubBlock_2.length;
@@ -2905,7 +2905,7 @@ function RootTextBlock(input, begin = 0, end = input.length) {
     nt_TextFormat_0 = { _ipg_end: right, _ipg_start: left };
     seq_TextFormat_0_start = 0;
     loopEnd = nt_VarUInt_1.value;
-    seq_TextFormat_0 = new Array(loopEnd - seq_TextFormat_0_start);
+    seq_TextFormat_0 = new Array(Math.max(0, loopEnd - seq_TextFormat_0_start));
     for (let i_i = seq_TextFormat_0_start; i_i < loopEnd; i_i++) {
       const left = nt_TextFormat_0._ipg_end;
       const right = nt_SubBlock_4._ipg_end + nt_SubBlock_4.length;

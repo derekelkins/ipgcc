@@ -408,7 +408,7 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     nt_RGB_0 = { _ipg_end: right, _ipg_start: left };
     seq_RGB_0_start = 0;
     loopEnd = EOI / 3;
-    seq_RGB_0 = new Array(loopEnd - seq_RGB_0_start);
+    seq_RGB_0 = new Array(Math.max(0, loopEnd - seq_RGB_0_start));
     for (let i_i = seq_RGB_0_start; i_i < loopEnd; i_i++) {
       const left = 3 * i_i;
       const right = 3 * i_i + 3;
