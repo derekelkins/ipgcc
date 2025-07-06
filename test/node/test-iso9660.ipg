@@ -27,7 +27,8 @@ function get(o, f) { return o[f]; }
 
 %preamble_end
 
-// Based on ECMA-119 4th Ed. June 2019
+// Based on ECMA-119 5th Ed. December 2024
+// https://ecma-international.org/publications-and-standards/standards/ecma-119/
 
 const LOGICAL_SECTOR_SIZE = 2048; // In theory this could be a higher power of 2.
 
@@ -70,7 +71,7 @@ VolumeDescriptors
                                VolumeDescriptor.START + 2*LOGICAL_SECTOR_SIZE].descriptor
        starting on [0, LOGICAL_SECTOR_SIZE] until VolumeDescriptorSetTerminator;
 
-// 8.1
+// 9.1
 VolumeDescriptor
     -> PrimaryVolumeDescriptor { descriptor = PrimaryVolumeDescriptor.this }
      / SupplementaryOrEnhancedVolumeDescriptor
@@ -80,7 +81,7 @@ VolumeDescriptor
      / VolumeDescriptorSetTerminator { descriptor = VolumeDescriptorSetTerminator.this }
      / UnknownVolumeDescriptor { descriptor = UnknownVolumeDescriptor.this };
 
-// 8.4
+// 9.4
 PrimaryVolumeDescriptor
     -> "\x01CD001\x01\x00"
        { descriptorType = "Primary Volume Descriptor" }
@@ -109,7 +110,7 @@ PrimaryVolumeDescriptor
        DateAndTime[17] { volumeModificationDateAndTime = DateAndTime.this }
        DateAndTime[17] { volumeExpirationDateAndTime = DateAndTime.this }
        DateAndTime[17] { volumeEffectiveDateAndTime = DateAndTime.this }
-       "\x01" // 1 for Primary or Supplementary, 2 for Enhanced. See 8.4.30.
+       "\x01" // 1 for Primary or Supplementary, 2 for Enhanced. See 9.4.30.
        "\x00" // reserved
        HexBytes[512] { applicationUse = HexBytes.value }
        NULBytes; // reserved
@@ -124,14 +125,14 @@ PrimaryVolumeDescriptor
 // length that the Supplementary Volume Descriptor implies. Annex B is a good overview
 // of the differences as it lists the differences between the 2nd and 4th edition, and
 // the main change was the addition of the Enhanced Volume Descriptors.
-// 8.5
+// 9.5
 SupplementaryOrEnhancedVolumeDescriptor
     -> "\x02CD001"
        { volumeDescriptorVersion = . }
        ?[ volumeDescriptorVersion == 1 || volumeDescriptorVersion == 2 ]
        { descriptorType = volumeDescriptorVersion == 1 ? "Supplementary Volume Descriptor"
                                                        : "Enhanced Volume Descriptor" }
-       { volumeFlags = . } // See 8.5.3
+       { volumeFlags = . } // See 9.5.4
        String[32] { systemIdentifier = String.value } // a1-characters for Supplementary
        String[32] { volumeIdentifier = String.value } // d1-characters for Supplementary
        NULBytes[8] // unused
@@ -157,12 +158,12 @@ SupplementaryOrEnhancedVolumeDescriptor
        DateAndTime[17] { volumeModificationDateAndTime = DateAndTime.this }
        DateAndTime[17] { volumeExpirationDateAndTime = DateAndTime.this }
        DateAndTime[17] { volumeEffectiveDateAndTime = DateAndTime.this }
-       { fileStructureVersion = . } // 1 for Primary or Supplementary, 2 for Enhanced. See 8.4.30.
+       { fileStructureVersion = . } // 1 for Primary or Supplementary, 2 for Enhanced. See 9.4.31.
        "\x00" // reserved
        HexBytes[512] { applicationUse = HexBytes.value }
        NULBytes; // reserved
 
-// 8.6
+// 9.6
 VolumePartitionDescriptor
     -> "\x03CD001\x01\x00"
        { descriptorType = "Volume Partition Descriptor" }
@@ -172,7 +173,7 @@ VolumePartitionDescriptor
        BB_U32 { volumePartitionSize = BB_U32.value } // Number of Logical blocks
        HexBytes { systemUse = HexBytes.value };
 
-// 8.2
+// 9.2
 BootRecord
     -> "\x00CD001\x01"
        { descriptorType = "Boot Record" }
@@ -180,7 +181,7 @@ BootRecord
        AChars[32] { bootIdentifier = AChars.value }
        HexBytes { systemUse = HexBytes.value };
 
-// 8.3
+// 9.3
 VolumeDescriptorSetTerminator
     -> "\xFFCD001\x01"
        { descriptorType = "Volume Descriptor Set Terminator" }
@@ -200,14 +201,14 @@ DirectoriesRecursive(logicalBlockSize, node)
 
 DirectoryRecords -> repeat DirectoryRecord.this;
 
-// 9.1
+// 10.1
 DirectoryRecord
     -> { length = . } ?[ length > 0 ]
        { extendedAttributeRecordLength = . }
        BB_U32 { locationOfExtent = BB_U32.value } // Logical Block number
-       BB_U32 { dataLength = BB_U32.value } // Bytes, see 6.4.5
+       BB_U32 { dataLength = BB_U32.value } // Bytes, see 7.4.5
        RecordingDateAndTime[7] { recordingDateAndTime = RecordingDateAndTime.this }
-       Byte // File Flags - See Table 10 in 9.1.6 (bits 5&6 are reserved and should be 0)
+       Byte // File Flags - See Table 10 in 10.1.7 (bits 5&6 are reserved and should be 0)
        { isHidden = (0x01 & Byte.value) != 0 } // Called Existence in the spec
        { isDirectory = (0x02 & Byte.value) != 0 }
        { isAssociatedFile = (0x04 & Byte.value) != 0 }
@@ -226,7 +227,7 @@ DirectoryRecord
        EvenPadByte(lengthOfFileIdentifier)
        HexBytes[EvenPadByte.END, length] { systemUse = HexBytes.value };
 
-// Table 9 in 9.1.5
+// Table 9 in 10.1.6
 RecordingDateAndTime
     -> Byte { year = Byte.value + 1900 }
        { month = . } // 1-12
@@ -238,7 +239,7 @@ RecordingDateAndTime
 
 LPathTableRecords -> repeat LPathTableRecord.this;
 
-// 9.4
+// 10.4
 LPathTableRecord
     -> { lengthOfDirectoryIdentifier = . }
        { extendedAttributeRecordLength = . }
@@ -250,7 +251,7 @@ LPathTableRecord
 
 MPathTableRecords -> repeat MPathTableRecord.this;
 
-// 9.4
+// 10.4
 MPathTableRecord
     -> { lengthOfDirectoryIdentifier = . }
        { extendedAttributeRecordLength = . }
@@ -260,17 +261,17 @@ MPathTableRecord
        { directoryIdentifier = String.value }
        OddPadByte(lengthOfDirectoryIdentifier);
 
-// 9.5
+// 10.5
 ExtendedAttributeRecord
     -> BB_U16 { ownerIdentification = BB_U16.value }
        BB_U16 { groupIdentification = BB_U16.value }
-       BE_U16 { permissions = BE_U16.value } // 16-bit field See Table 13 in 9.5.3.
+       BE_U16 { permissions = BE_U16.value } // 16-bit field See Table 13 in 10.5.4.
        DateAndTime { fileCreationDateAndTime = DateAndTime.this }
        DateAndTime { fileModificationDateAndTime = DateAndTime.this }
        DateAndTime { fileExpirationDateAndTime = DateAndTime.this }
        DateAndTime { fileEffectiveDateAndTime = DateAndTime.this }
-       { recordFormat = . } // See 9.5.8
-       { recordAttributes = . } // See 9.5.9
+       { recordFormat = . } // See 10.5.9
+       { recordAttributes = . } // See 10.5.10
        BB_U16 { recordLength = BB_U16.value }
        String[32] { systemIdentifier = String.value } // a-characters, or a1-characters
        HexBytes[64] { systemUse = HexBytes.value }
@@ -281,16 +282,17 @@ ExtendedAttributeRecord
        HexBytes[lengthOfApplicationUse] { applicationUse = HexBytes.value }
        HexBytes[lengthOfEscapeSequences] { escapeSequences = HexBytes.value };
 
-EvenPadByte(n) -> ?[ n % 2 == 0 ] "\x00" / ""; // 9.1.12
-OddPadByte(n) -> ?[ n % 2 == 1 ] "\x00" / ""; // 9.4.6
+EvenPadByte(n) -> ?[ n % 2 == 0 ] "\x00" / ""; // 10.1.13
+OddPadByte(n) -> ?[ n % 2 == 1 ] "\x00" / ""; // 10.4.7
 
 String -> { bytes = * } { value = decodeAscii(bytes) };
 
-// See Annex A.
+// See 8.4.1 and Annex A.
+// SEPARATOR 1 is 0x2E ('.'), SEPARATOR 2 (';') is 0x3B and FILLER is 0x20 (' ')
 AChars -> { bytes = * } { value = decodeAscii(bytes) }; // TODO: Actually check these are a-characters.
 DChars -> { bytes = * } { value = decodeAscii(bytes) }; // TODO: Actually check these are d-characters.
 
-// Table 5 in 8.4.26.1
+// Table 5 in 9.4.27.2
 DateAndTime
     -> Digits[4] { year = Digits.value }
        Digits[2] { month = Digits.value }
@@ -306,19 +308,19 @@ Digit -> { value = . } ?[ value == 0 || value >= 0x30 && value <= 0x39 ];
 
 HexBytes -> { bytes = * } { value = asHex(bytes) };
 
-LE_U16 -> { b = *[2] } { value = (b[1] << 8) | b[0] }; // 7.2.1
+LE_U16 -> { b = *[2] } { value = (b[1] << 8) | b[0] }; // 8.2.2
 
-BE_U16 -> { b = *[2] } { value = (b[0] << 8) | b[1] }; // 7.2.2
-
-// Both-byte orders
-BB_U16 -> LE_U16 BE_U16 ?[ LE_U16.value == BE_U16.value ] { value = LE_U16.value }; // 7.2.3
-
-LE_U32 -> { b = *[4] } { value = (b[3] << 24) | (b[2] << 16) | (b[1] << 8) | b[0] }; // 7.3.1
-
-BE_U32 -> { b = *[4] } { value = (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3] }; // 7.3.2
+BE_U16 -> { b = *[2] } { value = (b[0] << 8) | b[1] }; // 8.2.3
 
 // Both-byte orders
-BB_U32 -> LE_U32 BE_U32 ?[ LE_U32.value == BE_U32.value ] { value = LE_U32.value }; // 7.3.3
+BB_U16 -> LE_U16 BE_U16 ?[ LE_U16.value == BE_U16.value ] { value = LE_U16.value }; // 8.2.4
+
+LE_U32 -> { b = *[4] } { value = (b[3] << 24) | (b[2] << 16) | (b[1] << 8) | b[0] }; // 8.3.2
+
+BE_U32 -> { b = *[4] } { value = (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3] }; // 8.3.3
+
+// Both-byte orders
+BB_U32 -> LE_U32 BE_U32 ?[ LE_U32.value == BE_U32.value ] { value = LE_U32.value }; // 8.3.4
 
 NULBytes -> repeat NUL_BYTE.this;
 
