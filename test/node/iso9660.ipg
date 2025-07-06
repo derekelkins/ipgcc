@@ -15,7 +15,6 @@ function asHex(bs) {
 function getPrimaryDescriptor(descriptors) {
     for (const descriptor of descriptors) {
         if (descriptor.descriptorType === "Primary Volume Descriptor") {
-        // if (descriptor.descriptorType === "Supplementary Volume Descriptor") {
             return descriptor;
         }
     }
@@ -27,8 +26,6 @@ function length(xs) { return xs.length; }
 function get(o, f) { return o[f]; }
 
 %preamble_end
-
-// Test files? https://github.com/palantir/isofilereader/tree/develop/src/test/resources
 
 // Based on ECMA-119 4th Ed. June 2019
 
