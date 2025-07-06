@@ -1,0 +1,334 @@
+const fs = require("node:fs");
+
+function decodeAscii(bs) {
+    return new TextDecoder("ascii").decode(bs);
+}
+
+function decodeAscii2(bs) {
+    return decodeAscii(new Uint8Array(bs));
+}
+
+function asHex(bs) {
+    return bs.toString("hex");
+}
+
+function getPrimaryDescriptor(descriptors) {
+    for (const descriptor of descriptors) {
+        if (descriptor.descriptorType === "Primary Volume Descriptor") {
+        // if (descriptor.descriptorType === "Supplementary Volume Descriptor") {
+            return descriptor;
+        }
+    }
+    return null;
+}
+
+function length(xs) { return xs.length; }
+
+function get(o, f) { return o[f]; }
+
+%preamble_end
+
+// Test files? https://github.com/palantir/isofilereader/tree/develop/src/test/resources
+
+// Based on ECMA-119 4th Ed. June 2019
+
+const LOGICAL_SECTOR_SIZE = 2048; // In theory this could be a higher power of 2.
+
+// The System Area plus the Data Area form the Volume Space which is effectively the whole file.
+// Logical blocks count from the beginning of the Volume Space and start at 0.
+// The logical block size for the volume is stored in the volume descriptors.
+
+ISO9660
+    -> // The first 16 logical sector (0-15) are the System Area and are unspecified.
+       // SystemArea[0, 16*LOGICAL_SECTOR_SIZE]
+       // The Data Area begins at Logical Sector 16.
+       VolumeDescriptors[16*LOGICAL_SECTOR_SIZE, EOI]
+       { descriptors = VolumeDescriptors.values }
+
+       { primaryDescriptor = getPrimaryDescriptor(descriptors) }
+       { logicalBlockSize = get(primaryDescriptor, "logicalBlockSize") }
+
+       // Get directory structure from the DirectoryRecords.
+       // The following approach via the LPathTable is simpler and probably better,
+       // but this approach illustrates a non-trivial use of absolute offsets.
+       DirectoriesRecursive(logicalBlockSize, get(primaryDescriptor, "rootDirectoryRecord"))[0, EOI]
+       { directoriesRecursive = DirectoriesRecursive.this }
+
+       // Get directory structure from the LPathTable.
+       { pathTableLocation = get(primaryDescriptor, "locationOfTypeLPathTable") }
+       { pathTableSize = get(primaryDescriptor, "pathTableSize") }
+       { pathTableOffset = logicalBlockSize * pathTableLocation }
+       LPathTableRecords[pathTableOffset, pathTableOffset + pathTableSize]
+       { paths = LPathTableRecords.values }
+       for i = 0 to length(paths) do
+         DirectoryRecords[logicalBlockSize*get(paths[i], "locationOfExtent"),
+                          logicalBlockSize*get(paths[i], "locationOfExtent") + LOGICAL_SECTOR_SIZE]
+       { directories = DirectoryRecords.these };
+
+// Volume descriptors are stored at the start of each logical sector.
+// So the first volume descriptor is at logical sector 16 (offset 32,768).
+// The next is at logical sector 17 (offset 34,816 = 32,768 + 2,048).
+VolumeDescriptors
+    -> repeat VolumeDescriptor[VolumeDescriptor.START + LOGICAL_SECTOR_SIZE,
+                               VolumeDescriptor.START + 2*LOGICAL_SECTOR_SIZE].descriptor
+       starting on [0, LOGICAL_SECTOR_SIZE] until VolumeDescriptorSetTerminator;
+
+// 8.1
+VolumeDescriptor
+    -> PrimaryVolumeDescriptor { descriptor = PrimaryVolumeDescriptor.this }
+     / SupplementaryOrEnhancedVolumeDescriptor
+       { descriptor = SupplementaryOrEnhancedVolumeDescriptor.this }
+     / VolumePartitionDescriptor { descriptor = VolumePartitionDescriptor.this }
+     / BootRecord { descriptor = BootRecord.this }
+     / VolumeDescriptorSetTerminator { descriptor = VolumeDescriptorSetTerminator.this }
+     / UnknownVolumeDescriptor { descriptor = UnknownVolumeDescriptor.this };
+
+// 8.4
+PrimaryVolumeDescriptor
+    -> "\x01CD001\x01\x00"
+       { descriptorType = "Primary Volume Descriptor" }
+       AChars[32] { systemIdentifier = AChars.value }
+       DChars[32] { volumeIdentifier = DChars.value }
+       NULBytes[8] // unused
+       BB_U32 { volumeSpaceSize = BB_U32.value } // Number of Logical Blocks in volume
+       NULBytes[32] // unused
+       BB_U16[4] { volumeSetSize = BB_U16.value }
+       BB_U16[4] { volumeSequenceNumber = BB_U16.value }
+       BB_U16[4] { logicalBlockSize = BB_U16.value }
+       BB_U32[8] { pathTableSize = BB_U32.value } // In bytes
+       LE_U32[4] { locationOfTypeLPathTable = LE_U32.value } // Path table using LE numbers
+       LE_U32[4] { locationOfOptionalTypeLPathTable = LE_U32.value } // These are Logical Block Numbers.
+       BE_U32[4] { locationOfTypeMPathTable = BE_U32.value } // Path table using BE numbers
+       BE_U32[4] { locationOfOptionalTypeMPathTable = BE_U32.value }
+       DirectoryRecord[34] { rootDirectoryRecord = DirectoryRecord.this }
+       DChars[190, 318] { volumeSetIdentifier = DChars.value }
+       AChars[128] { publisherIdentifier = AChars.value }
+       AChars[128] { dataPreparerIdentifier = AChars.value }
+       AChars[128] { applicationIdentifier = AChars.value }
+       DChars[37] { copyrightFileIdentifier = DChars.value } // d-characters, SEPARATOR 1, SEPARATOR 2
+       DChars[37] { abstractFileIdentifier = DChars.value } // Ditto
+       DChars[37] { bibliographicFileIdentifier = DChars.value } // Ditto
+       DateAndTime[17] { volumeCreationDateAndTime = DateAndTime.this }
+       DateAndTime[17] { volumeModificationDateAndTime = DateAndTime.this }
+       DateAndTime[17] { volumeExpirationDateAndTime = DateAndTime.this }
+       DateAndTime[17] { volumeEffectiveDateAndTime = DateAndTime.this }
+       "\x01" // 1 for Primary or Supplementary, 2 for Enhanced. See 8.4.30.
+       "\x00" // reserved
+       HexBytes[512] { applicationUse = HexBytes.value }
+       NULBytes; // reserved
+
+// The differences between the Supplementary and Enhanced Volume Descriptors are
+// largely ones of interpretation and lifted restrictions. The various textual
+// fields, e.g. systemIdentifier, use a1-/d1-characters for Supplementary Volume
+// Descriptors. For Enhanced Volume Descriptors its "subject to agreement between
+// the originator and the recipient of the volume". I presume, in practice, this
+// means using the Joliet specification and UCS-2 (UTF-16) characters. The Enhanced
+// Volume Descriptor also removes some restrictions on directory depth and file name
+// length that the Supplementary Volume Descriptor implies. Annex B is a good overview
+// of the differences as it lists the differences between the 2nd and 4th edition, and
+// the main change was the addition of the Enhanced Volume Descriptors.
+// 8.5
+SupplementaryOrEnhancedVolumeDescriptor
+    -> "\x02CD001"
+       { volumeDescriptorVersion = . }
+       ?[ volumeDescriptorVersion == 1 || volumeDescriptorVersion == 2 ]
+       { descriptorType = volumeDescriptorVersion == 1 ? "Supplementary Volume Descriptor"
+                                                       : "Enhanced Volume Descriptor" }
+       { volumeFlags = . } // See 8.5.3
+       String[32] { systemIdentifier = String.value } // a1-characters for Supplementary
+       String[32] { volumeIdentifier = String.value } // d1-characters for Supplementary
+       NULBytes[8] // unused
+       BB_U32 { volumeSpaceSize = BB_U32.value }
+       HexBytes[32] { escapeSequences = HexBytes.value } // See Annex C.3.
+       BB_U16[4] { volumeSetSize = BB_U16.value }
+       BB_U16[4] { volumeSequenceNumber = BB_U16.value }
+       BB_U16[4] { logicalBlockSize = BB_U16.value }
+       BB_U32[8] { pathTableSize = BB_U32.value }
+       LE_U32[4] { locationOfTypeLPathTable = LE_U32.value } // Path table using LE numbers
+       LE_U32[4] { locationOfOptionalTypeLPathTable = LE_U32.value }
+       BE_U32[4] { locationOfTypeMPathTable = BE_U32.value } // Path table using BE numbers
+       BE_U32[4] { locationOfOptionalTypeMPathTable = BE_U32.value }
+       DirectoryRecord[34] { rootDirectoryRecord = DirectoryRecord.this }
+       String[190, 318] { volumeSetIdentifier = String.value } // d1-characters for Supplementary
+       String[128] { publisherIdentifier = String.value } // a1-characters for Supplementary
+       String[128] { dataPreparerIdentifier = String.value } // a1-characters for Supplementary
+       String[128] { applicationIdentifier = String.value } // a1-characters for Supplementary
+       String[37] { copyrightFileIdentifier = String.value } // d1-characters, SEPARATOR 1, SEPARATOR 2 for Supplementary
+       String[37] { abstractFileIdentifier = String.value } // d1-characters, SEPARATOR 1, SEPARATOR 2 for Supplementary
+       String[37] { bibliographicFileIdentifier = String.value } // d1-characters, SEPARATOR 1, SEPARATOR 2 for Supplementary
+       DateAndTime[17] { volumeCreationDateAndTime = DateAndTime.this }
+       DateAndTime[17] { volumeModificationDateAndTime = DateAndTime.this }
+       DateAndTime[17] { volumeExpirationDateAndTime = DateAndTime.this }
+       DateAndTime[17] { volumeEffectiveDateAndTime = DateAndTime.this }
+       { fileStructureVersion = . } // 1 for Primary or Supplementary, 2 for Enhanced. See 8.4.30.
+       "\x00" // reserved
+       HexBytes[512] { applicationUse = HexBytes.value }
+       NULBytes; // reserved
+
+// 8.6
+VolumePartitionDescriptor
+    -> "\x03CD001\x01\x00"
+       { descriptorType = "Volume Partition Descriptor" }
+       AChars[32] { systemIdentifier = AChars.value }
+       DChars[32] { volumePartitionIdentifier = DChars.value }
+       BB_U32 { volumePartitionLocation = BB_U32.value } // Logical blocks
+       BB_U32 { volumePartitionSize = BB_U32.value } // Number of Logical blocks
+       HexBytes { systemUse = HexBytes.value };
+
+// 8.2
+BootRecord
+    -> "\x00CD001\x01"
+       { descriptorType = "Boot Record" }
+       AChars[32] { bootSystemIdentifier = AChars.value }
+       AChars[32] { bootIdentifier = AChars.value }
+       HexBytes { systemUse = HexBytes.value };
+
+// 8.3
+VolumeDescriptorSetTerminator
+    -> "\xFFCD001\x01"
+       { descriptorType = "Volume Descriptor Set Terminator" }
+       NULBytes; // reserved
+
+UnknownVolumeDescriptor
+    -> { typeByte = . } "CD001" { version = . } { data = * }
+       { descriptorType = "Unknown Volume Descriptor" };
+
+DirectoriesRecursive(logicalBlockSize, node)
+    -> { offset = logicalBlockSize * get(node, "locationOfExtent") }
+       { record = node }
+       DirectoryRecords[offset, offset + get(node, "dataLength")]
+       for i = 2 to length(DirectoryRecords.values) do // First two records are '.' and '..'.
+         DirectoriesRecursive(logicalBlockSize, DirectoryRecords.values[i])[0, EOI]
+       { children = DirectoriesRecursive.these };
+
+DirectoryRecords -> repeat DirectoryRecord.this;
+
+// 9.1
+DirectoryRecord
+    -> { length = . } ?[ length > 0 ]
+       { extendedAttributeRecordLength = . }
+       BB_U32 { locationOfExtent = BB_U32.value } // Logical Block number
+       BB_U32 { dataLength = BB_U32.value } // Bytes, see 6.4.5
+       RecordingDateAndTime[7] { recordingDateAndTime = RecordingDateAndTime.this }
+       Byte // File Flags - See Table 10 in 9.1.6 (bits 5&6 are reserved and should be 0)
+       { isHidden = (0x01 & Byte.value) != 0 } // Called Existence in the spec
+       { isDirectory = (0x02 & Byte.value) != 0 }
+       { isAssociatedFile = (0x04 & Byte.value) != 0 }
+       { isRecord = (0x08 & Byte.value) != 0 }
+       { hasPermissions = (0x10 & Byte.value) != 0 } // Called Protection in the spec
+       { isMultiExtent = (0x80 & Byte.value) != 0 }
+       { fileUnitSize = . }
+       { interleaveGapSize = . }
+       BB_U16 { volumeSequenceNumber = BB_U16.value }
+       { lengthOfFileIdentifier = . }
+       // d-characters, d1-characters, SEPARATOR 1, SEPARATOR 2, \x00, \x01
+       // Presumably depending on what points to this directory record and whether this is a file
+       // or directory as indicated by the fileFlags.
+       // \x00 is '.' and \x01 is '..'
+       String[lengthOfFileIdentifier] { fileIdentifier = String.value }
+       EvenPadByte(lengthOfFileIdentifier)
+       HexBytes[EvenPadByte.END, length] { systemUse = HexBytes.value };
+
+// Table 9 in 9.1.5
+RecordingDateAndTime
+    -> Byte { year = Byte.value + 1900 }
+       { month = . } // 1-12
+       { day = . } // 1-31
+       { hour = . } // 0-23
+       { minute = . } // 0-59
+       { second = . } // 0-59
+       { gmtOffset = . }; // -48 to 52 in 15min increments
+
+LPathTableRecords -> repeat LPathTableRecord.this;
+
+// 9.4
+LPathTableRecord
+    -> { lengthOfDirectoryIdentifier = . }
+       { extendedAttributeRecordLength = . }
+       LE_U32 { locationOfExtent = LE_U32.value } // Logical block number
+       LE_U16 { parentDirectoryNumber = LE_U16.value }
+       String[lengthOfDirectoryIdentifier] // d-characters, or d1-characters
+       { directoryIdentifier = String.value }
+       OddPadByte(lengthOfDirectoryIdentifier);
+
+MPathTableRecords -> repeat MPathTableRecord.this;
+
+// 9.4
+MPathTableRecord
+    -> { lengthOfDirectoryIdentifier = . }
+       { extendedAttributeRecordLength = . }
+       BE_U32 { locationOfExtent = BE_U32.value } // Logical block number
+       BE_U16 { parentDirectoryNumber = BE_U16.value }
+       String[lengthOfDirectoryIdentifier] // d-characters, or d1-characters
+       { directoryIdentifier = String.value }
+       OddPadByte(lengthOfDirectoryIdentifier);
+
+// 9.5
+ExtendedAttributeRecord
+    -> BB_U16 { ownerIdentification = BB_U16.value }
+       BB_U16 { groupIdentification = BB_U16.value }
+       BE_U16 { permissions = BE_U16.value } // 16-bit field See Table 13 in 9.5.3.
+       DateAndTime { fileCreationDateAndTime = DateAndTime.this }
+       DateAndTime { fileModificationDateAndTime = DateAndTime.this }
+       DateAndTime { fileExpirationDateAndTime = DateAndTime.this }
+       DateAndTime { fileEffectiveDateAndTime = DateAndTime.this }
+       { recordFormat = . } // See 9.5.8
+       { recordAttributes = . } // See 9.5.9
+       BB_U16 { recordLength = BB_U16.value }
+       String[32] { systemIdentifier = String.value } // a-characters, or a1-characters
+       HexBytes[64] { systemUse = HexBytes.value }
+       "\x01" // { extendedAttributeRecordVersion = .[180] }
+       { lengthOfEscapeSequences = . }
+       NULBytes[64] // reserved
+       BB_U16 { lengthOfApplicationUse = BB_U16.value }
+       HexBytes[lengthOfApplicationUse] { applicationUse = HexBytes.value }
+       HexBytes[lengthOfEscapeSequences] { escapeSequences = HexBytes.value };
+
+EvenPadByte(n) -> ?[ n % 2 == 0 ] "\x00" / ""; // 9.1.12
+OddPadByte(n) -> ?[ n % 2 == 1 ] "\x00" / ""; // 9.4.6
+
+String -> { bytes = * } { value = decodeAscii(bytes) };
+
+// See Annex A.
+AChars -> { bytes = * } { value = decodeAscii(bytes) }; // TODO: Actually check these are a-characters.
+DChars -> { bytes = * } { value = decodeAscii(bytes) }; // TODO: Actually check these are d-characters.
+
+// Table 5 in 8.4.26.1
+DateAndTime
+    -> Digits[4] { year = Digits.value }
+       Digits[2] { month = Digits.value }
+       Digits[2] { day = Digits.value }
+       Digits[2] { hour = Digits.value }
+       Digits[2] { minute = Digits.value }
+       Digits[2] { second = Digits.value }
+       Digits[2] { hundrethsOfSecond = Digits.value }
+       { gmtOffset = . }; // Offset from GMT in 15min increments from -48 to 52.
+
+Digits -> repeat Digit.value { value = decodeAscii2(values) };
+Digit -> { value = . } ?[ value == 0 || value >= 0x30 && value <= 0x39 ];
+
+HexBytes -> { bytes = * } { value = asHex(bytes) };
+
+LE_U16 -> { b = *[2] } { value = (b[1] << 8) | b[0] }; // 7.2.1
+
+BE_U16 -> { b = *[2] } { value = (b[0] << 8) | b[1] }; // 7.2.2
+
+// Both-byte orders
+BB_U16 -> LE_U16 BE_U16 ?[ LE_U16.value == BE_U16.value ] { value = LE_U16.value }; // 7.2.3
+
+LE_U32 -> { b = *[4] } { value = (b[3] << 24) | (b[2] << 16) | (b[1] << 8) | b[0] }; // 7.3.1
+
+BE_U32 -> { b = *[4] } { value = (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3] }; // 7.3.2
+
+// Both-byte orders
+BB_U32 -> LE_U32 BE_U32 ?[ LE_U32.value == BE_U32.value ] { value = LE_U32.value }; // 7.3.3
+
+NULBytes -> repeat NUL_BYTE.this;
+
+NUL_BYTE -> "\x00";
+
+Byte -> { value = . };
+
+%postamble_begin
+
+console.log(JSON.stringify(ISO9660(fs.readFileSync("./test/node/samples/1.iso")), null, 2));
