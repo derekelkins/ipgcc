@@ -3,8 +3,8 @@ roughly as described in [Interval Parsing Grammars for File Format Parsing](http
 by Zhang, Morrisett, and Tan.
 
 These grammars are geared to binary formats where random access is often
-used. Combined with some other features, this provides a powerful, but
-still declarative and analyzable, language for handling parsing. It can
+used. Combined with some other features, this provides a powerful language
+for handling parsing which is still declarative and analyzable. It can
 handle common patterns that most other (truly) declarative parsers cannot.
 It's also more principled than "semi-declarative" parsers, such as
 [Kaitai struct](https://kaitai.io/) or [binary-parser](https://github.com/keichi/binary-parser/),
@@ -25,27 +25,20 @@ that uses stack linearly.
 
 >  For the largest test file (over 25MB), the IPG parser performs much worse
 >  because parsing symbol names requires deep recursion in the IPG parser, which
->  could be eliminated by introducing the Kleene-star operator into IPGs. 
+>  could be eliminated by introducing the Kleene-star operator into IPGs.
 
 I don't (currently) support the `switch` syntax or existentials. I may add the
 former in the future, but it doesn't really add that much convenience. The latter
 can handled by the `A.these` notation and an external function. I also
 don't have the `btoi` expression they reference. Instead, you can use
-`{ bs = *[l, r] }` to bind `bs` to the slice of the input from `l` to `r`.
+`{ bs = *[l, r] }` to bind `bs` to a slice of the input from `l` to `r`.
 You can then compute a numeric value with an expression.
 
 I did support local rules, i.e. `where` clauses, but I removed that support.
-Local rules aren't that well-behaved as the attributes of the containing
-alternative that they reference need to be bound before the local rule
-is invoked. This leads to wonky scoping. The actual implementation in the
-code artifact had some limitations and seemed to be implemented by inlining.
-My implementation didn't have those limitations and was a bit more cleanly
-implemented, but, ultimately, had the same wonky scoping that is inherent
-to the feature. Other than scoping the rule name itself, parameterized
+Other than scoping the rule name itself, parameterized
 rules allow the same functionality in a much clearer and cleaner fashion.
 
-I do support interval inference which wasn't actually implemented in the
-code artifact.
+I do support interval inference.
 
 I currently do not do any analysis, e.g. termination analysis on the grammar.
 (In fact, I currently don't even do basic checks like ensuring a used rule is
@@ -59,6 +52,44 @@ referencing an "array" element.
 WARNING: The concrete syntax is subject to change. I'm not 100% happy with
 some of the choices made so far.
 
+To just give a flavor, here's a snippet from the (partial) ELF parse in the tests
+which illustrates some of the unique features. This parses a header (the `H` rule
+isn't listed here) which gives the offsets and sizes to a collection of section
+headers. The section headers then give the offsets and sizes of the actual sections.
+The `Sec` rule, which parses a section, is parameterized by the type of section and
+performs a switch via a sequence of guarded alternatives. In the default case at the
+end, we just take the entire buffer (`*[0, EOI]`) but here the "entire buffer" is
+relative to the interval `Sec` was called on. This example illustrates random
+access into the input and, potentially, [multiple passes over the same data](https://nathanotterness.com/2021/10/tiny_elf_modernized.html).
+
+```
+ELF -> H[0, 128]
+       for i = 0 to H.e_shnum do
+           SH[H.e_shoff + i*H.e_shentsize, H.e_shoff + (i + 1)*H.e_shentsize]
+       for i = 1 to H.e_shnum do
+           Sec(SH(i).sh_type)[SH(i).sh_offset, SH(i).sh_offset + SH(i).sh_size]
+       { header = H.this }
+       { section_headers = SH.these }
+       { sections = projectSections(Sec.these) };
+
+Sec(sh_type)
+    -> ?[ sh_type == 6 ]
+       DynSec { section = DynSec.section }
+     / ?[ sh_type == 3 ]
+       StrSec { section = StrSec.section }
+     / ?[ sh_type == 11 || sh_type == 2 ]
+       DynSymSec { section = DynSymSec.section }
+     / ?[ sh_type == 7 ]
+       NoteSec { section = NoteSec.section }
+     / ?[ sh_type == 9 ]
+       RelSec { section = RelSec.section }
+     / ?[ sh_type == 4 ]
+       RelAddEndSec { section = RelAddEndSec.section }
+     / ?[ sh_type == 8 ] // NoBits section
+       { section = empty() }
+     / { section = *[0, EOI] };
+```
+
 The following uses a BNF-like description of syntax rules, and regexes for terminals.
 
 - `--` indicates a line comment.
@@ -71,15 +102,25 @@ The following uses a BNF-like description of syntax rules, and regexes for termi
 
 ```bnf
 -- Regexes describing more complicated terminals.
-NAME = /[_a-zA-Z_][_a-zA-Z0-9]*/
-INT = /[1-9][0-9]*/
-FLOAT = /INT "." [0-9]*/
-STRING = /"[^"]*"/ -- TODO: Describe escaping.
+NAME = /[_a-zA-Z][_a-zA-Z0-9]*/
+BOOL = (true|false)
+INT = /[0-9]+/
+FLOAT = /[0-9]+.[0-9]*/
+STRING = /"([^\n\\"]|\\[0abfnrtv\\"']|\\x[0-9a-fA-F][0-9a-fA-F])*"/
+NT = /[_a-zA-Z][_a-zA-Z0-9]*(@[0-9]+)?/
+-- NT is a NAME optionally followed by a disambiguating number of the form A@123
 
-Grammar ::= Rule*
+Grammar ::= RuleOrConst*
+
+RuleOrConst ::= Rule | Const
+
+-- const foo = 10;
+Const ::= "const" NAME "=" Exp ";"
 
 -- Schematic Example: A(a_1, ..., a_m) -> alt_1 / ... / alt_n;
-Rule ::= "%instrument"? NAME ParameterList? "->" Alt ("/" Alt)* ";"
+Rule ::= MetaTags* NAME ParameterList? "->" Alt ("/" Alt)* ";"
+
+MetaTags ::= "%instrument" | "%export"
 
 ParameterList
   ::= "(" ")"
@@ -88,16 +129,18 @@ ParameterList
 Alt ::= Term+
 
 Term
-  ::= NAME ArgumentList? Interval?  -- A(a_1, ..., a_m)[l, r]
+  ::= NT ArgumentList? Interval?    -- A@1(a_1, ..., a_m)[l, r]
     | STRING Interval?              -- "foo"[l, r]
     | "{" NAME "=" RHS "}"          -- { id = e }
     | "?[" Exp "]"                  -- ?[ e ]
-    | "for" NAME "=" Exp "to" Exp "do" NAME ArgumentList? Interval?
-      -- for id=e_1 to e_2 do A(a_1, ..., a_m)[e_l, e_r]
-    | "repeat" NAME ArgumentList? Interval? "." NAME ("starting" "on" Interval)?
-      -- repeat A(a_1, ..., a_m)[l, r].id starting on [l0, r0]
-    | "repeat" NAME ArgumentList? Interval? "." NAME ("starting" "on" Interval)? "until" NAME ArgumentList?
-      -- repeat A(a_1, ..., a_m)[l, r].id starting on [l0, r0] until B(b_1, ..., b_k)
+    | "for" NAME "=" Exp "to" Exp "do" NT ArgumentList? Interval?
+      -- for id=e_1 to e_2 do A@1(a_1, ..., a_m)[e_l, e_r]
+    | "repeat" NT ArgumentList? Interval? "." NAME
+          ("starting" "on" Interval)?
+      -- repeat A@1(a_1, ..., a_m)[l, r].id starting on [l0, r0]
+    | "repeat" NT ArgumentList? Interval? "." NAME
+          ("starting" "on" Interval)? "until" NT ArgumentList?
+      -- repeat A@1(a_1, ..., a_m)[l, r].id starting on [l0, r0] until B@1(b_1, ..., b_k)
 
 RHS
   ::= Exp                 -- e, as in { id = e }
@@ -113,7 +156,8 @@ Interval
     | "[" Exp "," Exp "]"
 
 -- See below for the precedences, but they are intended to follow JavaScript.
-Exp ::= INT                       -- 123
+Exp ::= BOOL                      -- true
+      | INT                       -- 123
       | FLOAT                     -- 123.5
       | STRING                    -- "foo"
       | Exp BinOp Exp             -- x + y
@@ -122,8 +166,8 @@ Exp ::= INT                       -- 123
       | NAME ArgumentList         -- f(x, y)
       | Exp "[" Exp "]"           -- a[i]
       | NAME                      -- id
-      | NAME "." NAME             -- A.id
-      | NAME "(" Exp ")" "." NAME -- A(e).id
+      | NT "." NAME               -- A@1.id
+      | NT "(" Exp ")" "." NAME   -- A@1(e).id
       | "(" Exp ")"               -- (x)
 
 BinOp ::= "||" | "&&" | "|" | "^" | "&" | "==" | "!=" | "<" | ">" | "<=" | ">="
@@ -182,6 +226,8 @@ functions. It is a bit tedious at times though...
 
 `%instrument` marks a rule for debugging instrumentation.
 
+`%export` indicates that the function generated should be marked as exported.
+
 ### External Interface
 
 For the purposes of error checking, you can declare some rule names as external
@@ -221,8 +267,8 @@ In a way similar to [Parsing Expression Grammars](https://en.wikipedia.org/wiki/
 (PEGs), we have a *biased* alternation operator, `/`. Here, the first alternative
 to succeed is taken and other alternatives will not be considered. In other
 words, the resulting parser is deterministic in that it will produce at most one
-successful parse. Terms within an alternative are executed in sequence and must
-all succeed for the alternative to succeed.
+successful parse. Terms within an alternative are executed in data dependency
+order and then in written order and must all succeed for the alternative to succeed.
 
 The expressions, `Exp` above, behave as you expect. The syntax and semantics are
 taken from JavaScript, though likely generators will use the semantics details of the
@@ -347,10 +393,9 @@ long as you don't expect too many iterations.
 
 ### Interval Inference
 
-Interval inference is done as described in the paper (but not actually implemented in
-the code artifact). The paper doesn't actually describe the array case, i.e. `for`.
-Since I allow `A.START`/`A.END` rules following an array term can use the same rules
-as if they followed a plain non-terminal case.
+Interval inference is done as described in the paper. The paper doesn't actually
+describe the array case, i.e. `for`. Since I allow `A.START`/`A.END` rules following
+an array term can use the same rules as if they followed a plain non-terminal case.
 
 In a nutshell, for a non-terminal `A`, the term `A` becomes `A[Prev.END, EOI]` where `Prev`
 is the non-terminal immediately preceding `A`. If a terminal immediately precedes `A`,
@@ -377,10 +422,35 @@ Interval inference proceeds left-to-right.
 
 ### Skipping input
 
-This is more of a warning that a trick. DON'T use `{ _ = *[l] }` or similar to
+This is more of a warning than a trick. DON'T use `{ _ = *[l] }` or similar to
 skip past input. You can just give the next term an interval like `[Prev.END + l, EOI]`
 instead. This will avoid "reading" that input unnecessarily, and this kind of thing
 is one of the strengths of IPG.
+
+### Backward Parsing
+
+Since we're specifying intervals we don't need to have the terms in the order
+they occur in the file. Still, it would be nice in most cases to write the terms
+in the order they occur in the file, even if, for whatever reason, we are not
+parsing them in that order.
+
+If we have a `B` at the end of the input, and an `A` immediately preceding it, but
+we have to parse `B` to know where it begins, we can write:
+
+```
+S -> A[0, B.START] B[0, EOI]
+```
+
+This will parse `B` to figure out where `B.START` is and then parse `A`. If we wanted
+the more operational order, we can write it the other way which is completely equivalent.
+
+```
+S -> B[0, EOI] A[0, B.START]
+```
+
+`S -> A[0, B.START] B[A.END, EOI]` is disallowed since it's ambiguous whether we
+should parse `A` first or `B`. To be precise, the data dependencies between terms
+determine the parse order, and this example has a cyclic dependency graph.
 
 ### Avoiding END calculations
 
@@ -435,7 +505,7 @@ the same name on the returned object, there are the fields `_ipg_start` and `_ip
 parsed. If no data was consumed, `_ipg_end` will be `0` and `_ipg_start` will be the
 length of the input.
 
-As a TypeScript declaration: 
+As a TypeScript declaration:
 
 ```typescript
 interface ParserOutput {
@@ -467,8 +537,6 @@ ways it could be improved.
   naively implemented. The generator knowing the type of the input could allow a
   good implementation to be chosen. (Feel free to replace it in the output with
   something better or more specialized.)
-- For simplicity, I add the iteration variable of an array term as an attribute
-  (and then `delete` it afterwards), but it can and should be just a local variable.
 
 I'm not worried about things like constant expressions. I assume the JavaScript
 implementation (or any back-end for a well optimized language) will handle this
@@ -531,6 +599,12 @@ straightforward.
 
 As an example of using IPG, GIF is an example of a chunk-based format.
 
+### ISO9660
+
+[ISO9660](https://ecma-international.org/publications-and-standards/standards/ecma-119/) is
+one of the specifications that governs the format of CD-ROM file systems. Or, nowadays,
+`.iso` files.
+
 ### QOI
 
 I made a [QOI](https://qoiformat.org/) parser as an early simple but "real" example.
@@ -560,8 +634,7 @@ parsing approach wasn't just a (strong) preference of mine, but I also wanted to
 an artifact that would describe the format at a reasonably high level. This format is
 not documented by the producer and so has been reversed engineered. However, the
 known public information on the format seems to be largely represented by two codebases
-that not only have few comments but also don't seem to have any kind of summary README
-that gives a high-level overview of the format.
+that provide little documentation beyond the code itself.
 
 My hope is that even without comments of its own, the grammar here can give a relatively
 high-level overview of at least the syntactic aspects of this format.
@@ -579,6 +652,10 @@ language or whatever with this, there is no benefit to doing that in IPG as comp
 to other grammar formalisms such as PEG. As such, things like being able to specify
 precedence of operators won't be added. Similarly, "good error messages" isn't
 really a goal, however see the section on [Grammar Debugging Tools](#grammar-debugging-tools).
+
+### Imports
+
+TODO: Add some kind of import mechanism. For now, CPP is probably the simplest solution.
 
 ### Termination Checker and Other Analyses
 
@@ -601,6 +678,11 @@ but many rules always succeed, e.g. `repeat A.id` always succeeds.
 The good-ish news is that a recursive descent parser has a close and straightforward
 relationship to the grammar, so debugging the generated code with JavaScript debugging
 tools is a completely reasonable thing to do.
+
+### Static Types
+
+Adding types and type checking would be nice both to catch more errors in the grammar
+and to ease export to statically typed languages.
 
 ### More Back-ends
 
@@ -642,6 +724,7 @@ Even for non-tail-calls this is a common pattern, so this notation would be nice
 
 ### Higher-Order Rules
 
-You can sort of already do this kind of by accident, but being more deliberate about this
-may be nice. That said, it would be very easy to make the grammar significantly less
-analyzable this way, so one could imagine this being guarded by a flag.
+You can almost sort of already do this kind of by accident in the JavaScript export, but
+being more deliberate about this may be nice. That said, it would be very easy to make the
+grammar significantly less analyzable this way, so one could imagine this being guarded
+by a flag.
