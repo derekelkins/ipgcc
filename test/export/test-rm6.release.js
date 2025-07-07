@@ -207,8 +207,8 @@ function HeaderV6(input, begin = 0, end = input.length) {
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "reMarkable .lines file, version=6          ")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 43;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     return self;
   }
@@ -1702,8 +1702,8 @@ function SceneGlyphItemBlockValue(input, begin = 0, end = input.length) {
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x01")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // OptionalU32@0(2)[SubBlock@0.END + 1, EOI]
     left = nt_SubBlock_0._ipg_end + 1;
@@ -2059,8 +2059,8 @@ function SceneGroupItemBlockValue(input, begin = 0, end = input.length) {
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x02")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // TaggedId@0(2)[SubBlock@0.END + 1, SubBlock@0.END + SubBlock@0.length]
     left = nt_SubBlock_0._ipg_end + 1;
@@ -2203,8 +2203,8 @@ function SceneLineItemBlockValue(input, begin = 0, end = input.length, a_version
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x03")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // TaggedU32@0(1)[SubBlock@0.END + 1, outerEnd]
     left = nt_SubBlock_0._ipg_end + 1;
@@ -3434,8 +3434,8 @@ function TextFormat(input, begin = 0, end = input.length) {
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x11")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // { formatCode = .[SubBlock@0.END + 1] }
     left = nt_SubBlock_0._ipg_end + 1;
@@ -5048,8 +5048,8 @@ function Bool(input, begin = 0, end = input.length) {
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x00")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // { value = !(!0) }
     self.value = !(!0);
@@ -5066,8 +5066,8 @@ function Bool(input, begin = 0, end = input.length) {
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x01")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // { value = !0 }
     self.value = !0;

@@ -145,8 +145,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "GIF89a")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 6;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -684,8 +684,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "!\xf9")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 2;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // "\x04"[2, 3]
     left = 2;
@@ -694,8 +694,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x04")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // { packedFields = .[3] }
     left = 3;
@@ -968,8 +968,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, ",")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // U16@0[1, EOI]
     left = 1;
@@ -1159,8 +1159,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "!\x01")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 2;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // "\x03"[2, 3]
     left = 2;
@@ -1169,8 +1169,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x03")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // { type = "plainTextExtension" }
     self.type = "plainTextExtension";
@@ -1377,8 +1377,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "!\xff")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 2;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // "\x0b"[2, 3]
     left = 2;
@@ -1387,8 +1387,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x0b")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // { type = "applicationExtension" }
     self.type = "applicationExtension";
@@ -1483,8 +1483,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "!\xfe")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 2;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // { type = "commentExtension" }
     self.type = "commentExtension";
@@ -1642,8 +1642,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, ";")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -1716,8 +1716,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x00")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
   _ipg_failTreeStack.pop();
     return self;

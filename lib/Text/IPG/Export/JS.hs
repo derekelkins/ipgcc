@@ -170,8 +170,8 @@ termToJS indent c env z@(Terminal t l r)
    <> indent <>   "if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
    <> indent <> [i|if (!#{await}_ipg_startsWith(input, begin + left, begin + right, #{terminal})) break _ipg_alt;\n|]
    <> indent <>   "self._ipg_start = Math.min(self._ipg_start, left);\n"
-   <> indent <>   "self._ipg_end = Math.max(self._ipg_end, right);\n"
-   <> indent <> [i|right = left + #{BS.length t};\n\n|]
+   <> indent <> [i|right = left + #{BS.length t};\n|]
+   <> indent <>   "self._ipg_end = Math.max(self._ipg_end, right);\n\n"
   where lExp = exprToJS c env l; rExp = exprToJS c env r; terminal = hexyString t
         await = if asyncMode c then "await " else "" :: T
 termToJS indent c env z@(x := e)
@@ -381,7 +381,7 @@ toJSWithContext c (Grammar ruleOrConsts) = Builder.toLazyByteString $
             | asyncMode c = [__i|
                 async function _ipg_startsWith(input, l, r, prefix) {
                   if (r - l < prefix.length) return false;
-                  const s = await input.slice(l, r);
+                  const s = await input.slice(l, l + prefix.length);
                   for (let i = 0; i < prefix.length; ++i) {
                     if (s[i] !== prefix.charCodeAt(i)) return false;
                   }

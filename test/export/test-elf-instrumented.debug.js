@@ -394,8 +394,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x00")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -593,8 +593,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x7fELF")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 4;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // { ei_class = .[4] }
     left = 4;
@@ -1755,8 +1755,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x00")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
   _ipg_failTreeStack.pop();
     return self;

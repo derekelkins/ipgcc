@@ -107,8 +107,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "qoif")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 4;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // BE_U32@0[4, EOI]
     left = 4;
@@ -515,8 +515,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x00\x00\x00\x00\x00\x00\x00\x01")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 8;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
   _ipg_failTreeStack.pop();
     return self;

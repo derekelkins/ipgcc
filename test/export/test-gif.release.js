@@ -120,8 +120,8 @@ function Header(input, begin = 0, end = input.length) {
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "GIF89a")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 6;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     return self;
   }
@@ -550,8 +550,8 @@ function MaybeGraphicControlExtension(input, begin = 0, end = input.length) {
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "!\xf9")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 2;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // "\x04"[2, 3]
     left = 2;
@@ -559,8 +559,8 @@ function MaybeGraphicControlExtension(input, begin = 0, end = input.length) {
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x04")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // { packedFields = .[3] }
     left = 3;
@@ -788,8 +788,8 @@ function ImageDescriptor(input, begin = 0, end = input.length) {
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, ",")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // U16@0[1, EOI]
     left = 1;
@@ -949,8 +949,8 @@ function PlainTextExtension(input, begin = 0, end = input.length) {
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "!\x01")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 2;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // "\x03"[2, 3]
     left = 2;
@@ -958,8 +958,8 @@ function PlainTextExtension(input, begin = 0, end = input.length) {
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x03")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // { type = "plainTextExtension" }
     self.type = "plainTextExtension";
@@ -1133,8 +1133,8 @@ function ApplicationExtension(input, begin = 0, end = input.length) {
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "!\xff")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 2;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // "\x0b"[2, 3]
     left = 2;
@@ -1142,8 +1142,8 @@ function ApplicationExtension(input, begin = 0, end = input.length) {
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x0b")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // { type = "applicationExtension" }
     self.type = "applicationExtension";
@@ -1223,8 +1223,8 @@ function CommentExtension(input, begin = 0, end = input.length) {
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "!\xfe")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 2;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     // { type = "commentExtension" }
     self.type = "commentExtension";
@@ -1344,8 +1344,8 @@ function Trailer(input, begin = 0, end = input.length) {
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, ";")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     return self;
   }
@@ -1394,8 +1394,8 @@ function BlockTerminator(input, begin = 0, end = input.length) {
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
     if (!_ipg_startsWith(input, begin + left, begin + right, "\x00")) break _ipg_alt;
     self._ipg_start = Math.min(self._ipg_start, left);
-    self._ipg_end = Math.max(self._ipg_end, right);
     right = left + 1;
+    self._ipg_end = Math.max(self._ipg_end, right);
 
     return self;
   }
