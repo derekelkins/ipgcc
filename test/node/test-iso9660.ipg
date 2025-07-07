@@ -192,12 +192,15 @@ UnknownVolumeDescriptor
        { descriptorType = "Unknown Volume Descriptor" };
 
 DirectoriesRecursive(logicalBlockSize, node)
-    -> { offset = logicalBlockSize * get(node, "locationOfExtent") }
+    -> ?[ get(node, "isDirectory") ]
+       { offset = logicalBlockSize * get(node, "locationOfExtent") }
        { record = node }
        DirectoryRecords[offset, offset + get(node, "dataLength")]
        for i = 2 to length(DirectoryRecords.values) do // First two records are '.' and '..'.
          DirectoriesRecursive(logicalBlockSize, DirectoryRecords.values[i])[0, EOI]
-       { children = DirectoriesRecursive.these };
+       { children = DirectoriesRecursive.these }
+     / { offset = logicalBlockSize * get(node, "locationOfExtent") }
+       { record = node };
 
 DirectoryRecords -> repeat DirectoryRecord.this;
 

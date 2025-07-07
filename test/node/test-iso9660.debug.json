@@ -333,8 +333,7 @@
           "lengthOfFileIdentifier": 7,
           "fileIdentifier": "4MB.PNG",
           "systemUse": ""
-        },
-        "children": []
+        }
       },
       {
         "offset": 4356096,
@@ -364,8 +363,7 @@
           "lengthOfFileIdentifier": 7,
           "fileIdentifier": "6MB.PNG",
           "systemUse": ""
-        },
-        "children": []
+        }
       }
     ]
   },
