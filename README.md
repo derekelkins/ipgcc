@@ -547,6 +547,10 @@ There are also potentially grammar-level optimizations that could be done, e.g.
 recognizing a pattern of recursion as a repetition, though I don't see implementing
 any of these unless some very compelling case comes up.
 
+I do recommend having parsers for primitive types be implemented via external
+parsers. See [test/node/test-rm6.ipg](test/node/test-rm6.ipg) for an example.
+Specifically, the `Float32`/`Float64` parsers.
+
 TODO: Describe debug mode.
 
 ### Reserved Identifiers
