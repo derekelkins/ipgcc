@@ -333,7 +333,7 @@ constToJS c (n, e) = [i|const #{n} = #{exprToJS c Set.empty e};\n|]
 ruleToJS :: Context -> Rule T T T Expr -> Out
 ruleToJS c (Rule mt nt args alts) =
     [__i|
-      function #{nt}(input, begin = 0, end = input.length#{paramList args}) {
+      #{export}function #{nt}(input, begin = 0, end = input.length#{paramList args}) {
         const EOI = end - begin; let self;
         #{debuggingPreamble}
       #{foldMap (alternativeToJS instrument "  " c env) alts}
@@ -342,6 +342,7 @@ ruleToJS c (Rule mt nt args alts) =
       }\n\n
     |]
   where env = Set.fromList args
+        export = if EXPORT `elem` mt then "export " else "" :: T
         instrument = if INSTRUMENT `elem` mt then Just (nt, args) else Nothing
         debuggingPreamble = whenDebug c [__i|
             const _ipg_currentFailTree = {

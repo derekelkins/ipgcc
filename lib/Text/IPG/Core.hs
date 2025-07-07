@@ -9,8 +9,10 @@ import qualified Data.IntMap as IntMap -- containers
 import qualified Data.Map as Map -- containers
 import qualified Data.Set as Set -- containers
 
-data MetaTag = INSTRUMENT -- %instrument
-    deriving ( Eq, Ord, Show )
+data MetaTag
+    = INSTRUMENT -- %instrument
+    | EXPORT     -- %export
+  deriving ( Eq, Ord, Show )
 
 newtype Grammar nt t id e = Grammar [Either (Rule nt t id e) (id, e)]
     deriving ( Show )

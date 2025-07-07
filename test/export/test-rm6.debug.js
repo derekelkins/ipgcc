@@ -147,7 +147,7 @@ function _ipg_startsWith(s, l, r, prefix) {
 }
 const _ipg_failTreeRoot = { children: [] };
 const _ipg_failTreeStack = [_ipg_failTreeRoot];
-function RM6(input, begin = 0, end = input.length) {
+export function RM6(input, begin = 0, end = input.length) {
   const EOI = end - begin; let self;
   const _ipg_currentFailTree = {
     rule: "RM6",

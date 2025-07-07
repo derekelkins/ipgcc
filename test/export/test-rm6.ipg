@@ -142,6 +142,7 @@ function checkRootTextBlockId(blockId) {
 
 // The below is presented in a top-down order.
 
+%export
 RM6 -> HeaderV6 Blocks { blocks = Blocks.values };
 
 HeaderV6 -> "reMarkable .lines file, version=6          ";

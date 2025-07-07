@@ -33,6 +33,7 @@ floatToOut = foldMap (Builder.word8 . fromIntegral . ord) . show -- TODO: Crude
 
 pprintMetaTag :: MetaTag -> Out
 pprintMetaTag INSTRUMENT = "%instrument"
+pprintMetaTag EXPORT = "%export"
 
 pprintNT :: (T, Int) -> Out
 pprintNT (nt, -1) = Builder.byteString nt -- This case shouldn't really happen.

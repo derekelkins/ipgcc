@@ -30,6 +30,7 @@ import Text.IPG.Lexer (
 %token
     '%declare' { TokenDeclare }
     '%instrument' { TokenInstrument }
+    '%export' { TokenExport }
     '%end'  { TokenEndDeclare }
     EOI     { TokenEOI }
     repeat  { TokenRepeat }
@@ -150,11 +151,12 @@ RuleOrConsts :: { [Either Rule' Const'] }
     | {- empty -} { [] }
 
 RuleOrConst :: { Either Rule' Const' }
-    : MaybeInstrument name ParamList '->' Alternatives { Left (Rule $1 $2 $3 (reverse $5)) }
+    : MetaTags name ParamList '->' Alternatives { Left (Rule $1 $2 $3 (reverse $5)) }
     | const name '=' Exp { Right ($2, $4) }
 
-MaybeInstrument :: { [MetaTag] }
-    : '%instrument' { [INSTRUMENT] }
+MetaTags :: { [MetaTag] }
+    : '%instrument' MetaTags { (INSTRUMENT:$2) }
+    | '%export' MetaTags { (EXPORT:$2) }
     | {- empty -} { [] }
 
 ParamList :: { [IdType] }

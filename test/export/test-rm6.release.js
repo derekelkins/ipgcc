@@ -145,7 +145,7 @@ function _ipg_startsWith(s, l, r, prefix) {
   }
   return true;
 }
-function RM6(input, begin = 0, end = input.length) {
+export function RM6(input, begin = 0, end = input.length) {
   const EOI = end - begin; let self;
   
   _ipg_alt: {

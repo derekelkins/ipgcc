@@ -43,6 +43,8 @@ tokens :-
                { token $ \_ _ -> TokenDeclare }
 <0>    "%instrument"
                { token $ \_ _ -> TokenInstrument }
+<0>    "%export"
+               { token $ \_ _ -> TokenExport }
 <0>    "%end"  { token $ \_ _ -> TokenEndDeclare }
 <0>    EOI     { token $ \_ _ -> TokenEOI }
 <0>    repeat  { token $ \_ _ -> TokenRepeat }
@@ -106,6 +108,7 @@ data Token
     | TokenEOI
     | TokenDeclare
     | TokenInstrument
+    | TokenExport
     | TokenEndDeclare
     | TokenRepeat
     | TokenStarting
