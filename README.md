@@ -609,6 +609,10 @@ As an example of using IPG, GIF is an example of a chunk-based format.
 one of the specifications that governs the format of CD-ROM file systems. Or, nowadays,
 `.iso` files.
 
+This example illustrates traversing a tree-like structure specified by absolute offsets.
+ISO9660 also specifies a flat version of the directory structure with the Path Tables.
+This parser illustrates traversing both.
+
 ### QOI
 
 I made a [QOI](https://qoiformat.org/) parser as an early simple but "real" example.

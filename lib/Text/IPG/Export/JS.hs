@@ -14,12 +14,6 @@ import Text.IPG.Core (
 import Text.IPG.GenericExp ( UnOp(..), BinOp(..), Exp(..) )
 import Text.IPG.PPrint ( floatToOut, hexyString, outParen, pprintTerm )
 
--- It's worth noting that the way this export works already supports blackbox parsers.
--- ANY function that takes a buffer and a start and end and returns an object with the
--- _ipg_start/_ipg_end fields suitably set can just immediately be referenced. If we
--- assume a blackbox parser will always consume its full input, we can just return
--- _ipg_start = 0, _ipg_end = end - start.
-
 type T = BS.ByteString
 type Out = Builder.Builder
 type Expr = Exp T T T
@@ -27,6 +21,7 @@ type Env = Set.Set T
 
 data Context = Context {
     debugMode :: !Bool,
+    asyncMode :: !Bool,
     leaveExtraFields :: !Bool,
     constants :: Set.Set T,
     iterationVar :: T
@@ -35,6 +30,7 @@ data Context = Context {
 defaultContext :: Context
 defaultContext = Context {
     debugMode = False,
+    asyncMode = False,
     leaveExtraFields = False,
     constants = Set.empty,
     iterationVar = ""
@@ -147,7 +143,7 @@ termToJS indent c env z@(NonTerminal nt args l r)
    <> whenDebug c (indent <> [i|_ipg_failedTerm = { term: #{show (pprintTerm z)}, left, right };\n|])
    <> indent <> [i|right = #{rExp};\n|]
    <> indent <>   "if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
-   <> indent <> [i|nt_#{u nt} = #{fst nt}(input, begin + left, begin + right#{argList es});\n|]
+   <> indent <> [i|nt_#{u nt} = #{await}#{fst nt}(input, begin + left, begin + right#{argList es});\n|]
    <> indent <> [i|if (nt_#{u nt} === null) break _ipg_alt;\n|]
    <> indent <> [i|if (nt_#{u nt}._ipg_end !== 0) {\n|]
    <> indent <> [i|  self._ipg_start = Math.min(self._ipg_start, left + nt_#{u nt}._ipg_start);\n|]
@@ -158,6 +154,7 @@ termToJS indent c env z@(NonTerminal nt args l r)
    <> indent <> [i|left = nt_#{u nt}._ipg_start;\n|]
    <> indent <> [i|right = nt_#{u nt}._ipg_end;\n\n|]
   where lExp = exprToJS c env l; rExp = exprToJS c env r; es = map (exprToJS c env) args
+        await = if asyncMode c then "await " else "" :: T
 termToJS indent c env z@(Terminal "" l r)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> indent <> [i|left = #{lExp};\n|]
@@ -171,11 +168,12 @@ termToJS indent c env z@(Terminal t l r)
    <> indent <> [i|right = #{rExp};\n|]
    <> whenDebug c (indent <> [i|_ipg_failedTerm = { term: #{show (pprintTerm z)}, left, right };\n|])
    <> indent <>   "if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
-   <> indent <> [i|if (!_ipg_startsWith(input, begin + left, begin + right, #{terminal})) break _ipg_alt;\n|]
+   <> indent <> [i|if (!#{await}_ipg_startsWith(input, begin + left, begin + right, #{terminal})) break _ipg_alt;\n|]
    <> indent <>   "self._ipg_start = Math.min(self._ipg_start, left);\n"
    <> indent <>   "self._ipg_end = Math.max(self._ipg_end, right);\n"
    <> indent <> [i|right = left + #{BS.length t};\n\n|]
   where lExp = exprToJS c env l; rExp = exprToJS c env r; terminal = hexyString t
+        await = if asyncMode c then "await " else "" :: T
 termToJS indent c env z@(x := e)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> indent <> [i|self.#{x} = #{eExp};\n\n|]
@@ -197,7 +195,7 @@ termToJS indent c env z@(Array x start end nt args l r)
    <> indent <> [i|  const right = #{rExp};\n|]
    <> whenDebug c (indent <> [i|_ipg_failedTerm.left = left; _ipg_failedTerm.right = right;\n|])
    <> indent <>   "  if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
-   <> indent <> [i|  const tmp = #{fst nt}(input, begin + left, begin + right#{argList es});\n|]
+   <> indent <> [i|  const tmp = #{await}#{fst nt}(input, begin + left, begin + right#{argList es});\n|]
    <> indent <>   "  if (tmp === null) break _ipg_alt;\n"
    <> indent <>   "  if (tmp._ipg_end !== 0) {\n"
    <> indent <>   "    self._ipg_start = Math.min(self._ipg_start, left + tmp._ipg_start);\n"
@@ -213,6 +211,7 @@ termToJS indent c env z@(Array x start end nt args l r)
    <> indent <> [i|right = nt_#{u nt}._ipg_end;\n\n|]
   where startExp = exprToJS c env start; endExp = exprToJS' c env 10 end;
         lExp = exprToJS c' env l; rExp = exprToJS c' env r; es = map (exprToJS c' env) args
+        await = if asyncMode c then "await " else "" :: T
         c' = c { iterationVar = x }
 termToJS indent c env z@(Any x l)
     = indent <> [i|// #{pprintTerm z}\n|]
@@ -220,28 +219,31 @@ termToJS indent c env z@(Any x l)
    <> indent <>   "right = left + 1;\n"
    <> whenDebug c (indent <> [i|_ipg_failedTerm = { term: #{show (pprintTerm z)}, left, right };\n|])
    <> indent <>   "if (left < 0 || right > EOI) break _ipg_alt;\n"
-   <> indent <> [i|self.#{x} = input[begin + left];\n|]
+   <> indent <>   asyncAt
    <> indent <>   "self._ipg_start = Math.min(self._ipg_start, left);\n"
    <> indent <>   "self._ipg_end = Math.max(self._ipg_end, right);\n\n"
   where lExp = exprToJS c env l
+        asyncAt | asyncMode c =  [i|self.#{x} = await input.at(begin + left);\n|]
+                | otherwise = [i|self.#{x} = input[begin + left];\n|]
 termToJS indent c env z@(Slice x l r)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> indent <> [i|left = #{lExp};\n|]
    <> indent <> [i|right = #{rExp};\n|]
    <> whenDebug c (indent <> [i|_ipg_failedTerm = { term: #{show (pprintTerm z)}, left, right };\n|])
    <> indent <>   "if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
-   <> indent <> [i|self.#{x} = input.slice(begin + left, begin + right);\n|]
+   <> indent <> [i|self.#{x} = #{await}input.slice(begin + left, begin + right);\n|]
    <> indent <>   "if (left !== right) {\n"
    <> indent <>   "  self._ipg_start = Math.min(self._ipg_start, left);\n"
    <> indent <>   "  self._ipg_end = Math.max(self._ipg_end, right);\n"
    <> indent <>   "}\n\n"
   where lExp = exprToJS c env l; rExp = exprToJS c env r
+        await = if asyncMode c then "await " else "" :: T
 termToJS indent c env z@(Repeat nt args l r x l0 r0)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> indent <>   "self.values = [];\n"
    <> indent <> [i|left = #{l0Exp};\n|]
    <> indent <> [i|right = #{r0Exp};\n|]
-   <> indent <> [i|nt_#{u nt} = #{fst nt}(input, begin + left, begin + right#{argList es});\n|]
+   <> indent <> [i|nt_#{u nt} = #{await}#{fst nt}(input, begin + left, begin + right#{argList es});\n|]
    <> indent <> [i|if (nt_#{u nt} !== null) {\n|]
    <> indent <> [i|  if (nt_#{u nt}._ipg_end === 0) throw 'repeat of non-consuming rule: #{fst nt}';\n|]
    <> indent <> [i|  self._ipg_start = Math.min(self._ipg_start, left + nt_#{u nt}._ipg_start);\n|]
@@ -253,7 +255,7 @@ termToJS indent c env z@(Repeat nt args l r x l0 r0)
    <> indent <> [i|  self.values.push(#{xAttr});\n\n|]
 
    <> indent <>   "  while (left >= 0 && left <= right && right <= EOI) {\n"
-   <> indent <> [i|    nt_#{u nt} = #{fst nt}(input, begin + left, begin + right#{argList es});\n|]
+   <> indent <> [i|    nt_#{u nt} = #{await}#{fst nt}(input, begin + left, begin + right#{argList es});\n|]
    <> indent <> [i|    if (nt_#{u nt} === null) break;\n|]
    <> indent <> [i|    if (nt_#{u nt}._ipg_end === 0) throw 'repeat of non-consuming rule: #{fst nt}';\n|]
    <> indent <> [i|    self._ipg_start = Math.min(self._ipg_start, left + nt_#{u nt}._ipg_start);\n|]
@@ -268,6 +270,7 @@ termToJS indent c env z@(Repeat nt args l r x l0 r0)
   where es = map (exprToJS c env) args
         lExp = exprToJS c env l; rExp = exprToJS c env r
         l0Exp = exprToJS c env l0; r0Exp = exprToJS c env r0
+        await = if asyncMode c then "await " else "" :: T
         xAttr = refToJS c env (Attr nt x)
 termToJS indent c env z@(RepeatUntil nt1 args1 l r x l0 r0 nt2 args2)
     = indent <> [i|// #{pprintTerm z}\n|]
@@ -277,7 +280,7 @@ termToJS indent c env z@(RepeatUntil nt1 args1 l r x l0 r0 nt2 args2)
    <> indent <>   "self.values = [];\n"
    <> indent <>   "while (true) {\n"
    <> indent <>   "  if (left < 0 || right < left || right > EOI) break _ipg_alt;\n"
-   <> indent <> [i|  nt_#{u nt2} = #{fst nt2}(input, begin + left, begin + right#{argList es2});\n|]
+   <> indent <> [i|  nt_#{u nt2} = #{await}#{fst nt2}(input, begin + left, begin + right#{argList es2});\n|]
    <> indent <> [i|  if (nt_#{u nt2} !== null) {\n|]
    <> indent <> [i|    if (nt_#{u nt2}._ipg_end !== 0) {\n|]
    <> indent <> [i|      self._ipg_start = Math.min(self._ipg_start, left + nt_#{u nt2}._ipg_start);\n|]
@@ -288,7 +291,7 @@ termToJS indent c env z@(RepeatUntil nt1 args1 l r x l0 r0 nt2 args2)
    <> indent <> [i|    right = nt_#{u nt2}._ipg_end;\n|]
    <> indent <>   "    break;\n"
    <> indent <>   "  }\n"
-   <> indent <> [i|  nt_#{u nt1} = #{fst nt1}(input, begin + left, begin + right#{argList es1});\n|]
+   <> indent <> [i|  nt_#{u nt1} = #{await}#{fst nt1}(input, begin + left, begin + right#{argList es1});\n|]
    <> indent <> [i|  if (nt_#{u nt1} === null) break _ipg_alt;\n|]
    <> indent <> [i|  if (nt_#{u nt1}._ipg_end === 0) throw 'repeat of non-consuming rule: #{fst nt1}';\n|]
    <> indent <> [i|  self._ipg_start = Math.min(self._ipg_start, left + nt_#{u nt1}._ipg_start);\n|]
@@ -302,6 +305,7 @@ termToJS indent c env z@(RepeatUntil nt1 args1 l r x l0 r0 nt2 args2)
   where es1 = map (exprToJS c env) args1; es2 = map (exprToJS c env) args2
         lExp = exprToJS c env l; rExp = exprToJS c env r
         l0Exp = exprToJS c env l0; r0Exp = exprToJS c env r0
+        await = if asyncMode c then "await " else "" :: T
         xAttr = refToJS c env (Attr nt1 x)
 
 alternativeToJS :: Maybe (T, [T]) -> Out -> Context -> Env -> Alternative T T T Expr -> Out
@@ -333,7 +337,7 @@ constToJS c (n, e) = [i|const #{n} = #{exprToJS c Set.empty e};\n|]
 ruleToJS :: Context -> Rule T T T Expr -> Out
 ruleToJS c (Rule mt nt args alts) =
     [__i|
-      #{export}function #{nt}(input, begin = 0, end = input.length#{paramList args}) {
+      #{export}#{async}function #{nt}(input, begin = 0, end = input.length#{paramList args}) {
         const EOI = end - begin; let self;
         #{debuggingPreamble}
       #{foldMap (alternativeToJS instrument "  " c env) alts}
@@ -344,6 +348,7 @@ ruleToJS c (Rule mt nt args alts) =
   where env = Set.fromList args
         export = if EXPORT `elem` mt then "export " else "" :: T
         instrument = if INSTRUMENT `elem` mt then Just (nt, args) else Nothing
+        async = if asyncMode c then "async " else "" :: T
         debuggingPreamble = whenDebug c [__i|
             const _ipg_currentFailTree = {
                 rule: "#{nt}",
@@ -363,16 +368,7 @@ ruleToJS c (Rule mt nt args alts) =
 
 toJSWithContext :: Context -> Grammar T T T Expr -> LBS.ByteString
 toJSWithContext c (Grammar ruleOrConsts) = Builder.toLazyByteString $
-    [__i|
-      function _ipg_startsWith(s, l, r, prefix) {
-        if (r - l < prefix.length) return false;
-        if (typeof s === 'string') return s.startsWith(prefix, l);
-        for (let i = 0; i < prefix.length; ++i) {
-          if (s[l + i] !== prefix.charCodeAt(i)) return false;
-        }
-        return true;
-      }\n
-    |]
+      startsWith
    <> whenDebug c [__i|
       const _ipg_failTreeRoot = { children: [] };
       const _ipg_failTreeStack = [_ipg_failTreeRoot];\n
@@ -381,6 +377,25 @@ toJSWithContext c (Grammar ruleOrConsts) = Builder.toLazyByteString $
   where c' = c {
                 constants = foldMap (either (const Set.empty) (Set.singleton . fst)) ruleOrConsts
              }
+        startsWith
+            | asyncMode c = [__i|
+                async function _ipg_startsWith(input, l, r, prefix) {
+                  if (r - l < prefix.length) return false;
+                  const s = await input.slice(l, r);
+                  for (let i = 0; i < prefix.length; ++i) {
+                    if (s[i] !== prefix.charCodeAt(i)) return false;
+                  }
+                  return true;
+                }\n|]
+            | otherwise = [__i|
+                function _ipg_startsWith(s, l, r, prefix) {
+                  if (r - l < prefix.length) return false;
+                  if (typeof s === 'string') return s.startsWith(prefix, l);
+                  for (let i = 0; i < prefix.length; ++i) {
+                    if (s[l + i] !== prefix.charCodeAt(i)) return false;
+                  }
+                  return true;
+                }\n|]
 
 toJS :: Grammar T T T Expr -> LBS.ByteString
 toJS = toJSWithContext defaultContext

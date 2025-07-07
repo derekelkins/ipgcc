@@ -24,6 +24,7 @@ data Options = Options {
     leaveExtraFieldsFlag :: !Bool,
     noValidation :: !Bool,
     debugModeFlag :: !Bool,
+    asyncModeFlag :: !Bool,
     interpretFlag :: !Bool
   }
 
@@ -53,6 +54,9 @@ options = Opt.info (Options
     <*> Opt.switch (
             Opt.long "debug-mode"
          <> Opt.help "Enable debug mode in output.")
+    <*> Opt.switch (
+            Opt.long "async-mode"
+         <> Opt.help "Export using asynchronous interface.")
     <*> Opt.switch (
             Opt.long "interpret"
          <> Opt.short 'I'
@@ -86,6 +90,7 @@ main = do
                         LBS.hPutStrLn h (toJSWithContext
                             (defaultContext {
                                 debugMode = debugModeFlag opts,
+                                asyncMode = asyncModeFlag opts,
                                 leaveExtraFields = leaveExtraFieldsFlag opts
                             }) core)
                         LBS.hPutStr h postamble
