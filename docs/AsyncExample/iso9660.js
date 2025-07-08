@@ -76,9 +76,9 @@ function decodeAscii2(bs) {
 }
 
 function asHex(bs) {
-    const result = "";
+    let result = "";
     for (let i = 0, length = bs.length; i < length; i++) {
-      const hex = bs[i].toString(16)
+      const hex = bs[i].toString(16);
       result += hex.length === 1 ? '0' + hex : hex;
     }
     return result;
