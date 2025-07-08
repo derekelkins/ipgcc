@@ -48,7 +48,7 @@ that succeeds is chosen.
 
 Terminals are represented by literal strings. So to recreate a standard example:
 
-<small>test/interpret/test-tutorial-1.ipg</small>
+<small>[test/interpret/test-tutorial-1.ipg](test/interpret/test-tutorial-1.ipg)</small>
 ```ipg
 Exp -> Term "+" Exp / Term;
 Term -> Factor "*" Term / Factor;
@@ -103,7 +103,7 @@ Attributes defined in a rule can be accessed by other rules which invoke this on
 However, only attributes that are defined in every alternative are available.
 Expanding the earlier example to return a result, we have:
 
-<small>test/interpret/test-tutorial-2.ipg</small>
+<small>[test/interpret/test-tutorial-2.ipg](test/interpret/test-tutorial-2.ipg)</small>
 ```ipg
 Exp
   -> Term "+" Exp { value = Term.value + Exp.value }
@@ -196,7 +196,7 @@ the sequence of values of `x`. This behaves like the Kleene star.
 If we wanted to handle many digits in our expression parser, we could rewrite `Factor`
 as:
 
-<small>test/parsing/test-tutorial-3.ipg</small>
+<small>[test/parsing/test-tutorial-3.ipg](test/parsing/test-tutorial-3.ipg)</small>
 ```ipg
 Factor
   -> "(" Exp ")" { value = Exp.value }
@@ -229,7 +229,7 @@ parser succeeds.
 
 For example:
 
-<small>test/interpret/test-tutorial-4.ipg</small>
+<small>[test/interpret/test-tutorial-4.ipg](test/interpret/test-tutorial-4.ipg)</small>
 ```ipg
 String -> Quote repeat Char.value until Quote;
 
@@ -240,7 +240,7 @@ Quote -> "\"";
 
 `repeat A.x until B` behaves like invoking the rule `R` defined as:
 
-<small>test/interpret/test-tutorial-5.ipg</small>
+<small>[test/interpret/test-tutorial-5.ipg](test/interpret/test-tutorial-5.ipg)</small>
 ```ipg
 R -> B { values = nil() }
    / A R { values = cons(A.x, R.values) };
@@ -254,7 +254,7 @@ since `Char` matches quotation marks too.
 
 Parameterized rules are allowed as well. For example:
 
-<small>test/interpret/test-tutorial-6.ipg</small>
+<small>[test/interpret/test-tutorial-6.ipg](test/interpret/test-tutorial-6.ipg)</small>
 ```ipg
 const BASE = 10;
 
@@ -419,8 +419,6 @@ Value(type)
 There is absolutely nothing that stops different terms from being given the same or
 overlapping intervals. This can be useful for structures that require multipass parsing.
 
-You can simply write something
-
 ### Repetition and Intervals
 
 For something like `repeat A.x`, we usually want the individual instances of `A` to
@@ -436,7 +434,7 @@ The full form of `repeat A.x until B` is similarly `repeat A[l, r].x starting on
 
 These `repeat` forms are quite powerful. For example, in:
 
-<small>test/interpret/test-tutorial-7.ipg</small>
+<small>[test/interpret/test-tutorial-7.ipg](test/interpret/test-tutorial-7.ipg)</small>
 ```ipg
 Forward -> repeat A.x;
 A -> "a" { x = "a" };
@@ -454,7 +452,7 @@ consist of 16-bit integers and links are 16-bit offsets. The nodes can be locate
 throughout the file in any order but the output will be in the order of the linked
 list.
 
-<small>test/interpret/test-linked-list.ipg</small>
+<small>[test/interpret/test-linked-list.ipg](test/interpret/test-linked-list.ipg)</small>
 ```ipg
 U16 -> { lo = . } { hi = . } { value = (hi << 8) | lo };
 
@@ -585,7 +583,7 @@ parser is given the full interval. `DirectoriesRecursive` in the ISO9660 parser
 illustrates this pattern. The top-level parser invokes it with the full interval,
 i.e. `[0, EOI]`, and it passes that interval down into its recursive calls.
 
-<small>test/node/test-iso9660.ipg</small>
+<small>[test/node/test-iso9660.ipg](test/node/test-iso9660.ipg)</small>
 ```ipg
 DirectoriesRecursive(logicalBlockSize, node)
     -> { offset = logicalBlockSize * get(node, "locationOfExtent") }
