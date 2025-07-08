@@ -44,7 +44,8 @@ export function clearCache(uri) {
 
 export async function fetchRange(uri, start, end) {
     const headers = new Headers({
-        "Range": `bytes=${start}-${end-1}`
+        "Range": `bytes=${start}-${end-1}`,
+        "Accept-Encoding": "identity"
     });
     const request = new Request(uri, { headers });
     const result = await fetch(request);
