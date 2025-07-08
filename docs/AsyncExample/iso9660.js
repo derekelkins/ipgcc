@@ -1,4 +1,4 @@
-const BLOCK_SIZE = 1024 * 1024;
+const BLOCK_SIZE = 4 * 1024;
 const blockCache = {};
 
 async function slice(uri, start, end) {
@@ -44,8 +44,7 @@ export function clearCache(uri) {
 
 export async function fetchRange(uri, start, end) {
     const headers = new Headers({
-        "Range": `bytes=${start}-${end-1}`,
-        "Accept-Encoding": "identity"
+        "Range": `bytes=${start}-${end-1}`
     });
     const request = new Request(uri, { headers });
     const result = await fetch(request);
