@@ -264,7 +264,8 @@ An **invalid interval** is one where the start is *strictly* after the end,
 i.e. for `[l, r]` we have `l > r`. Empty intervals, i.e. where `l == r` are
 allowed and useful. Nothing stops having different terms parse overlapping
 slices of the input. In fact, this is a powerful technique that allows
-multi-pass parsing. (See `test/node/test-elf.ipg` for an example.)
+multi-pass parsing. (See [`test/node/test-elf.ipg`](test/node/test-elf.ipg)
+for an example.)
 
 In a way similar to [Parsing Expression Grammars](https://en.wikipedia.org/wiki/Parsing_expression_grammar)
 (PEGs), we have a *biased* alternation operator, `/`. Here, the first alternative
@@ -586,8 +587,8 @@ producing self-contained executable examples.
 
 ### ELF
 
-`test/node/test-elf.ipg` is a translation of the ELF parser from the paper's
-code artifacts. It does not handle the fullness of [ELF](https://www.man7.org/linux/man-pages/man5/elf.5.html),
+[`test/node/test-elf.ipg`](test/node/test-elf.ipg) is a translation of the ELF parser
+from the paper's code artifacts. It does not handle the fullness of [ELF](https://www.man7.org/linux/man-pages/man5/elf.5.html),
 but it is a good illustration of a file format that significantly leveraged
 random access.
 
@@ -597,7 +598,7 @@ leads to stack overflows even on the example ELF files they used.
 
 ### GIF
 
-`test/node/test-gif.ipg` is a full [GIF89a](https://giflib.sourceforge.net/gifstandard/GIF89a.html)
+[`test/node/test-gif.ipg`](test/node/test-gif.ipg) is a full [GIF89a](https://giflib.sourceforge.net/gifstandard/GIF89a.html)
 parser. Originally, I started translating the example from the code artifact,
 but some ambiguities and incompleteness led me to look at the GIF spec. At that
 point I decided just implementing it from scratch and more closely following the
@@ -621,9 +622,11 @@ This parser illustrates traversing both.
 I made a [QOI](https://qoiformat.org/) parser as an early simple but "real" example.
 Unfortunately, it doesn't really leverage anything special about IPG.
 
-Nevertheless, `test/node/test-qoi-syntax.ipg` provides a parser that will output the
-structure of a QOI file. To make it more interesting and better validate the code,
-`test/parsing/test-qoi.ipg` actually produces a full QOI to PNG converter. The parser itself
+Nevertheless, [`test/node/test-qoi-syntax.ipg`](test/node/test-qoi-syntax.ipg)
+provides a parser that will output the structure of a QOI file. To make it more
+interesting and better validate the code, [`test/parsing/test-qoi.ipg`](test/parsing/test-qoi.ipg)
+actually produces a full QOI to PNG converter. You can
+see a variant of this in action at [`docs/QOI.html`](docs/QOI.html). The parser itself
 passes through a `state` object via parameterized rules which maintains the
 decoders state. This is updated by functions called in assignment terms in the
 grammar. In theory, using impure functions like this as expressions is ill-defined.
@@ -631,8 +634,7 @@ In practice, for a PEG-like grammar language and a recursive descent based imple
 when and how often an expression will be evaluated is fairly predictable and
 understandable.
 
-The parser produces a sequence of color objects. [pureimage](https://www.npmjs.com/package/pureimage)
-is used to convert that to a PNG file.
+The parser produces a sequence of color objects.
 
 ### RM6
 
@@ -728,7 +730,7 @@ Second, you often do want to do something after what would otherwise be a tail c
 Most fundamentally, you probably want to assign the result to some attribute.
 
 Adding notation like `A(a_1, ..., a_n)[l, r].x into y` that is conceptually the
-same as `A(a_1, ..., a_n)[l,r] { y = A.x }` and then using continuation-/destination-passing
+same as `A(a_1, ..., a_n)[l, r] { y = A.x }` and then using continuation-/destination-passing
 style techniques could probably resolve the issues. (At which point we'd run into
 the issue of the underlying runtime not supporting tail-call elimination.)
 Even for non-tail-calls this is a common pattern, so this notation would be nice.
