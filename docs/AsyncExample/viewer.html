@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    html {
+        background-color: black;
+        color: white;
+    }
+    a {
+        color: #4886FF;
+        cursor: pointer;
+    }
+    a:hover {
+        color: #FF8548;
+    }
+    a:active {
+        filter: invert();
+    }
+    .collapsed > ul {
+        display: none;
+    }
+    a.collection {
+        font-weight: bold;
+    }
+    li {
+        list-style-type: none;
+    }
+    li.collapsed:has(a.collection) {
+        list-style-type: "+ ";
+    }
+    li:has(a.collection) {
+        list-style-type: "- ";
+    }
+    .invisible {
+        display: none;
+    }
+  </style>
+  <title>ISO Viewer</title>
+</head>
+<body style="background-color: black;">
+    <div style="display: flex; width: 100%">
+        <input id="uriInput" type="text" value="/ipgcc/test/node/samples/1.iso" style="width: 80%;"></input>
+        <input id="submitBtn" type="submit" value="Analyze" style="width: 20%;"></input>
+    </div>
+    <div id="resultsContainer" style="width: 100%;">
+        <div><ul id="results"></ul></div>
+    </div>
+<script type="module">
+const uriInput = document.getElementById("uriInput");
+const submitBtn = document.getElementById("submitBtn");
+const resultsContainer = document.getElementById("resultsContainer");
+const resultsList = document.getElementById("results");
+
+function download(fileName, fileContent) {
+    const blob = new Blob([fileContent]);
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(link.href);
+}
+
+const contentsCache = {};
+const worker = new Worker("./worker.js", { type: "module" });
+worker.addEventListener("message", (e) => {
+    const request = e.data.request;
+    if (request.type === "GetDirectoryStructure") {
+        contentsCache[request.uri] = e.data.result.directoriesRecursive;
+        renderTree(e.data.result.directoriesRecursive, resultsList);
+        resultsList.querySelector("li").classList.remove("collapsed");
+    } else if (request.type === "GetFile") {
+        download(request.fileName, e.data.result);
+    }
+});
+
+function toName(s) {
+    if (s === "\x00") { return "."; }
+    if (s === "\x01") { return ".."; }
+    return s;
+}
+
+const renderTree = (node, element) => {
+    const name = toName(node.record.fileIdentifier);
+    const entryElement = document.createElement("li");
+    entryElement.classList.add("collapsed");
+    entryElement.innerHTML = `<a class="collection">${name}</a>`;
+    const subList = document.createElement("ul");
+    for (const childNode of node.children) {
+        if (!childNode.record.isDirectory) continue;
+        renderTree(childNode, subList);
+    }
+    for (const childNode of node.children) {
+        if (childNode.record.isDirectory) continue;
+        const docElement = document.createElement("li");
+        const childName = toName(childNode.record.fileIdentifier);
+        const offset = childNode.offset;
+        const len = childNode.record.dataLength;
+        docElement.innerHTML =
+            `<a class="file" data-offset=${offset} data-len=${len}>${childName}</a>`;
+        subList.appendChild(docElement);
+    }
+    entryElement.appendChild(subList);
+    element.appendChild(entryElement);
+}
+
+resultsList.addEventListener("click", (evt) => {
+    if (evt.target.classList.contains("collection")) {
+        evt.target.parentElement.classList.toggle("collapsed");
+    } else if (evt.target.classList.contains("file")) {
+        const offset = parseInt(evt.target.dataset.offset);
+        const len = parseInt(evt.target.dataset.len);
+        const uri = uriInput.value;
+        const fileName = evt.target.innerText;
+        worker.postMessage({ type: "GetFile", fileName, uri, offset, len });
+    }
+});
+
+submitBtn.addEventListener("click", (evt) => {
+    const uri = uriInput.value;
+    const node = contentsCache[uri];
+    if (node !== undefined) {
+        resultsList.innerHTML = "";
+        renderTree(node, resultsList);
+        resultsList.querySelector("li").classList.remove("collapsed");
+    } else {
+        worker.postMessage({ type: "GetDirectoryStructure", uri });
+    }
+});
+</script>
+</body>
+</html>
