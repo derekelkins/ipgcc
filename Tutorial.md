@@ -21,6 +21,30 @@ in the input file, then there is no preamble or postamble respectively. The gram
 is contained between these markers (if they are present). The preamble and postamble
 are included into the final output as-is.
 
+## Running
+
+In most cases, after building the project, e.g. via `cabal install`, you would
+run via:
+
+```console
+$ ipgcc -i input.ipg -o generated.js
+```
+
+If you want to use the interpreter, you would use:
+
+```console
+$ ipgcc -i input.ipg -I < example.bin
+```
+
+You can use:
+
+```console
+$ ipgcc -i input.ipg -t CORE -o core.ipg
+```
+
+to get a pretty-printed version of the input after some preprocessing
+such as interval inference and non-terminal disambiguation.
+
 ## Basics
 
 Starting with the parts similar to PEGs or CFGs, a grammar consists of a series

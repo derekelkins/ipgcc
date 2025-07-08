@@ -2,6 +2,9 @@ An implementation of a parser generator for Interval Parsing Grammars (IPGs)
 roughly as described in [Interval Parsing Grammars for File Format Parsing](https://doi.org/10.1145/3591264)
 by Zhang, Morrisett, and Tan.
 
+See the [Tutorial](Tutorial.md), for an overview and introduction to using
+the system.
+
 These grammars are geared to binary formats where random access is often
 used. Combined with some other features, this provides a powerful language
 for handling parsing which is still declarative and analyzable. It can
