@@ -529,7 +529,7 @@ Any function that has an interface similar to this can be used as
 a parser. You can just reference that function as a non-terminal in your parser.
 
 If `--async-mode` is passed, an asynchronous interface is expected and produced.
-See [`docs/AsyncMode.md`](docs/AsyncMode).
+See [`docs/AsyncMode.md`](docs/AsyncMode.md).
 
 The output is a straightforward recursive descent parser *without* packrat-style
 memoization.
@@ -620,8 +620,9 @@ This example illustrates traversing a tree-like structure specified by absolute 
 ISO9660 also specifies a flat version of the directory structure with the Path Tables.
 This parser illustrates traversing both.
 
-[This example](docs/AsyncExample/viewer.html) illustrates this live. The example
-uses the `--async-mode` output to only fetch the parts of the ISO that are needed.
+[This live example](https://www.hedonisticlearning.com/ipgcc/docs/AsyncExample/viewer.html)
+illustrates this. The example uses the `--async-mode` output to only fetch the
+parts of the ISO that are needed.
 
 ### QOI
 
@@ -632,8 +633,8 @@ Nevertheless, [`test/node/test-qoi-syntax.ipg`](test/node/test-qoi-syntax.ipg)
 provides a parser that will output the structure of a QOI file. To make it more
 interesting and better validate the code, [`test/parsing/test-qoi.ipg`](test/parsing/test-qoi.ipg)
 actually produces a full QOI to PNG converter. You can
-see a variant of this in action at [`docs/QOI.html`](docs/QOI.html). The parser itself
-passes through a `state` object via parameterized rules which maintains the
+see a variant of this in action at [`docs/QOI.html`](https://www.hedonisticlearning.com/ipgcc/docs/QOI.html).
+The parser itself passes through a `state` object via parameterized rules which maintains the
 decoders state. This is updated by functions called in assignment terms in the
 grammar. In theory, using impure functions like this as expressions is ill-defined.
 In practice, for a PEG-like grammar language and a recursive descent based implementation,
