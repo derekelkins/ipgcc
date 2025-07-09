@@ -20,8 +20,9 @@ function render(canvas, width, height, colors) {
 
 function initState() {
     const black = { r: 0, g: 0, b: 0, a: 255 };
+    const transparent = { r: 0, g: 0, b: 0, a: 0 };
     const history = new Array(64);
-    history.fill(black);
+    history.fill(transparent);
     return { prevColor: black, history };
 }
 
