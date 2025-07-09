@@ -528,6 +528,9 @@ function MyRule(
 Any function that has an interface similar to this can be used as
 a parser. You can just reference that function as a non-terminal in your parser.
 
+If `--async-mode` is passed, an asynchronous interface is expected and produced.
+See [`docs/AsyncMode.md`](docs/AsyncMode).
+
 The output is a straightforward recursive descent parser *without* packrat-style
 memoization.
 
@@ -616,6 +619,9 @@ one of the specifications that governs the format of CD-ROM file systems. Or, no
 This example illustrates traversing a tree-like structure specified by absolute offsets.
 ISO9660 also specifies a flat version of the directory structure with the Path Tables.
 This parser illustrates traversing both.
+
+[This example](docs/AsyncExample/viewer.html) illustrates this live. The example
+uses the `--async-mode` output to only fetch the parts of the ISO that are needed.
 
 ### QOI
 
