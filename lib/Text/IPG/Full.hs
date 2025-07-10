@@ -86,24 +86,28 @@ data ExpHelpers nt t id e = ExpHelpers {
 toCore
     :: (Ord id, Ord nt, Show nt)
     => ExpHelpers nt t id e
+    -> id
     -> Grammar nt t id e
     -> Core.Grammar nt t id e
-toCore h (Grammar rules) = Core.Grammar (map (either (Left . toCoreRule h) Right) rules)
+toCore h v (Grammar rules) = Core.Grammar (map (either (Left . toCoreRule h v) Right) rules)
 
 toCoreRule
     :: (Ord id, Ord nt, Show nt)
     => ExpHelpers nt t id e
+    -> id
     -> Rule nt t id e
     -> Core.Rule nt t id e
-toCoreRule h (Rule mt nt args alts) = Core.Rule mt nt args (map (toCoreAlternative h) alts)
+toCoreRule h v (Rule mt nt args alts) = Core.Rule mt nt args (map (toCoreAlternative h v) alts)
 
 toCoreAlternative
     :: (Ord id, Ord nt, Show nt)
     => ExpHelpers nt t id e
+    -> id
     -> Alternative nt t id e
     -> Core.Alternative nt t id e
-toCoreAlternative h (Alternative terms) =
-    Core.Alternative (Core.rearrange g (Core.renumber (mapRef h) (go terms (num h 0) Map.empty [])))
+toCoreAlternative h values (Alternative terms) =
+    Core.Alternative (Core.rearrange g values
+                        (Core.renumber (mapRef h) (go terms (num h 0) Map.empty [])))
   where go [] _ _ acc = reverse acc
         go (t:ts) nt seen acc = let (t', nt', seen') = toCoreTerm h nt seen t
                            in go ts nt' seen' (t':acc)

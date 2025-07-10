@@ -109,11 +109,12 @@ renumber mapRef terms = go Map.empty terms
 rearrange
     :: (Ord id, Ord nt)
     => (e -> Set.Set (Either id (nt, Int)))
+    -> id
     -> [Term nt t id e]
     -> [Term nt t id e]
-rearrange uses' ts = map ((\(x, _, _) -> x ) . term) (G.reverseTopSort deps)
+rearrange uses' values ts = map ((\(x, _, _) -> x ) . term) (G.reverseTopSort deps)
     where uses = crushTerm uses'
-          defs = IntMap.fromDistinctAscList (zipWith (\j t -> (j, defines t)) [0..] ts)
+          defs = IntMap.fromDistinctAscList (zipWith (\j t -> (j, defines values t)) [0..] ts)
           (deps, term) =
             G.graphFromEdges'
                 (map
@@ -149,15 +150,15 @@ crushUses _ _ f (Start nt) = f nt
 crushUses _ _ f (End nt) = f nt
 crushUses _ _ _ EOI = mempty
 
-defines :: (Ord id, Ord nt) => Term nt t id e -> Set.Set (Either id (nt, Int))
-defines (NonTerminal nt _ _ _) = Set.singleton (Right nt)
-defines (x := _) = Set.singleton (Left x)
-defines (Array _ _ _ nt _ _ _) = Set.singleton (Right nt)
-defines (Any x _) = Set.singleton (Left x)
-defines (Slice x _ _) = Set.singleton (Left x)
-defines (Repeat nt _ _ _ _ _ _) = Set.singleton (Right nt)
-defines (RepeatUntil nt1 _ _ _ _ _ _ nt2 _) = Set.fromList [Right nt1, Right nt2]
-defines _ = mempty
+defines :: (Ord id, Ord nt) => id -> Term nt t id e -> Set.Set (Either id (nt, Int))
+defines _ (NonTerminal nt _ _ _) = Set.singleton (Right nt)
+defines _ (x := _) = Set.singleton (Left x)
+defines _ (Array _ _ _ nt _ _ _) = Set.singleton (Right nt)
+defines _ (Any x _) = Set.singleton (Left x)
+defines _ (Slice x _ _) = Set.singleton (Left x)
+defines v (Repeat nt _ _ _ _ _ _) = Set.fromList [Left v, Right nt]
+defines v (RepeatUntil nt1 _ _ _ _ _ _ nt2 _) = Set.fromList [Left v, Right nt1, Right nt2]
+defines _ _ = mempty
 
 crushTerm :: (Monoid m) => (e -> m) -> Term nt t id e -> m
 crushTerm f (NonTerminal _ es l r) = foldMap f es <> f l <> f r

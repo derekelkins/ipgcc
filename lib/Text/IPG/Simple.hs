@@ -51,7 +51,7 @@ parse doValidation ipgInput' = do
     case P.parseWithStartPos byteOffset startLine startCol ipgInput of
         Left err -> Left [err]
         Right (g, decls) -> do
-            let core = E.simplify (toCore helper g)
+            let core = E.simplify (toCore helper "values" g)
             if doValidation then
                 case validate (Set.fromList decls) core of
                     Just errs -> Left (map CBS.unpack errs)
