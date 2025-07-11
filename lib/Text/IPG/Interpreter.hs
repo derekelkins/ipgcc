@@ -347,17 +347,10 @@ eval ctxt eoi (env, bs) ps = go
               where bneg (INT x) = INT (complement x)
           go (Un Not l) = not' (go l)
               where not' (BOOL b) = BOOL (not b)
-                    not' (INT n) = BOOL (n == 0)
           go (Bin And l r) = and' (go l) (go r)
               where and' (BOOL x) (BOOL y) = BOOL (x && y)
-                    and' (BOOL x) (INT y) = BOOL (x && y /= 0)
-                    and' (INT x) (BOOL y) = BOOL (x /= 0 && y)
-                    and' (INT x) (INT y) = BOOL (x /= 0 && y /= 0)
           go (Bin Or l r) = or' (go l) (go r)
               where or' (BOOL x) (BOOL y) = BOOL (x || y)
-                    or' (BOOL x) (INT y) = BOOL (x || y /= 0)
-                    or' (INT x) (BOOL y) = BOOL (x /= 0 || y)
-                    or' (INT x) (INT y) = BOOL (x /= 0 || y /= 0)
           go (Bin BitwiseAnd l r) = band (go l) (go r)
               where band (INT x) (INT y) = INT (x .&. y)
           go (Bin BitwiseXor l r) = bxor (go l) (go r)
@@ -402,6 +395,7 @@ eval ctxt eoi (env, bs) ps = go
                     equal (FLOAT x) (INT y) = BOOL (x == fromIntegral y)
                     equal (FLOAT x) (FLOAT y) = BOOL (x == y)
                     equal (STRING x) (STRING y) = BOOL (x == y)
+                    equal (BOOL x) (BOOL y) = BOOL (x == y)
                     equal _ _ = BOOL False -- TODO: Type conversions
           go (Bin NotEqual l r) = notEqual (go l) (go r)
               where notEqual (INT x) (INT y) = BOOL (x /= y)
@@ -409,6 +403,7 @@ eval ctxt eoi (env, bs) ps = go
                     notEqual (FLOAT x) (INT y) = BOOL (x /= fromIntegral y)
                     notEqual (FLOAT x) (FLOAT y) = BOOL (x /= y)
                     notEqual (STRING x) (STRING y) = BOOL (x /= y)
+                    notEqual (BOOL x) (BOOL y) = BOOL (x /= y)
                     notEqual _ _ = BOOL False -- TODO: Type conversions
           go (If b t e) = if_ (go b) (go t) (go e)
               where if_ (INT x) y z = if x /= 0 then y else z

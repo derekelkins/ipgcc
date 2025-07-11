@@ -488,7 +488,7 @@ CrdtId -> { part1 = . } VarUInt { part2 = VarUInt.value };
 
 OptionalTaggedBool(expectedIndex)
     -> TaggedBool(expectedIndex) { value = TaggedBool.value }
-     / { value = !!0 };
+     / { value = false };
 
 TaggedBool(expectedIndex) -> Byte1Tag(expectedIndex) Bool { value = Bool.value };
 
@@ -529,7 +529,7 @@ ExpectEmpty
 
 Bytes -> { value = * };
 
-Bool -> "\x00" { value = !!0 } / "\x01" { value = !0 };
+Bool -> "\x00" { value = false } / "\x01" { value = true };
 
 U8 -> { value = . };
 

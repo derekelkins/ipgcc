@@ -5224,8 +5224,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     let left = EOI; let right = 0; let loopEnd = 0;
     self = { _ipg_start: EOI, _ipg_end: 0 };
 
-    // { value = !(!0) }
-    self.value = !(!0);
+    // { value = false }
+    self.value = false;
 
   _ipg_failTreeStack.pop();
     return self;
@@ -6014,8 +6014,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     right = left + 1;
     self._ipg_end = Math.max(self._ipg_end, right);
 
-    // { value = !(!0) }
-    self.value = !(!0);
+    // { value = false }
+    self.value = false;
 
   _ipg_failTreeStack.pop();
     return self;
@@ -6034,8 +6034,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     right = left + 1;
     self._ipg_end = Math.max(self._ipg_end, right);
 
-    // { value = !0 }
-    self.value = !0;
+    // { value = true }
+    self.value = true;
 
   _ipg_failTreeStack.pop();
     return self;

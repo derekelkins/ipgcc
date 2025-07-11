@@ -442,7 +442,7 @@ CrdtId
 OptionalTaggedBool(expectedIndex)
   -> TaggedBool@0(expectedIndex)[0, EOI]
      { value = TaggedBool@0.value }
-   / { value = !(!0) };
+   / { value = false };
 
 TaggedBool(expectedIndex)
   -> Byte1Tag@0(expectedIndex)[0, EOI]
@@ -507,9 +507,9 @@ Bytes
 
 Bool
   -> "\x00"[0, 1]
-     { value = !(!0) }
+     { value = false }
    / "\x01"[0, 1]
-     { value = !0 };
+     { value = true };
 
 U8
   -> { value = .[0] };

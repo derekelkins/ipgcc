@@ -134,17 +134,13 @@ simplifyExp (Un BitwiseNeg l) = bneg (simplifyExp l)
           bneg x = Un BitwiseNeg x
 simplifyExp (Un Not l) = Un Not (simplifyExp l)
 simplifyExp (Bin And l r) = and' (simplifyExp l) (simplifyExp r)
-    where and' (Int x) y = if x /= 0 then y else F
-          and' x (Int y) = if y /= 0 then x else F
-          and' T y = y
+    where and' T y = y
           and' F _ = F
           and' x T = x
           and' _ F = F
           and' x y = Bin And x y
 simplifyExp (Bin Or l r) = or' (simplifyExp l) (simplifyExp r)
-    where or' (Int x) y = if x == 0 then y else T
-          or' x (Int y) = if y == 0 then x else T
-          or' F y = y
+    where or' F y = y
           or' T _ = T
           or' x F = x
           or' _ T = T

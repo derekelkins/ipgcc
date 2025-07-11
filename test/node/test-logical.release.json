@@ -1,0 +1,22 @@
+{
+  "_ipg_start": 0,
+  "_ipg_end": 0,
+  "t": true,
+  "f": false,
+  "t_and_t": true,
+  "t_and_f": true,
+  "f_and_t": true,
+  "f_and_f": true,
+  "t_and_t_c": true,
+  "t_and_f_c": true,
+  "f_and_t_c": true,
+  "f_and_f_c": true,
+  "t_or_t": true,
+  "t_or_f": true,
+  "f_or_t": true,
+  "f_or_f": true,
+  "t_or_t_c": true,
+  "t_or_f_c": true,
+  "f_or_t_c": true,
+  "f_or_f_c": true
+}

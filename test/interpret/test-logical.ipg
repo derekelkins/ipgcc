@@ -1,0 +1,21 @@
+S -> { t = true } { f = false }
+
+     { t_and_t = (t && t) == true }
+     { t_and_f = (t && f) == false }
+     { f_and_t = (f && t) == false }
+     { f_and_f = (f && f) == false }
+     
+     { t_and_t_c = (true && true) == true }
+     { t_and_f_c = (true && false) == false }
+     { f_and_t_c = (false && true) == false }
+     { f_and_f_c = (false && false) == false }
+
+     { t_or_t = (t || t) == true }
+     { t_or_f = (t || f) == true }
+     { f_or_t = (f || t) == true }
+     { f_or_f = (f || f) == false }
+     
+     { t_or_t_c = (true || true) == true }
+     { t_or_f_c = (true || false) == true }
+     { f_or_t_c = (false || true) == true }
+     { f_or_f_c = (false || false) == false };
