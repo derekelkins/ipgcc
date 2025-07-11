@@ -116,7 +116,10 @@ simplifyExp (Bin Mod l r) = mod' (simplifyExp l) (simplifyExp r)
           mod' x y = Bin Mod x y
 simplifyExp (Bin Exp l r) = exp' (simplifyExp l) (simplifyExp r)
     where exp' (Float x) (Float y) = Float (x ** y)
-          exp' (Int x) (Int y) = Int (x ^ y)
+          exp' (Float x) (Int y) = Float (x ^^ y)
+          exp' (Int x) (Float y) = Float (fromIntegral x ** y)
+          exp' (Int x) (Int y) | y >= 0    = Int (x ^ y)
+                               | otherwise = Float (fromIntegral x ^^ y)
           exp' _ (Int 0) = Int 1
           exp' x (Int 1) = x
           exp' x y = Bin Exp x y
