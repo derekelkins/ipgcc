@@ -97,8 +97,8 @@ simplifyExp (Bin Sub l r) = sub (simplifyExp l) (simplifyExp r)
 simplifyExp (Bin Mul l r) = mul (simplifyExp l) (simplifyExp r)
     where mul (Int 0) _ = Int 0 -- TODO: Check types.
           mul _ (Int 0) = Int 0
-          mul x (Int 1) = x
           mul (Int 1) y = y
+          mul x (Int 1) = x
           mul (Int x) (Int y) = Int (x * y)
           mul (Float 0) _ = Float 0
           mul _ (Float 0) = Float 0
@@ -164,31 +164,55 @@ simplifyExp (Bin LessThan l r) = lessThan (simplifyExp l) (simplifyExp r)
     where lessThan (Int x) (Int y) = if x < y then T else F
           lessThan (Float x) (Float y) = if x < y then T else F
           lessThan (String x) (String y) = if x < y then T else F
+          lessThan T T = F
+          lessThan T F = F
+          lessThan F T = T
+          lessThan F F = F
           lessThan x y = Bin LessThan x y
 simplifyExp (Bin LTE l r) = lte (simplifyExp l) (simplifyExp r)
     where lte (Int x) (Int y) = if x <= y then T else F
           lte (Float x) (Float y) = if x <= y then T else F
           lte (String x) (String y) = if x <= y then T else F
+          lte T T = T
+          lte T F = F
+          lte F T = T
+          lte F F = T
           lte x y = Bin LTE x y
 simplifyExp (Bin GreaterThan l r) = greaterThan (simplifyExp l) (simplifyExp r)
     where greaterThan (Int x) (Int y) = if x > y then T else F
           greaterThan (Float x) (Float y) = if x > y then T else F
           greaterThan (String x) (String y) = if x > y then T else F
+          greaterThan T T = F
+          greaterThan T F = T
+          greaterThan F T = F
+          greaterThan F F = F
           greaterThan x y = Bin GreaterThan x y
 simplifyExp (Bin GTE l r) = gte (simplifyExp l) (simplifyExp r)
     where gte (Int x) (Int y) = if x >= y then T else F
           gte (Float x) (Float y) = if x >= y then T else F
           gte (String x) (String y) = if x >= y then T else F
+          gte T T = T
+          gte T F = T
+          gte F T = F
+          gte F F = T
           gte x y = Bin GTE x y
 simplifyExp (Bin Equal l r) = equal (simplifyExp l) (simplifyExp r)
     where equal (Int x) (Int y) = if x == y then T else F
           equal (Float x) (Float y) = if x == y then T else F
           equal (String x) (String y) = if x == y then T else F
+          equal T T = T
+          equal T F = F
+          equal F T = F
+          equal F F = T
           equal x y = Bin Equal x y
 simplifyExp (Bin NotEqual l r) = notEqual (simplifyExp l) (simplifyExp r)
     where notEqual (Int x) (Int y) = if x /= y then T else F
           notEqual (Float x) (Float y) = if x /= y then T else F
           notEqual (String x) (String y) = if x /= y then T else F
+          notEqual T T = F
+          notEqual T F = T
+          notEqual F T = T
+          notEqual F F = F
           notEqual x y = Bin NotEqual x y
 simplifyExp (If b t e) = if_ (simplifyExp b) (simplifyExp t) (simplifyExp e)
     where if_ (Int x) y z = if x == 0 then z else y

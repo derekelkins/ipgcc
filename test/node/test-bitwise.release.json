@@ -4,6 +4,8 @@
   "x": 250,
   "y": 15,
   "k": 3,
+  "x_neg": true,
+  "x_neg_c": true,
   "x_and_y": true,
   "x_and_y_c": true,
   "x_or_y": true,

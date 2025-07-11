@@ -367,28 +367,28 @@ eval ctxt eoi (env, bs) ps = go
                     lessThan (FLOAT x) (INT y) = BOOL (x < fromIntegral y)
                     lessThan (FLOAT x) (FLOAT y) = BOOL (x < y)
                     lessThan (STRING x) (STRING y) = BOOL (x < y)
-                    lessThan _ _ = BOOL False -- TODO: Type conversions
+                    lessThan (BOOL x) (BOOL y) = BOOL (x < y)
           go (Bin LTE l r) = lte (go l) (go r)
               where lte (INT x) (INT y) = BOOL (x <= y)
                     lte (INT x) (FLOAT y) = BOOL (fromIntegral x <= y)
                     lte (FLOAT x) (INT y) = BOOL (x <= fromIntegral y)
                     lte (FLOAT x) (FLOAT y) = BOOL (x <= y)
                     lte (STRING x) (STRING y) = BOOL (x <= y)
-                    lte _ _ = BOOL False -- TODO: Type conversions
+                    lte (BOOL x) (BOOL y) = BOOL (x <= y)
           go (Bin GreaterThan l r) = greaterThan (go l) (go r)
               where greaterThan (INT x) (INT y) = BOOL (x > y)
                     greaterThan (INT x) (FLOAT y) = BOOL (fromIntegral x > y)
                     greaterThan (FLOAT x) (INT y) = BOOL (x > fromIntegral y)
                     greaterThan (FLOAT x) (FLOAT y) = BOOL (x > y)
                     greaterThan (STRING x) (STRING y) = BOOL (x > y)
-                    greaterThan _ _ = BOOL False -- TODO: Type conversions
+                    greaterThan (BOOL x) (BOOL y) = BOOL (x > y)
           go (Bin GTE l r) = gte (go l) (go r)
               where gte (INT x) (INT y) = BOOL (x >= y)
                     gte (INT x) (FLOAT y) = BOOL (fromIntegral x >= y)
                     gte (FLOAT x) (INT y) = BOOL (x >= fromIntegral y)
                     gte (FLOAT x) (FLOAT y) = BOOL (x >= y)
                     gte (STRING x) (STRING y) = BOOL (x >= y)
-                    gte _ _ = BOOL False -- TODO: Type conversions
+                    gte (BOOL x) (BOOL y) = BOOL (x >= y)
           go (Bin Equal l r) = equal (go l) (go r)
               where equal (INT x) (INT y) = BOOL (x == y)
                     equal (INT x) (FLOAT y) = BOOL (fromIntegral x == y)
@@ -396,7 +396,7 @@ eval ctxt eoi (env, bs) ps = go
                     equal (FLOAT x) (FLOAT y) = BOOL (x == y)
                     equal (STRING x) (STRING y) = BOOL (x == y)
                     equal (BOOL x) (BOOL y) = BOOL (x == y)
-                    equal _ _ = BOOL False -- TODO: Type conversions
+                    -- TODO: Non-primitive values
           go (Bin NotEqual l r) = notEqual (go l) (go r)
               where notEqual (INT x) (INT y) = BOOL (x /= y)
                     notEqual (INT x) (FLOAT y) = BOOL (fromIntegral x /= y)
@@ -404,7 +404,7 @@ eval ctxt eoi (env, bs) ps = go
                     notEqual (FLOAT x) (FLOAT y) = BOOL (x /= y)
                     notEqual (STRING x) (STRING y) = BOOL (x /= y)
                     notEqual (BOOL x) (BOOL y) = BOOL (x /= y)
-                    notEqual _ _ = BOOL False -- TODO: Type conversions
+                    -- TODO: Non-primitive values
           go (If b t e) = if_ (go b) (go t) (go e)
               where if_ (INT x) y z = if x /= 0 then y else z
                     if_ (BOOL b') y z = if b' then y else z
