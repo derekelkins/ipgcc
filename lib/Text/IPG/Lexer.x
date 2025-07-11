@@ -34,7 +34,7 @@ tokens :-
 <cmt>  "*/"    { unnestComment }
 <cmt>  .       ;
 <cmt>  \n      ;
-<0>    "0x" $hex $hex?
+<0>    "0x" $hex+
                { token $ \inp len -> TokenInt (readHex (current inp len)) }
 <0>    $digit+ \. $digit*
                { token $ \inp len -> TokenDouble (readDouble (current inp len)) }

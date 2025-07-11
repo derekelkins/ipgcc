@@ -1,0 +1,17 @@
+{
+  "_ipg_start": 0,
+  "_ipg_end": 0,
+  "x": 250,
+  "y": 15,
+  "k": 3,
+  "x_and_y": true,
+  "x_and_y_c": true,
+  "x_or_y": true,
+  "x_or_y_c": true,
+  "x_xor_y": true,
+  "x_xor_y_c": true,
+  "x_lsh_k": true,
+  "x_lsh_k_c": true,
+  "x_rsh_k": true,
+  "x_rsh_k_c": true
+}

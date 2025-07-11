@@ -1,0 +1,20 @@
+S -> { x = 0xFA } { y = 0x0F } { k = 3 }
+
+     { x_and_y = (x & y) == 0x0A }
+     { x_and_y_c = (x & y) == (0xFA & 0x0F) }
+
+     { x_or_y = (x | y) == 0xFF }
+     { x_or_y_c = (x | y) == (0xFA | 0x0F) }
+
+     { x_xor_y = (x ^ y) == 0xF5 }
+     { x_xor_y_c = (x ^ y) == (0xFA ^ 0x0F) }
+
+     { x_lsh_k = (x << k) == 0x7D0 }
+     { x_lsh_k_c = (x << k) == (0xFA << 3) }
+
+     { x_rsh_k = (x >> k) == 0x1F }
+     { x_rsh_k_c = (x >> k) == (0xFA >> 3) };
+
+%postamble_begin
+
+console.log(JSON.stringify(S(""), null, 2));

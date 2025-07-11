@@ -141,7 +141,7 @@ slice l r buf | 0 <= l && l <= r && r <= BS.length buf = Just (BS.take (r - l) (
               | otherwise = Nothing
 
 interpNonTerminal
-    :: HasCallStack
+    :: (HasCallStack)
     => Context a
     -> (NT, Int)
     -> [Exp']
@@ -300,12 +300,12 @@ interpTerm ctxt = go
                 body = interpNonTerminal ctxt nt1 es1 l r
                 condition = interpNonTerminal ctxt nt2 es2 l r
 
-access :: HasCallStack => NTBindings a -> (NT, Int) -> Id -> Value a
+access :: (HasCallStack) => NTBindings a -> (NT, Int) -> Id -> Value a
 access env nt "this" = BINDINGS (this_ (env !!! nt))
 access env nt "these" = SEQUENCE (map BINDINGS (these_ (env !!! nt)))
 access env nt x = case this_ (env !!! nt) of bs -> bs !!! x
 
-eval :: HasCallStack => Context a -> Int -> Environment a -> Parameters a -> Exp' -> Value a
+eval :: (HasCallStack) => Context a -> Int -> Environment a -> Parameters a -> Exp' -> Value a
 eval ctxt eoi (env, bs) ps = go
     where go T = BOOL True
           go F = BOOL False

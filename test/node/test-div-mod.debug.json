@@ -1,0 +1,34 @@
+{
+  "_ipg_start": 0,
+  "_ipg_end": 0,
+  "xI": 2,
+  "yI": 4,
+  "xF": 2.4,
+  "yF": 3.9,
+  "oI": 1,
+  "oF": 1,
+  "DII": {
+    "xy": true,
+    "value": 0.5
+  },
+  "DIF": {
+    "xy": true,
+    "value": 0.5128205128205129
+  },
+  "DFI": {
+    "xy": true,
+    "value": 0.6
+  },
+  "DFF": {
+    "xy": true,
+    "value": 0.6153846153846154
+  },
+  "xI_1": true,
+  "xI_1_0": true,
+  "xF_1": true,
+  "xF_1_0": true,
+  "MII": {
+    "xy": true
+  },
+  "cm": true
+}

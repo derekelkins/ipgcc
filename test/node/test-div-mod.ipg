@@ -1,0 +1,20 @@
+S -> { xI = 2 } { yI = 4 } { xF = 2.4 } { yF = 3.9 } { oI = 1 } { oF = 1.0 }
+     D(xI, yI, 0.5) { DII = D.this } // An unfortunate distinction with the interpreter.
+     D(xI, yF, 0.5128205128205129) { DIF = D.this }
+     D(xF, yI, 0.6) { DFI = D.this }
+     D(xF, yF, 0.6153846153846154) { DFF = D.this }
+
+     { xI_1 = xI / 1 == xI }
+     { xI_1_0 = xI / 1.0 == xI }
+     { xF_1 = xF / 1 == xF }
+     { xF_1_0 = xF / 1.0 == xF }
+
+     M(xI, yI, 2) { MII = M.this }
+     { cm = xI % yI == 2 % 4 };
+     
+D(x, y, exy) -> { xy = x / y == exy } { value = x / y };
+M(x, y, exy) -> { xy = x % y == exy };
+
+%postamble_begin
+
+console.log(JSON.stringify(S(""), null, 2));
