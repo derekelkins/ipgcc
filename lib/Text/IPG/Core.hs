@@ -30,18 +30,21 @@ newtype Grammar nt t id e = Grammar [Declaration Rule nt t id e]
 
 data Declaration rule nt t id e
     = RuleDef (rule nt t id e)
-    | ConstDeclaration id e                     -- const id = e;
+    | ConstDeclaration id (Maybe (Ty id)) e     -- const id: ty = e;
     | TypeDeclaration id [id] (Ty id)           -- type Foo(x_1, ..., x_n) = ty;
     | RuleDeclaration nt [(id, Ty id)] (Ty id)  -- rule A(a_1: ty_1, ..., a_m: ty_m): ty;
   deriving ( Functor, Show )
 
 partitionDeclarations
     :: [Declaration rule nt t id e]
-    -> ([rule nt t id e], [(id, e)], [(id, [id], Ty id)], [(nt, [(id, Ty id)], Ty id)])
+    -> ([rule nt t id e],
+        [(id, Maybe (Ty id), e)],
+        [(id, [id], Ty id)],
+        [(nt, [(id, Ty id)], Ty id)])
 partitionDeclarations [] = ([], [], [], [])
 partitionDeclarations (RuleDef r:ds) = (r:rs, cs, ts, rds)
     where (rs, cs, ts, rds) = partitionDeclarations ds
-partitionDeclarations (ConstDeclaration x e:ds) = (rs, (x, e):cs, ts, rds)
+partitionDeclarations (ConstDeclaration x ty e:ds) = (rs, (x, ty, e):cs, ts, rds)
     where (rs, cs, ts, rds) = partitionDeclarations ds
 partitionDeclarations (TypeDeclaration t args ty:ds) = (rs, cs, (t, args, ty):ts, rds)
     where (rs, cs, ts, rds) = partitionDeclarations ds
@@ -50,13 +53,13 @@ partitionDeclarations (RuleDeclaration nt args ty:ds) = (rs, cs, ts, (nt, args, 
 
 foldDeclaration
     :: (rule nt t id e -> a)
-    -> (id -> e -> a)
+    -> (id -> Maybe (Ty id) -> e -> a)
     -> (id -> [id] -> Ty id -> a)
     -> (nt -> [(id, Ty id)] -> Ty id -> a)
     -> Declaration rule nt t id e
     -> a
 foldDeclaration ruleDef _ _ _ (RuleDef r) = ruleDef r
-foldDeclaration _ constDecl _ _ (ConstDeclaration x e) = constDecl x e
+foldDeclaration _ constDecl _ _ (ConstDeclaration x ty e) = constDecl x ty e
 foldDeclaration _ _ typeDecl _ (TypeDeclaration t args ty) = typeDecl t args ty
 foldDeclaration _ _ _ ruleDecl (RuleDeclaration nt args ty) = ruleDecl nt args ty
 

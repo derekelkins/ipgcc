@@ -116,7 +116,7 @@ interpretStartingWith (Grammar decls) efs startRule args =
     in fmap (\((_, bindings), s, e) -> (bindings, s, e)) . body (Map.empty, Map.empty) args'
   where ctxt = Context {
           ruleFuncs = Map.fromList (map (\rule@(Rule _ nt _ _) -> (nt, buildFunc rule)) rules),
-          constants = Map.fromList (map (fmap eval') consts),
+          constants = Map.fromList (map (\(n, _, e) -> (n, eval' e)) consts),
           externalFuncs = efs }
         buildFunc = buildInterpFunc ctxt -- Go, go knot tying.
         eval' = eval ctxt (error "EOI in const") (Map.empty, Map.empty) Map.empty

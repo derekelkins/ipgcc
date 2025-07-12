@@ -51,12 +51,14 @@ pprint' ppExp (Grammar decls) = mconcat (intersperse "\n\n" (map (pprintDecl' pp
 
 pprintDecl' :: (e -> Out) -> Declaration Rule T T T e -> Out
 pprintDecl' ppExp (RuleDef r) = pprintRule' ppExp r
-pprintDecl' ppExp (ConstDeclaration n e) = pprintConst' ppExp n e
+pprintDecl' ppExp (ConstDeclaration n ty e) = pprintConst' ppExp n ty e
 pprintDecl' _ (TypeDeclaration n args ty) = pprintTypeDeclaration n args ty
 pprintDecl' _ (RuleDeclaration n args ty) = pprintRuleDeclaration n args ty
 
-pprintConst' :: (e -> Out) -> T -> e -> Out
-pprintConst' ppExp n e = "const " <> Builder.byteString n <> " = " <> ppExp e <> ";"
+pprintConst' :: (e -> Out) -> T -> Maybe (Ty T) -> e -> Out
+pprintConst' ppExp n (Just ty) e =
+    "const " <> Builder.byteString n <> ": " <> pprintType ty <> " = " <> ppExp e <> ";"
+pprintConst' ppExp n Nothing e = "const " <> Builder.byteString n <> " = " <> ppExp e <> ";"
 
 pprintTypeDeclaration :: T -> [T] -> Ty T -> Out
 pprintTypeDeclaration n [] ty =

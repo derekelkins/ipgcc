@@ -168,7 +168,7 @@ Declaration :: { Declaration' }
     : MetaTags name ParamList '->' Alternatives { RuleDef (Rule $1 $2 $3 (reverse $5)) }
     | typedef name ParamList '=' Type { TypeDeclaration $2 $3 $5 }
     | rule name TypedParamList ':' Type { RuleDeclaration $2 $3 $5 }
-    | const name '=' Exp { ConstDeclaration $2 $4 }
+    | const name MaybeType '=' Exp { ConstDeclaration $2 $3 $5 }
 
 MetaTags :: { [MetaTag] }
     : '%instrument' MetaTags { (INSTRUMENT:$2) }
@@ -192,6 +192,11 @@ TypedParams :: { [(IdType, Ty')] }
     : {- empty -} { [] }
     | name ':' Type { [($1, $3)] }
     | TypedParams ',' name ':' Type { ($3, $5) : $1 }
+
+MaybeType :: { Maybe Ty' }
+    : ':' Type { Just $2 }
+    | {- empty -} { Nothing }
+
 
 Alternatives :: { [Alternative'] }
     : Alternative { [$1] }

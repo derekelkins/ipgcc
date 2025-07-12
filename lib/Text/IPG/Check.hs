@@ -38,7 +38,7 @@ validate externalRules (Grammar decls) =
     foldMap checkConsts consts <> foldMap check rules <> basicChecks
   where
     (rules, consts, _, _) = partitionDeclarations decls -- TODO: Check other declarations.
-    constNames = Set.fromList (map fst consts)
+    constNames = Set.fromList (map (\(n, _, _) -> n) consts)
 
     possibleAttributes' =
         Map.fromList (map (\(Rule _ nt _ alts) -> (nt, Set.unions (map attrInAlt alts))) rules)
@@ -84,7 +84,7 @@ validate externalRules (Grammar decls) =
         | "_ipg_end" `Set.member` attrs = Just [[i|Rule #{nt} illegally assigns to _ipg_end|]]
         | otherwise = Nothing
 
-    checkConsts (n, e) = crushRef checkConstRef e
+    checkConsts (n, _, e) = crushRef checkConstRef e
         where locals = Set.delete n constNames
               checkConstRef :: Ref T T Exp' -> Maybe [T]
               checkConstRef (Id x) | x `Set.member` locals = Nothing

@@ -9,7 +9,7 @@ import qualified Data.Set as Set -- containers
 import Data.String.Interpolate ( i, __i ) -- string-interpolate
 
 import Text.IPG.Core (
-    Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..),
+    Ty, Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..),
     foldDeclaration, arrayNonTerminals, nonTerminals, )
 import Text.IPG.GenericExp ( UnOp(..), BinOp(..), Exp(..) )
 import Text.IPG.PPrint ( floatToOut, hexyString, outParen, pprintTerm )
@@ -331,8 +331,8 @@ alternativeToJS instrument indent c env (Alternative ts)
                                 [i|    console.error({#{nt}: self#{paramList args}});\n|]
         debuggingPostamble = whenDebug c (indent <> "_ipg_failTreeStack.pop();\n")
 
-constToJS :: Context -> T -> Expr -> Out
-constToJS c n e = [i|const #{n} = #{exprToJS c Set.empty e};\n|]
+constToJS :: Context -> T -> Maybe (Ty T) -> Expr -> Out
+constToJS c n _ e = [i|const #{n} = #{exprToJS c Set.empty e};\n|]
 
 ruleToJS :: Context -> Rule T T T Expr -> Out
 ruleToJS c (Rule mt nt args alts) =
@@ -377,7 +377,7 @@ toJSWithContext c (Grammar decls) = Builder.toLazyByteString $
   where c' = c {
                 constants = foldMap (foldDeclaration
                                         (\_ -> Set.empty)
-                                        (\n _ -> Set.singleton n)
+                                        (\n _ _ -> Set.singleton n)
                                         (\_ _ _ -> Set.empty)
                                         (\_ _ _ -> Set.empty))
                                     decls
