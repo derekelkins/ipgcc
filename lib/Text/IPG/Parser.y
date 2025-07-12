@@ -1,4 +1,5 @@
 {
+{-# LANGUAGE OverloadedStrings #-}
 module Text.IPG.Parser (
     IdType, NT, Exp', Grammar', Rule', Const', Alternative', Term', Ref',
     parseIPG, parse, parseWithStartPos,
@@ -6,9 +7,10 @@ module Text.IPG.Parser (
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Lazy as LBS -- bytestring
 import qualified Data.ByteString.Lazy.Char8 as CLBS -- bytestring
+import qualified Data.Map as Map -- containers
 import Data.List ( intersperse ) -- base
 
-import Text.IPG.Core ( Ref(..), MetaTag(..) )
+import Text.IPG.Core ( Ty(..), Declaration(..), Ref(..), MetaTag(..) )
 import Text.IPG.Full ( Grammar(..), Rule(..), Alternative(..), Term(..), StartingOn(..) )
 import Text.IPG.GenericExp ( UnOp(..), BinOp(..), Exp(..) )
 import Text.IPG.Lexer (
@@ -29,6 +31,7 @@ import Text.IPG.Lexer (
 
 %token
     '%declare' { TokenDeclare }
+    '%declare_type' { TokenDeclareType }
     '%instrument' { TokenInstrument }
     '%export' { TokenExport }
     '%end'  { TokenEndDeclare }
@@ -36,6 +39,8 @@ import Text.IPG.Lexer (
     repeat  { TokenRepeat }
     starting  { TokenStarting }
     const   { TokenConst }
+    typedef { TokenTypeDef }
+    rule    { TokenRule }
     true    { TokenTrue }
     false   { TokenFalse }
     on      { TokenOn }
@@ -130,29 +135,40 @@ import Text.IPG.Lexer (
 
 %%
 
-Top :: { (Grammar', [IdType]) }
-    : MaybeDeclarations Grammar { ($2, $1) }
+Top :: { (Grammar', [IdType], [IdType]) }
+    : ExternDeclarations Grammar { ($2, fst $1, snd $1) }
 
-MaybeDeclarations :: { [IdType] }
-    : '%declare' Declarations '%end' { reverse $2 }
-    | {- empty -} { [] }
+Type :: { Ty' }
+    : '[' Type ']'  { ArrayTy $2 }
+    | '{' TypedParams '}' { RowTy (Map.fromList $2) }
+    | name { typeFromName $1 }
 
-Declarations :: { [IdType] }
-    : Declarations name { $2 : $1 }
+ExternDeclarations :: { ([IdType], [IdType]) }
+    : ExternDeclarations ExternDeclaration { (fst $2 ++ fst $1, snd $2 ++ snd $1) }
+    | {- empty -} { ([], []) }
+
+ExternDeclaration :: { ([IdType], [IdType]) }
+    : '%declare' ExternDecls '%end' { (reverse $2, []) }
+    | '%declare_type' ExternDecls '%end' { ([], reverse $2) }
+
+ExternDecls :: { [IdType] }
+    : ExternDecls name { $2 : $1 }
     | name { [$1] }
 
 Grammar :: { Grammar' }
-    : RuleOrConsts { Grammar (reverse $1) }
+    : Declarations { Grammar (reverse $1) }
 
-RuleOrConsts :: { [Either Rule' Const'] }
-    : RuleOrConsts ';' RuleOrConst { $3 : $1 }
-    | RuleOrConsts ';' { $1 }
-    | RuleOrConst { [$1] }
+Declarations :: { [Declaration'] }
+    : Declarations ';' Declaration { $3 : $1 }
+    | Declarations ';' { $1 }
+    | Declaration { [$1] }
     | {- empty -} { [] }
 
-RuleOrConst :: { Either Rule' Const' }
-    : MetaTags name ParamList '->' Alternatives { Left (Rule $1 $2 $3 (reverse $5)) }
-    | const name '=' Exp { Right ($2, $4) }
+Declaration :: { Declaration' }
+    : MetaTags name ParamList '->' Alternatives { RuleDef (Rule $1 $2 $3 (reverse $5)) }
+    | typedef name ParamList '=' Type { TypeDeclaration $2 $3 $5 }
+    | rule name TypedParamList ':' Type { RuleDeclaration $2 $3 $5 }
+    | const name '=' Exp { ConstDeclaration $2 $4 }
 
 MetaTags :: { [MetaTag] }
     : '%instrument' MetaTags { (INSTRUMENT:$2) }
@@ -168,6 +184,15 @@ Params :: { [IdType] }
     | name { [$1] }
     | Params ',' name { $3 : $1 }
 
+TypedParamList :: { [(IdType, Ty')] }
+    : '(' TypedParams ')' { reverse $2 }
+    | {- empty -} { [] }
+
+TypedParams :: { [(IdType, Ty')] }
+    : {- empty -} { [] }
+    | name ':' Type { [($1, $3)] }
+    | TypedParams ',' name ':' Type { ($3, $5) : $1 }
+
 Alternatives :: { [Alternative'] }
     : Alternative { [$1] }
     | Alternatives '/' Alternative { $3 : $1 }
@@ -180,8 +205,8 @@ Terms :: { [Term'] }
     | Terms Term { $2 : $1 }
 
 NT :: { NT }
-   : name { ($1, -1) }
-   | nt { $1 }
+    : name { ($1, -1) }
+    | nt { $1 }
 
 Term :: { Term' }
     : NT ArgList { NonTerminal0 $1 $2 }
@@ -284,13 +309,23 @@ Args :: { [Exp'] }
 type IdType = BS.ByteString
 type NT = (IdType, Int)
 type Exp' = Exp IdType IdType IdType
+type Ty' = Ty IdType
 type Grammar' = Grammar IdType IdType IdType Exp'
+type Declaration' = Declaration Rule IdType IdType IdType Exp'
 type Rule' = Rule IdType IdType IdType Exp'
 type Const' = (IdType, Exp')
 type Alternative' = Alternative IdType IdType IdType Exp'
 type Term' = Term IdType IdType IdType Exp'
 type StartingOn' = StartingOn Exp'
 type Ref' = Ref IdType IdType Exp'
+
+typeFromName :: IdType -> Ty'
+typeFromName name
+    | name == "Bool" = BoolTy
+    | name == "Int" = IntTy
+    | name == "Float" = FloatTy
+    | name == "String" = StringTy
+    | otherwise = ExternalTy name
 
 data NameExpTail
     = Start'                -- name '.' START               { Ref (Start $1) }
@@ -324,10 +359,15 @@ makeAssign n (Slice1' l) = Slice1 n l
 makeAssign n (Slice2' l r) = Slice2 n l r
 makeAssign n (Assign' e) = n := e
 
-parse :: LBS.ByteString -> Either String (Grammar', [IdType])
+parse :: LBS.ByteString -> Either String (Grammar', [IdType], [IdType])
 parse input = runAlex input (saveInitialLine >> parseIPG)
 
-parseWithStartPos :: Int -> Int -> Int -> LBS.ByteString -> Either String (Grammar', [IdType])
+parseWithStartPos
+    :: Int
+    -> Int 
+    -> Int
+    -> LBS.ByteString
+    -> Either String (Grammar', [IdType], [IdType])
 parseWithStartPos n l col input = runAlex input $ do
     (_, c, bs, bpos) <- alexGetInput
     alexSetInput (AlexPn n l col, c, bs, bpos)

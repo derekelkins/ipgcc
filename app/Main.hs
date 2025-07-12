@@ -74,7 +74,7 @@ main = do
 
     case parse (not (noValidation opts)) ipgInput of
         Left errs -> mapM_ (hPutStrLn stderr) errs
-        Right (preamble, core, _, postamble) -> do
+        Right (preamble, core, _, _, postamble) -> do
             case exportType opts of
                 CORE -> LBS.hPutStrLn h (Builder.toLazyByteString (pprint core))
                 JS -> do

@@ -9,13 +9,14 @@ import Control.Applicative ( asum ) -- base
 import Data.Bits ( complement, shift, xor, (.&.), (.|.) ) -- base
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Builder as Builder -- bytestring
-import Data.Either ( lefts, partitionEithers ) -- base
 import Data.Int ( Int64 ) -- base
 import Data.List ( (!?), intersperse ) -- base
 import qualified Data.Map as Map -- containers
 import GHC.Stack ( HasCallStack ) -- base
 
-import Text.IPG.Core ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..) )
+import Text.IPG.Core (
+    Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..),
+    partitionDeclarations )
 import Text.IPG.GenericExp ( UnOp(..), BinOp(..), Exp(..) )
 import Text.IPG.PPrint ( hexyString )
 
@@ -98,8 +99,8 @@ interpret
     -> [Value a]
     -> Buffer
     -> Maybe (Bindings a, Int, Int)
-interpret g@(Grammar ruleOrConsts) efs = interpretStartingWith g efs startRule
-    where (Rule _ startRule _ _:_) = lefts ruleOrConsts
+interpret g@(Grammar decls) efs = interpretStartingWith g efs startRule
+    where (Rule _ startRule _ _:_, _, _, _) = partitionDeclarations decls
 
 interpretStartingWith
     :: (HasCallStack)
@@ -109,7 +110,7 @@ interpretStartingWith
     -> [Value a]
     -> Buffer
     -> Maybe (Bindings a, Int, Int)
-interpretStartingWith (Grammar ruleOrConsts) efs startRule args =
+interpretStartingWith (Grammar decls) efs startRule args =
     let (params, body) = ruleFuncs ctxt !!! startRule
         args' = Map.fromList (zip params args)
     in fmap (\((_, bindings), s, e) -> (bindings, s, e)) . body (Map.empty, Map.empty) args'
@@ -119,7 +120,7 @@ interpretStartingWith (Grammar ruleOrConsts) efs startRule args =
           externalFuncs = efs }
         buildFunc = buildInterpFunc ctxt -- Go, go knot tying.
         eval' = eval ctxt (error "EOI in const") (Map.empty, Map.empty) Map.empty
-        (rules, consts) = partitionEithers ruleOrConsts
+        (rules, consts, _, _) = partitionDeclarations decls
 
 buildInterpFunc :: (HasCallStack) => Context a -> Rule' -> ([Id], InterpFunc a)
 buildInterpFunc ctxt (Rule _ _ args alts) =

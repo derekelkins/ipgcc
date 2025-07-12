@@ -2,14 +2,18 @@
 module Text.IPG.PPrint (
     pprint, pprintRule, pprintExpr, pprintAlternative, pprintTerm, pprintRef, pprintMetaTag,
     pprint', pprintRule', pprintConst', pprintAlternative', pprintTerm', pprintRef', pprintNT,
+    pprintDecl', pprintRuleDeclaration, pprintTypeDeclaration,
     floatToOut, hexyString, outParen
 ) where
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Builder as Builder -- bytestring
+import qualified Data.Map as Map -- containers
 import Data.Char ( ord ) -- base
 import Data.List ( intersperse ) -- base
 
-import Text.IPG.Core ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..) )
+import Text.IPG.Core (
+    Ty(..), Grammar(..), Declaration(..), Rule(..), Alternative(..), Term(..), Ref(..),
+    MetaTag(..) )
 import Text.IPG.GenericExp ( UnOp(..), BinOp(..), Exp(..) )
 
 type T = BS.ByteString
@@ -43,11 +47,43 @@ pprint :: Grammar T T T (Exp T T T) -> Out
 pprint = pprint' (pprintExpr 0)
 
 pprint' :: (e -> Out) -> Grammar T T T e -> Out
-pprint' ppExp (Grammar rules) =
-    mconcat (intersperse "\n\n" (map (either (pprintRule' ppExp) (pprintConst' ppExp)) rules))
+pprint' ppExp (Grammar decls) = mconcat (intersperse "\n\n" (map (pprintDecl' ppExp) decls))
 
-pprintConst' :: (e -> Out) -> (T, e) -> Out
-pprintConst' ppExp (n, e) = "const " <> Builder.byteString n <> " = " <> ppExp e <> ";"
+pprintDecl' :: (e -> Out) -> Declaration Rule T T T e -> Out
+pprintDecl' ppExp (RuleDef r) = pprintRule' ppExp r
+pprintDecl' ppExp (ConstDeclaration n e) = pprintConst' ppExp n e
+pprintDecl' _ (TypeDeclaration n args ty) = pprintTypeDeclaration n args ty
+pprintDecl' _ (RuleDeclaration n args ty) = pprintRuleDeclaration n args ty
+
+pprintConst' :: (e -> Out) -> T -> e -> Out
+pprintConst' ppExp n e = "const " <> Builder.byteString n <> " = " <> ppExp e <> ";"
+
+pprintTypeDeclaration :: T -> [T] -> Ty T -> Out
+pprintTypeDeclaration n [] ty =
+    "typedef " <> Builder.byteString n <> " = " <> pprintType ty <> ";"
+pprintTypeDeclaration n args ty =
+    "typedef " <> Builder.byteString n <> "(" <> args' <> ") = " <> pprintType ty <> ";"
+  where args' = mconcat (intersperse ", " (map Builder.byteString args))
+
+pprintRuleDeclaration :: T -> [(T, Ty T)] -> Ty T -> Out
+pprintRuleDeclaration n [] ty =
+    "rule " <> Builder.byteString n <> ": " <> pprintType ty <> ";"
+pprintRuleDeclaration n args ty =
+    "rule " <> Builder.byteString n <> "(" <> args' <> "): " <> pprintType ty <> ";"
+  where args' = mconcat (intersperse ", "
+                    (map (\(n', ty') -> Builder.byteString n' <> ": " <> pprintType ty') args))
+
+pprintType :: Ty T -> Out
+pprintType BoolTy = "Bool"
+pprintType IntTy = "Int"
+pprintType FloatTy = "Float"
+pprintType StringTy = "String"
+pprintType (RowTy fields) = "{" <> fields' <> "}"
+    where args = Map.toAscList fields
+          fields' = mconcat (intersperse ", "
+                        (map (\(n, ty') -> Builder.byteString n <> ": " <> pprintType ty') args))
+pprintType (ArrayTy ty) = "[" <> pprintType ty <> "]"
+pprintType (ExternalTy n) = Builder.byteString n
 
 pprintRule :: Rule T T T (Exp T T T) -> Out
 pprintRule = pprintRule' (pprintExpr 0)

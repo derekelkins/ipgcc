@@ -3,7 +3,11 @@ if exists("b:current_syntax")
 endif
 
 syntax keyword IPGKeyword EOI where repeat until START END for to do starting on true false const
+syntax keyword IPGKeyword typedef rule
 highlight link IPGKeyword Keyword
+
+syntax keyword IPGType Bool Int Float String
+highlight link IPGType Identifier
 
 syntax match IPGDelimiter "?\[\|:\|?\|(\|)\|\[\|\]\|,\|;\|{\|}"
 highlight link IPGDelimiter Delimiter

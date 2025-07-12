@@ -41,6 +41,8 @@ tokens :-
 <0>    $digit+ { token $ \inp len -> TokenInt (readInteger (current inp len)) }
 <0>    ^"%declare"
                { token $ \_ _ -> TokenDeclare }
+<0>    ^"%declare_type"
+               { token $ \_ _ -> TokenDeclareType }
 <0>    "%instrument"
                { token $ \_ _ -> TokenInstrument }
 <0>    "%export"
@@ -51,6 +53,8 @@ tokens :-
 <0>    starting
                { token $ \_ _ -> TokenStarting }
 <0>    const   { token $ \_ _ -> TokenConst }
+<0>    typedef { token $ \_ _ -> TokenTypeDef }
+<0>    rule    { token $ \_ _ -> TokenRule }
 <0>    true    { token $ \_ _ -> TokenTrue }
 <0>    false   { token $ \_ _ -> TokenFalse }
 <0>    on      { token $ \_ _ -> TokenOn }
@@ -107,12 +111,15 @@ data Token
     = TokenEOF
     | TokenEOI
     | TokenDeclare
+    | TokenDeclareType
     | TokenInstrument
     | TokenExport
     | TokenEndDeclare
     | TokenRepeat
     | TokenStarting
     | TokenConst
+    | TokenTypeDef
+    | TokenRule
     | TokenTrue
     | TokenFalse
     | TokenOn

@@ -1,13 +1,14 @@
 {-# LANGUAGE OverloadedStrings, QuasiQuotes #-}
 module Text.IPG.Check ( validate ) where
-import Data.Either ( partitionEithers ) -- base
 import Data.List ( group, sort ) -- base
 import qualified Data.Set as Set -- containers
 import qualified Data.Map as Map -- containers
 
 import Data.String.Interpolate ( i ) -- string-interpolate
 
-import Text.IPG.Core ( Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..) )
+import Text.IPG.Core (
+    Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..),
+    partitionDeclarations )
 import Text.IPG.GenericExp ( crushRef, Exp(..) )
 import Text.IPG.Parser ( IdType )
 
@@ -33,10 +34,10 @@ u (nt, n) = [i|#{nt}@#{show n}|]
 --   - consts don't use EOI
 --   - consts don't refer to rules
 validate :: Set.Set T -> Grammar' -> Maybe [T]
-validate externalRules (Grammar ruleOrConsts) =
+validate externalRules (Grammar decls) =
     foldMap checkConsts consts <> foldMap check rules <> basicChecks
   where
-    (rules, consts) = partitionEithers ruleOrConsts
+    (rules, consts, _, _) = partitionDeclarations decls -- TODO: Check other declarations.
     constNames = Set.fromList (map fst consts)
 
     possibleAttributes' =

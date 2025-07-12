@@ -10,7 +10,7 @@ import Data.String.Interpolate ( i, __i ) -- string-interpolate
 
 import Text.IPG.Core (
     Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..),
-    arrayNonTerminals, nonTerminals, )
+    foldDeclaration, arrayNonTerminals, nonTerminals, )
 import Text.IPG.GenericExp ( UnOp(..), BinOp(..), Exp(..) )
 import Text.IPG.PPrint ( floatToOut, hexyString, outParen, pprintTerm )
 
@@ -331,8 +331,8 @@ alternativeToJS instrument indent c env (Alternative ts)
                                 [i|    console.error({#{nt}: self#{paramList args}});\n|]
         debuggingPostamble = whenDebug c (indent <> "_ipg_failTreeStack.pop();\n")
 
-constToJS :: Context -> (T, Expr) -> Out
-constToJS c (n, e) = [i|const #{n} = #{exprToJS c Set.empty e};\n|]
+constToJS :: Context -> T -> Expr -> Out
+constToJS c n e = [i|const #{n} = #{exprToJS c Set.empty e};\n|]
 
 ruleToJS :: Context -> Rule T T T Expr -> Out
 ruleToJS c (Rule mt nt args alts) =
@@ -367,15 +367,20 @@ ruleToJS c (Rule mt nt args alts) =
           |]
 
 toJSWithContext :: Context -> Grammar T T T Expr -> LBS.ByteString
-toJSWithContext c (Grammar ruleOrConsts) = Builder.toLazyByteString $
+toJSWithContext c (Grammar decls) = Builder.toLazyByteString $
       startsWith
    <> whenDebug c [__i|
       const _ipg_failTreeRoot = { children: [] };
       const _ipg_failTreeStack = [_ipg_failTreeRoot];\n
     |]
-   <> foldMap (either (ruleToJS c') (constToJS c')) ruleOrConsts
+   <> foldMap (foldDeclaration (ruleToJS c') (constToJS c') (\_ _ _ -> "") (\_ _ _ -> "")) decls
   where c' = c {
-                constants = foldMap (either (const Set.empty) (Set.singleton . fst)) ruleOrConsts
+                constants = foldMap (foldDeclaration
+                                        (\_ -> Set.empty)
+                                        (\n _ -> Set.singleton n)
+                                        (\_ _ _ -> Set.empty)
+                                        (\_ _ _ -> Set.empty))
+                                    decls
              }
         startsWith
             | asyncMode c = [__i|

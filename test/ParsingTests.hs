@@ -19,7 +19,7 @@ parse doValidation f = do
     results <- parseFile doValidation f
     case results of
         Left err -> return $ LBS.concat (intersperse "\n" (map LBS.pack err))
-        Right (_, g, _, _) -> return $ toLazyByteString (pprint g)
+        Right (_, g, _, _, _) -> return $ toLazyByteString (pprint g)
 
 goldenTests :: IO TestTree
 goldenTests = do

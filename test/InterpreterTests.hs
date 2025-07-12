@@ -33,7 +33,7 @@ efs = Map.fromList [
 
 interpretFile :: FilePath -> IO LBS.ByteString
 interpretFile f = do
-    Right (_, g, _, input) <- parseFile True f
+    Right (_, g, _, _, input) <- parseFile True f
     let input' = CBS.dropWhileEnd isSpace input
     return (toLazyByteString
             (asJSON' (postProcess <$> interpret g efs [] (LBS.toStrict input'))))

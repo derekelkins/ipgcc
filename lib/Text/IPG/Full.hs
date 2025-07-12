@@ -10,12 +10,8 @@ import qualified Data.Set as Set -- containers
 
 import qualified Text.IPG.Core as Core
 
-newtype Grammar nt t id e = Grammar [Either (Rule nt t id e) (id, e)]
-    deriving ( Show )
-
-instance Functor (Grammar nt t id) where
-    fmap f (Grammar ruleOrConsts) =
-        Grammar (map (either (Left . fmap f) (Right . fmap f)) ruleOrConsts)
+newtype Grammar nt t id e = Grammar [Core.Declaration Rule nt t id e]
+    deriving ( Functor, Show )
 
 -- A(a_1, ..., a_m) -> alt_1 / ... / alt_n;
 data Rule nt t id e = Rule [Core.MetaTag] nt [id] [Alternative nt t id e]
@@ -89,7 +85,18 @@ toCore
     -> id
     -> Grammar nt t id e
     -> Core.Grammar nt t id e
-toCore h v (Grammar rules) = Core.Grammar (map (either (Left . toCoreRule h v) Right) rules)
+toCore h v (Grammar rules) = Core.Grammar (map (toCoreDeclaration h v) rules)
+
+toCoreDeclaration 
+    :: (Ord id, Ord nt, Show nt)
+    => ExpHelpers nt t id e
+    -> id
+    -> Core.Declaration Rule nt t id e
+    -> Core.Declaration Core.Rule nt t id e
+toCoreDeclaration _ _ (Core.TypeDeclaration name args ty) = Core.TypeDeclaration name args ty
+toCoreDeclaration _ _ (Core.RuleDeclaration name args ty) = Core.RuleDeclaration name args ty
+toCoreDeclaration _ _ (Core.ConstDeclaration name e) = Core.ConstDeclaration name e
+toCoreDeclaration h v (Core.RuleDef r) = Core.RuleDef (toCoreRule h v r)
 
 toCoreRule
     :: (Ord id, Ord nt, Show nt)

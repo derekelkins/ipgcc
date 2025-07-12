@@ -1,7 +1,8 @@
 {-# LANGUAGE DeriveFunctor #-}
 module Text.IPG.Core (
-    Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..),
-    nonTerminals, arrayNonTerminals, renumber, rearrange, crushUses
+    Ty(..), Grammar(..), Declaration(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..),
+    nonTerminals, arrayNonTerminals, renumber, rearrange, crushUses, partitionDeclarations,
+    foldDeclaration
 ) where
 import Data.List ( nub ) -- base
 import qualified Data.Graph as G
@@ -14,12 +15,50 @@ data MetaTag
     | EXPORT     -- %export
   deriving ( Eq, Ord, Show )
 
-newtype Grammar nt t id e = Grammar [Either (Rule nt t id e) (id, e)]
-    deriving ( Show )
+data Ty id
+    = BoolTy                        -- Bool
+    | IntTy                         -- Int
+    | FloatTy                       -- Float
+    | StringTy                      -- String
+    | RowTy (Map.Map id (Ty id))    -- { f_1: ty_1, ..., f_n: ty_n }
+    | ArrayTy (Ty id)               -- [ty]
+    | ExternalTy id                 -- External
+  deriving ( Show )
 
-instance Functor (Grammar nt t id) where
-    fmap f (Grammar ruleOrConsts) =
-        Grammar (map (either (Left . fmap f) (Right . fmap f)) ruleOrConsts)
+newtype Grammar nt t id e = Grammar [Declaration Rule nt t id e]
+    deriving ( Functor, Show )
+
+data Declaration rule nt t id e
+    = RuleDef (rule nt t id e)
+    | ConstDeclaration id e                     -- const id = e;
+    | TypeDeclaration id [id] (Ty id)           -- type Foo(x_1, ..., x_n) = ty;
+    | RuleDeclaration nt [(id, Ty id)] (Ty id)  -- rule A(a_1: ty_1, ..., a_m: ty_m): ty;
+  deriving ( Functor, Show )
+
+partitionDeclarations
+    :: [Declaration rule nt t id e]
+    -> ([rule nt t id e], [(id, e)], [(id, [id], Ty id)], [(nt, [(id, Ty id)], Ty id)])
+partitionDeclarations [] = ([], [], [], [])
+partitionDeclarations (RuleDef r:ds) = (r:rs, cs, ts, rds)
+    where (rs, cs, ts, rds) = partitionDeclarations ds
+partitionDeclarations (ConstDeclaration x e:ds) = (rs, (x, e):cs, ts, rds)
+    where (rs, cs, ts, rds) = partitionDeclarations ds
+partitionDeclarations (TypeDeclaration t args ty:ds) = (rs, cs, (t, args, ty):ts, rds)
+    where (rs, cs, ts, rds) = partitionDeclarations ds
+partitionDeclarations (RuleDeclaration nt args ty:ds) = (rs, cs, ts, (nt, args, ty):rds)
+    where (rs, cs, ts, rds) = partitionDeclarations ds
+
+foldDeclaration
+    :: (rule nt t id e -> a)
+    -> (id -> e -> a)
+    -> (id -> [id] -> Ty id -> a)
+    -> (nt -> [(id, Ty id)] -> Ty id -> a)
+    -> Declaration rule nt t id e
+    -> a
+foldDeclaration ruleDef _ _ _ (RuleDef r) = ruleDef r
+foldDeclaration _ constDecl _ _ (ConstDeclaration x e) = constDecl x e
+foldDeclaration _ _ typeDecl _ (TypeDeclaration t args ty) = typeDecl t args ty
+foldDeclaration _ _ _ ruleDecl (RuleDeclaration nt args ty) = ruleDecl nt args ty
 
 -- A(a_1, ..., a_m) -> alt_1 / ... / alt_n;
 data Rule nt t id e = Rule [MetaTag] nt [id] [Alternative nt t id e]

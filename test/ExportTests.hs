@@ -19,7 +19,7 @@ export doDebugging useAsync f = do
         asyncMode = useAsync }
     case results of
         Left err -> return $ LBS.pack (show err)
-        Right (preamble, g, _, postamble) -> return $
+        Right (preamble, g, _, _, postamble) -> return $
             preamble  <> toJSWithContext ctxt g <> postamble
 
 -- TODO: Not sure how much I want these as the export could easily change in

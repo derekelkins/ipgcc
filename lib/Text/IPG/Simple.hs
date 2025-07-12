@@ -30,7 +30,7 @@ helper = ExpHelpers {
 parseFile
     :: Bool
     -> FilePath
-    -> IO (Either [String] (LBS.ByteString, Grammar', [T], LBS.ByteString))
+    -> IO (Either [String] (LBS.ByteString, Grammar', [T], [T], LBS.ByteString))
 parseFile doValidation f = parse doValidation <$> LBS.readFile f
 
 computeStartLine :: LBS.ByteString -> Int
@@ -40,23 +40,23 @@ computeStartLine s = 3 + fromIntegral (LBS.count '\n' s)
 parse
     :: Bool
     -> LBS.ByteString
-    -> Either [String] (LBS.ByteString, Grammar', [T], LBS.ByteString)
+    -> Either [String] (LBS.ByteString, Grammar', [T], [T], LBS.ByteString)
 parse doValidation ipgInput' = do
     let (preamble, ipgInput, postamble) = splitFile ipgInput'
 
-    let byteOffset = fromIntegral (LBS.length preamble) -- TODO: This isn't 100% correct.
+    let byteOffset = fromIntegral (LBS.length preamble)
     let startLine = computeStartLine preamble
     let startCol = 1
 
     case P.parseWithStartPos byteOffset startLine startCol ipgInput of
         Left err -> Left [err]
-        Right (g, decls) -> do
+        Right (g, decls, typeDecls) -> do
             let core = E.simplify (toCore helper "values" g)
             if doValidation then
-                case validate (Set.fromList decls) core of
+                case validate (Set.fromList decls) core of -- TODO: validate sholud take typeDecls
                     Just errs -> Left (map CBS.unpack errs)
-                    Nothing -> Right (preamble, core, decls, postamble)
-              else Right (preamble, core, decls, postamble)
+                    Nothing -> Right (preamble, core, decls, typeDecls, postamble)
+              else Right (preamble, core, decls, typeDecls, postamble)
 
 interpretFile :: Bool -> FilePath -> LBS.ByteString -> IO (Either [String] (Maybe (I.Value a)))
 interpretFile doValidation f input = do
@@ -67,6 +67,6 @@ interpret :: Bool -> LBS.ByteString -> LBS.ByteString -> Either [String] (Maybe 
 interpret doValidation ipgInput input =
     case parse doValidation ipgInput of
         Left errs -> Left errs
-        Right (_, g, _, _) ->
+        Right (_, g, _, _, _) ->
             Right (postProcess <$> I.interpret g Map.empty [] (LBS.toStrict input))
   where postProcess (bs, _, _) = I.BINDINGS bs

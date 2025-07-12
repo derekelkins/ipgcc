@@ -31,7 +31,7 @@ run (tmpDir, nodeExe) doDebugging f = do
     parseResult <- parseFile True f
     case parseResult of
         Left err -> return $ LBS.pack (show err)
-        Right (preamble, g, _, postamble) -> do
+        Right (preamble, g, _, _, postamble) -> do
             (tmpFile, h) <- openBinaryTempFile tmpDir "test.js"
             LBS.hPutStrLn h preamble
             LBS.hPutStrLn h (toJSWithContext (defaultContext { debugMode = doDebugging }) g)
