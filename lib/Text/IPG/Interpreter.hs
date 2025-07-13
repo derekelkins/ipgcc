@@ -346,6 +346,7 @@ eval ctxt eoi (env, bs) ps = go
                     neg (FLOAT x) = FLOAT (-x)
           go (Un BitwiseNeg l) = bneg (go l)
               where bneg (INT x) = INT (complement x)
+                    bneg (BOOL x) = BOOL (not x)
           go (Un Not l) = not' (go l)
               where not' (BOOL b) = BOOL (not b)
           go (Bin And l r) = and' (go l) (go r)
@@ -354,10 +355,13 @@ eval ctxt eoi (env, bs) ps = go
               where or' (BOOL x) (BOOL y) = BOOL (x || y)
           go (Bin BitwiseAnd l r) = band (go l) (go r)
               where band (INT x) (INT y) = INT (x .&. y)
+                    band (BOOL x) (BOOL y) = BOOL (x && y)
           go (Bin BitwiseXor l r) = bxor (go l) (go r)
               where bxor (INT x) (INT y) = INT (xor x y)
+                    bxor (BOOL x) (BOOL y) = BOOL (x /= y)
           go (Bin BitwiseOr l r) = bor (go l) (go r)
               where bor (INT x) (INT y) = INT (x .|. y)
+                    bor (BOOL x) (BOOL y) = BOOL (x || y)
           go (Bin LSh l r) = lsh (go l) (go r)
               where lsh (INT x) (INT y) = INT (shift x (fromIntegral y))
           go (Bin RSh l r) = rsh (go l) (go r)
@@ -407,8 +411,7 @@ eval ctxt eoi (env, bs) ps = go
                     notEqual (BOOL x) (BOOL y) = BOOL (x /= y)
                     -- TODO: Non-primitive values
           go (If b t e) = if_ (go b) (go t) (go e)
-              where if_ (INT x) y z = if x /= 0 then y else z
-                    if_ (BOOL b') y z = if b' then y else z
+              where if_ (BOOL b') y z = if b' then y else z
           go (Call f es) = (externalFuncs ctxt !!! f) es'
             where es' = map go es
           go (Bin At l x) = at' (go l) (go x)
