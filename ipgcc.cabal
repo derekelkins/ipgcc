@@ -93,6 +93,7 @@ library
         Text.IPG.Parser,
         Text.IPG.PPrint,
         Text.IPG.Simple,
+        Text.IPG.TypeCheck,
         Text.IPG.TopLevel.FileSplit
 
     -- Modules included in this library but not exported.

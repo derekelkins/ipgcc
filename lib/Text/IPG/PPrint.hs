@@ -3,7 +3,7 @@ module Text.IPG.PPrint (
     Out,
     pprint, pprintRule, pprintExpr, pprintAlternative, pprintTerm, pprintRef, pprintMetaTag,
     pprint', pprintRule', pprintConst', pprintAlternative', pprintTerm', pprintRef', pprintNT,
-    pprintDecl', pprintRuleDeclaration, pprintTypeDeclaration, pprintType,
+    pprintDecl', pprintRuleDeclaration, pprintTypeDeclaration, pprintType, pprintType',
     floatToOut, hexyString, outParen
 ) where
 import qualified Data.ByteString as BS -- bytestring
@@ -86,16 +86,21 @@ pprintFunctionDeclaration n args ty =
                     (map (\(n', ty') -> Builder.byteString n' <> ": " <> pprintType ty') args))
 
 pprintType :: Ty T -> Out
-pprintType BoolTy = "Bool"
-pprintType IntTy = "Int"
-pprintType FloatTy = "Float"
-pprintType StringTy = "String"
-pprintType (RowTy fields) = "{" <> fields' <> "}"
-    where args = Map.toAscList fields
-          fields' = mconcat (intersperse ", "
-                        (map (\(n, ty') -> Builder.byteString n <> ": " <> pprintType ty') args))
-pprintType (ArrayTy ty) = "[" <> pprintType ty <> "]"
-pprintType (ExternalTy n) = Builder.byteString n
+pprintType = pprintType' Builder.byteString
+
+pprintType' :: (id -> Out) -> Ty id -> Out
+pprintType' _ BoolTy = "Bool"
+pprintType' _ IntTy = "Int"
+pprintType' _ FloatTy = "Float"
+pprintType' _ StringTy = "String"
+pprintType' out (RowTy fields)
+    | Map.null fields = "{}"
+    | otherwise = "{ " <> fields' <> " }"
+  where args = Map.toAscList fields
+        fields' = mconcat (intersperse ", "
+                      (map (\(n, ty') -> out n <> ": " <> pprintType' out ty') args))
+pprintType' out (ArrayTy ty) = "[" <> pprintType' out ty <> "]"
+pprintType' out (ExternalTy n) = out n
 
 pprintRule :: Rule T T T (Exp T T T) -> Out
 pprintRule = pprintRule' (pprintExpr 0)

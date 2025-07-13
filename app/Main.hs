@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 module Main ( main ) where
+import Control.Monad ( when ) -- base
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Char8 as CBS -- bytestring
 import qualified Data.ByteString.Lazy.Char8 as LBS -- bytestring
@@ -14,6 +15,8 @@ import Text.IPG.Interpreter ( NT, Value(..), asJSON, interpret )
 import Text.IPG.Export.JS ( Context(..), defaultContext, toJSWithContext )
 import Text.IPG.PPrint ( pprint )
 import Text.IPG.Simple ( parse )
+import qualified Text.IPG.TypeCheck as TC
+import Text.IPG.TypeCheck ( typeCheck ) -- TODO: Make Simple wrapper.
 
 data ExportType = JS | CORE deriving ( Eq, Ord, Show, Read )
 
@@ -21,11 +24,12 @@ data Options = Options {
     inFile :: Maybe String,
     outFile :: Maybe String,
     exportType :: !ExportType,
+    typeCheckFlag :: !Bool,
+    interpretFlag :: !Bool,
     leaveExtraFieldsFlag :: !Bool,
     noValidation :: !Bool,
     debugModeFlag :: !Bool,
-    asyncModeFlag :: !Bool,
-    interpretFlag :: !Bool
+    asyncModeFlag :: !Bool
   }
 
 options :: Opt.ParserInfo Options
@@ -46,6 +50,14 @@ options = Opt.info (Options
          <> Opt.help "Export type. JS or CORE. Default JS."
          <> Opt.value JS)
     <*> Opt.switch (
+            Opt.long "type-check"
+         <> Opt.short 'T'
+         <> Opt.help "Perform type checking")
+    <*> Opt.switch (
+            Opt.long "interpret"
+         <> Opt.short 'I'
+         <> Opt.help "Interpret grammar instead. --in-file is required for the .ipg and stdin will be the parser's input.")
+    <*> Opt.switch (
             Opt.long "leave-extra-fields"
          <> Opt.help "Don't strip internal fields in JS export.")
     <*> Opt.switch (
@@ -57,10 +69,6 @@ options = Opt.info (Options
     <*> Opt.switch (
             Opt.long "async-mode"
          <> Opt.help "Export using asynchronous interface.")
-    <*> Opt.switch (
-            Opt.long "interpret"
-         <> Opt.short 'I'
-         <> Opt.help "Interpret grammar instead. --in-file is required for the .ipg and stdin will be the parser's input.")
     Opt.<**> Opt.helper) (
         Opt.fullDesc
      <> Opt.progDesc "Interval Parsing Grammar parser generator"
@@ -75,6 +83,17 @@ main = do
     case parse (not (noValidation opts)) ipgInput of
         Left errs -> mapM_ (hPutStrLn stderr) errs
         Right (preamble, core, _, _, postamble) -> do
+            when (typeCheckFlag opts) $ do
+                let ctxt = TC.Context {
+                               TC.currentRule = "",
+                               TC.values = "values",
+                               TC.out = Builder.byteString,
+                               TC.tOut = Builder.byteString,
+                               TC.ntOut = Builder.byteString
+                           }
+                case typeCheck ctxt core of
+                    Nothing -> return ()
+                    Just errs -> mapM_ (LBS.hPutStrLn stderr . Builder.toLazyByteString) errs
             case exportType opts of
                 CORE -> LBS.hPutStrLn h (Builder.toLazyByteString (pprint core))
                 JS -> do

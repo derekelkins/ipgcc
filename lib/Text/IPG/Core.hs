@@ -22,6 +22,7 @@ data Ty id
     | StringTy                      -- String
     | RowTy (Map.Map id (Ty id))    -- { f_1: ty_1, ..., f_n: ty_n }
     | ArrayTy (Ty id)               -- [ty]
+    -- | TyApp id [Ty id]              -- T(ty_1, ..., ty_n) -- TODO
     | ExternalTy id                 -- External
   deriving ( Show )
 
@@ -33,7 +34,7 @@ data Declaration rule nt t id e
     | ConstDeclaration id (Maybe (Ty id)) e         -- const id: ty = e;
     | TypeDeclaration id [id] (Ty id)               -- type Foo(x_1, ..., x_n) = ty;
     | RuleDeclaration nt [(id, Ty id)] (Ty id)      -- rule A(a_1: ty_1, ..., a_m: ty_m): ty;
-    | FunctionDeclaration id [(id, Ty id)] (Ty id)  -- function f(a_1: ty_1, ..., a_m: ty_m): ty;
+    | FunctionDeclaration t [(id, Ty id)] (Ty id)   -- function f(a_1: ty_1, ..., a_m: ty_m): ty;
   deriving ( Functor, Show )
 
 partitionDeclarations
@@ -42,7 +43,7 @@ partitionDeclarations
         [(id, Maybe (Ty id), e)],
         [(id, [id], Ty id)],
         [(nt, [(id, Ty id)], Ty id)],
-        [(id, [(id, Ty id)], Ty id)])
+        [(t, [(id, Ty id)], Ty id)])
 partitionDeclarations [] = ([], [], [], [], [])
 partitionDeclarations (RuleDef r:ds) = (r:rs, cs, ts, rds, fs)
     where (rs, cs, ts, rds, fs) = partitionDeclarations ds
@@ -60,7 +61,7 @@ foldDeclaration
     -> (id -> Maybe (Ty id) -> e -> a)
     -> (id -> [id] -> Ty id -> a)
     -> (nt -> [(id, Ty id)] -> Ty id -> a)
-    -> (id -> [(id, Ty id)] -> Ty id -> a)
+    -> (t -> [(id, Ty id)] -> Ty id -> a)
     -> Declaration rule nt t id e
     -> a
 foldDeclaration ruleDef _ _ _ _ (RuleDef r) = ruleDef r

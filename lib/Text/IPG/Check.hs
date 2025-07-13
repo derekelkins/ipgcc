@@ -33,6 +33,9 @@ u (nt, n) = [i|#{nt}@#{show n}|]
 --   - No two rules have the same head non-terminal.
 --   - consts don't use EOI
 --   - consts don't refer to rules
+--   - Rule type is a row type -- TODO
+--   - Function calls match arity of function declarations. -- TODO
+--   - TODO: Various sanity checks on types
 validate :: Set.Set T -> Grammar' -> Maybe [T]
 validate externalRules (Grammar decls) =
     foldMap checkConsts consts <> foldMap check rules <> basicChecks
