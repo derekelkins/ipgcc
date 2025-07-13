@@ -55,6 +55,7 @@ pprintDecl' ppExp (RuleDef r) = pprintRule' ppExp r
 pprintDecl' ppExp (ConstDeclaration n ty e) = pprintConst' ppExp n ty e
 pprintDecl' _ (TypeDeclaration n args ty) = pprintTypeDeclaration n args ty
 pprintDecl' _ (RuleDeclaration n args ty) = pprintRuleDeclaration n args ty
+pprintDecl' _ (FunctionDeclaration n args ty) = pprintFunctionDeclaration n args ty
 
 pprintConst' :: (e -> Out) -> T -> Maybe (Ty T) -> e -> Out
 pprintConst' ppExp n (Just ty) e =
@@ -73,6 +74,14 @@ pprintRuleDeclaration n [] ty =
     "rule " <> Builder.byteString n <> ": " <> pprintType ty <> ";"
 pprintRuleDeclaration n args ty =
     "rule " <> Builder.byteString n <> "(" <> args' <> "): " <> pprintType ty <> ";"
+  where args' = mconcat (intersperse ", "
+                    (map (\(n', ty') -> Builder.byteString n' <> ": " <> pprintType ty') args))
+
+pprintFunctionDeclaration :: T -> [(T, Ty T)] -> Ty T -> Out
+pprintFunctionDeclaration n [] ty =
+    "function " <> Builder.byteString n <> ": " <> pprintType ty <> ";"
+pprintFunctionDeclaration n args ty =
+    "function " <> Builder.byteString n <> "(" <> args' <> "): " <> pprintType ty <> ";"
   where args' = mconcat (intersperse ", "
                     (map (\(n', ty') -> Builder.byteString n' <> ": " <> pprintType ty') args))
 
