@@ -100,7 +100,7 @@ interpret
     -> Buffer
     -> Maybe (Bindings a, Int, Int)
 interpret g@(Grammar decls) efs = interpretStartingWith g efs startRule
-    where (Rule _ startRule _ _:_, _, _, _) = partitionDeclarations decls
+    where (Rule _ startRule _ _:_, _, _, _, _) = partitionDeclarations decls
 
 interpretStartingWith
     :: (HasCallStack)
@@ -120,7 +120,7 @@ interpretStartingWith (Grammar decls) efs startRule args =
           externalFuncs = efs }
         buildFunc = buildInterpFunc ctxt -- Go, go knot tying.
         eval' = eval ctxt (error "EOI in const") (Map.empty, Map.empty) Map.empty
-        (rules, consts, _, _) = partitionDeclarations decls
+        (rules, consts, _, _, _) = partitionDeclarations decls
 
 buildInterpFunc :: (HasCallStack) => Context a -> Rule' -> ([Id], InterpFunc a)
 buildInterpFunc ctxt (Rule _ _ args alts) =

@@ -41,6 +41,7 @@ import Text.IPG.Lexer (
     const   { TokenConst }
     typedef { TokenTypeDef }
     rule    { TokenRule }
+    function { TokenFunction }
     true    { TokenTrue }
     false   { TokenFalse }
     on      { TokenOn }
@@ -159,16 +160,15 @@ Grammar :: { Grammar' }
     : Declarations { Grammar (reverse $1) }
 
 Declarations :: { [Declaration'] }
-    : Declarations ';' Declaration { $3 : $1 }
-    | Declarations ';' { $1 }
+    : Declarations Declaration { $2 : $1 }
     | Declaration { [$1] }
-    | {- empty -} { [] }
 
 Declaration :: { Declaration' }
-    : MetaTags name ParamList '->' Alternatives { RuleDef (Rule $1 $2 $3 (reverse $5)) }
-    | typedef name ParamList '=' Type { TypeDeclaration $2 $3 $5 }
-    | rule name TypedParamList ':' Type { RuleDeclaration $2 $3 $5 }
-    | const name MaybeType '=' Exp { ConstDeclaration $2 $3 $5 }
+    : MetaTags name ParamList '->' Alternatives ';' { RuleDef (Rule $1 $2 $3 (reverse $5)) }
+    | typedef name ParamList '=' Type ';' { TypeDeclaration $2 $3 $5 }
+    | rule name TypedParamList ':' Type ';' { RuleDeclaration $2 $3 $5 }
+    | const name MaybeType '=' Exp ';' { ConstDeclaration $2 $3 $5 }
+    | function name TypedParamList ':' Type ';' { FunctionDeclaration $2 $3 $5 }
 
 MetaTags :: { [MetaTag] }
     : '%instrument' MetaTags { (INSTRUMENT:$2) }

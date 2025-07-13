@@ -373,11 +373,17 @@ toJSWithContext c (Grammar decls) = Builder.toLazyByteString $
       const _ipg_failTreeRoot = { children: [] };
       const _ipg_failTreeStack = [_ipg_failTreeRoot];\n
     |]
-   <> foldMap (foldDeclaration (ruleToJS c') (constToJS c') (\_ _ _ -> "") (\_ _ _ -> "")) decls
+   <> foldMap (foldDeclaration
+                (ruleToJS c')
+                (constToJS c')
+                (\_ _ _ -> "")
+                (\_ _ _ -> "")
+                (\_ _ _ -> "")) decls
   where c' = c {
                 constants = foldMap (foldDeclaration
                                         (\_ -> Set.empty)
                                         (\n _ _ -> Set.singleton n)
+                                        (\_ _ _ -> Set.empty)
                                         (\_ _ _ -> Set.empty)
                                         (\_ _ _ -> Set.empty))
                                     decls

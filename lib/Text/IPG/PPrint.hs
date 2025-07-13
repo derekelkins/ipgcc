@@ -1,8 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Text.IPG.PPrint (
+    Out,
     pprint, pprintRule, pprintExpr, pprintAlternative, pprintTerm, pprintRef, pprintMetaTag,
     pprint', pprintRule', pprintConst', pprintAlternative', pprintTerm', pprintRef', pprintNT,
-    pprintDecl', pprintRuleDeclaration, pprintTypeDeclaration,
+    pprintDecl', pprintRuleDeclaration, pprintTypeDeclaration, pprintType,
     floatToOut, hexyString, outParen
 ) where
 import qualified Data.ByteString as BS -- bytestring

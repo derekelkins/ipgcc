@@ -96,6 +96,8 @@ toCoreDeclaration
 toCoreDeclaration _ _ (Core.TypeDeclaration name args ty) = Core.TypeDeclaration name args ty
 toCoreDeclaration _ _ (Core.RuleDeclaration name args ty) = Core.RuleDeclaration name args ty
 toCoreDeclaration _ _ (Core.ConstDeclaration name ty e) = Core.ConstDeclaration name ty e
+toCoreDeclaration _ _ (Core.FunctionDeclaration name args ty) =
+    Core.FunctionDeclaration name args ty
 toCoreDeclaration h v (Core.RuleDef r) = Core.RuleDef (toCoreRule h v r)
 
 toCoreRule

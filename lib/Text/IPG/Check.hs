@@ -37,7 +37,7 @@ validate :: Set.Set T -> Grammar' -> Maybe [T]
 validate externalRules (Grammar decls) =
     foldMap checkConsts consts <> foldMap check rules <> basicChecks
   where
-    (rules, consts, _, _) = partitionDeclarations decls -- TODO: Check other declarations.
+    (rules, consts, _, _, _) = partitionDeclarations decls -- TODO: Check other declarations.
     constNames = Set.fromList (map (\(n, _, _) -> n) consts)
 
     possibleAttributes' =

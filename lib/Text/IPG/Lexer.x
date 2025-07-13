@@ -55,6 +55,7 @@ tokens :-
 <0>    const   { token $ \_ _ -> TokenConst }
 <0>    typedef { token $ \_ _ -> TokenTypeDef }
 <0>    rule    { token $ \_ _ -> TokenRule }
+<0>    function { token $ \_ _ -> TokenFunction }
 <0>    true    { token $ \_ _ -> TokenTrue }
 <0>    false   { token $ \_ _ -> TokenFalse }
 <0>    on      { token $ \_ _ -> TokenOn }
@@ -120,6 +121,7 @@ data Token
     | TokenConst
     | TokenTypeDef
     | TokenRule
+    | TokenFunction
     | TokenTrue
     | TokenFalse
     | TokenOn
