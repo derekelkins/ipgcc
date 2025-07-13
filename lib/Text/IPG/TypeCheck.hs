@@ -1,11 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Text.IPG.TypeCheck ( Context(..), typeCheck ) where
+module Text.IPG.TypeCheck (
+    Context(..), ConstTypes, FunTypes, RuleTypes, TypeDefs,
+    Environments(typeDefs, constTypes, funTypes, ruleTypes),
+    annotate, groundType, isEquatable, isOrderable, joinTy, subTypeOf, (<:), typeCheck, 
+) where
 import qualified Data.ByteString.Builder as Builder -- bytestring
 import qualified Data.Map as Map -- containers
 import qualified Data.Set as Set -- containers
 
+import Data.Maybe ( catMaybes, fromJust ) -- base -- TODO: Remove me.
+
 import Text.IPG.Core (
-    Ty(..), Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..),
+    Ty(..), Grammar(..), Declaration(..), Rule(..), Alternative(..), Term(..), Ref(..),
     partitionDeclarations )
 import Text.IPG.GenericExp ( BinOp(..), Exp(..), UnOp(..) )
 import Text.IPG.PPrint ( Out, pprintType' )
@@ -41,70 +47,74 @@ isOrderable (ExternalTy _) = False
 isOrderable _ = True
 
 -- TODO: Using this willy-nilly is expensive.
-groundType :: (Ord id) => TypeEnv id -> Ty id -> Ty id
+groundType :: (Ord id) => TypeDefs id -> Ty id -> Ty id
 groundType env = go Set.empty Set.empty
   where go seen guarded ty@(ExternalTy x)
             | x `Set.member` guarded = error "(Guarded) circular typedefs" -- TODO: For now.
             | x `Set.member` seen = error "Circular typedefs"
             -- | x `Set.member` guarded = ty
-            | otherwise = go (Set.insert x seen) guarded (env Map.! x)
+            | otherwise = go (Set.insert x seen) guarded (case Map.lookup x env of Just y -> y)
         go seen guarded (ArrayTy ty) = ArrayTy (go Set.empty (Set.union seen guarded) ty)
         go seen guarded (RowTy fs) = RowTy (go Set.empty (Set.union seen guarded) <$> fs)
         go _ _ ty = ty
 
 -- TODO: We need to deref types during this unless we fully ground a type first.
 (<:) :: (Ord id) => Ty id -> Ty id -> Bool
-BoolTy <: BoolTy = True
-IntTy <: IntTy = True
-IntTy <: FloatTy = True
-FloatTy <: FloatTy = True
-StringTy <: StringTy = True
-ExternalTy x <: ExternalTy y = x == y
-ArrayTy t <: ArrayTy t' = t <: t'
-RowTy _ <: RowTy fs' | Map.null fs' = True
-RowTy fs <: RowTy fs' =
-    case foldMap (\(x', t') -> fmap (\t -> [(t, t')]) (Map.lookup x' fs)) (Map.toList fs') of
-        Nothing -> False
-        Just ps -> all (\(t, t') -> t <: t') ps
-_ <: _ = False
+ty1 <: ty2 = subTypeOf Map.empty ty1 ty2
 
-joinTy :: (Ord id) => Ty id -> Ty id -> Maybe (Ty id)
-joinTy (RowTy fs1) (RowTy fs2) =
-    case traverse (\k -> (,) k <$> joinTy (fs1 Map.! k) (fs2 Map.! k)) (Set.toList commonFields) of
-        Nothing -> Nothing
-        Just fs -> Just (RowTy (Map.fromList fs))
-  where commonFields = Set.intersection (Map.keysSet fs1) (Map.keysSet fs2)
-joinTy (ArrayTy ty1) (ArrayTy ty2) =
-    case joinTy ty1 ty2 of
-        Nothing -> Nothing
-        Just ty -> Just (ArrayTy ty)
-joinTy ty1 ty2 | ty1 <: ty2 = Just ty2
-               | ty2 <: ty1 = Just ty1
-               | otherwise = Nothing
+subTypeOf :: (Ord id) => TypeDefs id -> Ty id -> Ty id -> Bool
+subTypeOf tyEnv t1 t2 = go (derefTy tyEnv t1) (derefTy tyEnv t2)
+    where go BoolTy BoolTy = True
+          go IntTy IntTy = True
+          go IntTy FloatTy = True
+          go FloatTy FloatTy = True
+          go StringTy StringTy = True
+          go (ExternalTy x) (ExternalTy y) = x == y
+          go (ArrayTy t) (ArrayTy t') = subTypeOf tyEnv t t'
+          go (RowTy _) (RowTy fs') | Map.null fs' = True
+          go (RowTy fs) (RowTy fs') =
+              case foldMap (\(x', t') -> fmap (\t -> [(t, t')]) (Map.lookup x' fs)) (Map.toList fs') of
+                  Nothing -> False
+                  Just ps -> all (\(t, t') -> subTypeOf tyEnv t t') ps
+          go _ _ = False
 
-type TypeEnv id = Map.Map id (Ty id) -- TODO: Handle arguments.
+joinTy :: (Ord id) => TypeDefs id -> Ty id -> Ty id -> Maybe (Ty id)
+joinTy _ ty@(ExternalTy x) (ExternalTy y) | x == y = Just ty
+joinTy tyEnv t1 t2 = go (derefTy tyEnv t1) (derefTy tyEnv t2)
+    where go (RowTy fs1) (RowTy fs2) =
+              case traverse (\k -> (,) k <$> joinTy tyEnv (fs1 Map.! k) (fs2 Map.! k))
+                            (Set.toList commonFields) of
+                  Nothing -> Nothing
+                  Just fs -> Just (RowTy (Map.fromList fs))
+            where commonFields = Set.intersection (Map.keysSet fs1) (Map.keysSet fs2)
+          go (ArrayTy ty1) (ArrayTy ty2) =
+              case joinTy tyEnv ty1 ty2 of
+                  Nothing -> Nothing
+                  Just ty -> Just (ArrayTy ty)
+          go ty1 ty2 | subTypeOf tyEnv ty1 ty2 = Just ty2
+                     | subTypeOf tyEnv ty2 ty1 = Just ty1
+                     | otherwise = Nothing
 
--- derefTy :: (Ord id) => TypeEnv id -> Ty id -> Ty id
--- derefTy tyEnv' = go Set.empty
---     where go seen ty@(ExternalTy x)
---             | Set.member x seen = error "Circular typedefs"
---             | otherwise =
---                 case Map.lookup x tyEnv' of
---                     Nothing -> ty
---                     Just ty' -> go (Set.insert x seen) ty'
---           go _ ty = ty
+derefTy :: (Ord id) => TypeDefs id -> Ty id -> Ty id
+derefTy tyEnv' = go Set.empty
+    where go seen ty@(ExternalTy x)
+            | Set.member x seen = error "Circular typedefs"
+            | otherwise =
+                case Map.lookup x tyEnv' of
+                    Nothing -> ty
+                    Just ty' -> go (Set.insert x seen) ty'
+          go _ ty = ty
 
+type TypeDefs id = Map.Map id (Ty id) -- TODO: Handle arguments.
 type ConstTypes id = Map.Map id (Ty id)
-
 type FunTypes t id = Map.Map t ([Ty id], Ty id)
-
-type RuleDecls nt id = Map.Map nt ([Ty id], Ty id)
+type RuleTypes nt id = Map.Map nt ([Ty id], Ty id)
 
 data Environments nt t id = Environments {
-    tyEnv :: TypeEnv id,
-    cTypes :: ConstTypes id,
-    fTypes :: FunTypes t id,
-    ruleDecls :: RuleDecls nt id,
+    typeDefs :: TypeDefs id,
+    constTypes :: ConstTypes id,
+    funTypes :: FunTypes t id,
+    ruleTypes :: RuleTypes nt id,
     locals :: Map.Map id (Ty id)
   }
 
@@ -116,27 +126,66 @@ data Context nt t id = Context {
     ntOut :: nt -> Out
   }
 
+annotate :: (Ord id, Ord nt) => Environments nt t id -> Grammar nt t id e -> Grammar nt t id e
+annotate envs (Grammar decls) = Grammar (go Set.empty decls)
+  where go seen (ConstDeclaration n Nothing e:ds) = ConstDeclaration n (Just ty) e:go seen ds
+          where ty = case Map.lookup n (constTypes envs) of Just y -> y
+        go seen (RuleDeclaration nt _ _:ds) | nt `Set.member` seen = go seen ds
+        go seen (d@(RuleDeclaration nt _ (Just _)):ds) = d:go (Set.insert nt seen) ds
+        go seen (RuleDeclaration nt es Nothing:ds) =
+            RuleDeclaration nt es (Just ty):go (Set.insert nt seen) ds
+          where ty = case Map.lookup nt (ruleTypes envs) of Just (_, y) -> y
+        go seen (d@(RuleDef (Rule _ nt _ _)):ds)
+            | nt `Set.member` seen = d:go seen ds
+            | otherwise =
+                case Map.lookup nt (ruleTypes envs) of
+                    Just ([], ty) -> RuleDeclaration nt [] (Just ty):d:go (Set.insert nt seen) ds
+                    _ -> d:go seen ds
+        go seen (d:ds) = d:go seen ds
+        go _ [] = []
+
 typeCheck
     :: (Ord id, Ord nt, Ord t)
     => Context nt t id
     -> Grammar nt t id (Exp nt t id)
-    -> Maybe [Out]
-typeCheck ctxt (Grammar decls) = foldMap (typeCheckRule ctxt envs) rules
-    -- foldMap (typeCheckConst ctxt envs) consts <> foldMap (typeCheckRule ctxt envs ruleDecls) rules
-  where (rules, consts, typeDefs, ruleDecls'', funDecls) = partitionDeclarations decls
-        tyEnv' = Map.fromList (map (\(n, _, ty) -> (n, ty)) typeDefs) -- TODO: Need to handle mutual recursion and args.
+    -> Either [Out] (Environments nt t id)
+typeCheck ctxt (Grammar decls)
+    | null cErrs && null rErrs = Right envs
+    | otherwise = Left (cErrs <> rErrs)                
+  where (rules, consts, tyEnv, ruleDecls, funDecls) = partitionDeclarations decls
+        -- TODO: Need to handle mutual recursion and args.
+        tyEnv' = Map.fromList (map (\(n, _, ty) -> (n, ty)) tyEnv)
         fTypes' = Map.fromList (map (\(n, tys, ty) -> (n, (map snd tys, ty))) funDecls)
-        ruleDecls' =
-            Map.fromList (map (\(n, tys, ty) -> (n, (map snd tys, groundType tyEnv' ty)))
-                              ruleDecls'')
-        cTypes' = Map.empty -- TODO: We could topologically sort consts and type check in that order. I'm not interested in *mutual* recursion here.
+        -- Add zero-arity rules that don't have explicit declarations so we don't need to write them.
+        zeroArityRules = catMaybes
+                            (map (\(Rule _ nt es _) -> if null es then Just nt else Nothing) rules)
+        argTys' = Map.fromList (map (\(nt, es, mty) -> (nt, (map snd es, mty))) ruleDecls)
+        argTys = Map.union argTys' (Map.fromList (map (\nt -> (nt, ([], Nothing))) zeroArityRules))
+        (cErrs, cTypes) = typeCheckConsts ctxt envs [] Map.empty consts
+        (rErrs, rTypes) = typeCheckRules ctxt envs argTys [] Map.empty rules
         envs = Environments {
-                 tyEnv = tyEnv',
-                 cTypes = cTypes', -- TODO: Problematic circularity.
-                 fTypes = fTypes',
-                 ruleDecls = ruleDecls',
+                 typeDefs = tyEnv',
+                 constTypes = cTypes,
+                 funTypes = fTypes',
+                 ruleTypes = rTypes,
                  locals = Map.empty
                }
+
+typeCheckConsts
+    :: (Ord id, Ord nt, Ord t)
+    => Context nt t id
+    -> Environments nt t id
+    -> [Out]
+    -> ConstTypes id
+    -> [(id, Maybe (Ty id), Exp nt t id)]
+    -> ([Out], ConstTypes id)
+typeCheckConsts _ _ eAcc acc [] = (eAcc, acc)
+typeCheckConsts ctxt envs eAcc acc (c@(n, _, _):cs) =
+    typeCheckConsts ctxt envs eAcc' (Map.insert n ty acc) cs
+  where (eAcc', ty) = 
+            case typeCheckConst ctxt envs c of
+                Left errs -> (errs <> eAcc, error "TODO: typeCheckConsts")
+                Right ty' -> (eAcc, ty')
 
 typeCheckConst
     :: (Ord id, Ord nt, Ord t)
@@ -153,32 +202,54 @@ typeCheckConst ctxt envs (n, Just ty, e) =
         Nothing -> Right ty
         Just err -> Left ["Failed to type check const " <> out ctxt n <> ".\nError: " <> err]
 
+typeCheckRules
+    :: (Ord id, Ord nt, Ord t)
+    => Context nt t id
+    -> Environments nt t id
+    -> Map.Map nt ([Ty id], Maybe (Ty id))
+    -> [Out]
+    -> RuleTypes nt id
+    -> [Rule nt t id (Exp nt t id)]
+    -> ([Out], RuleTypes nt id)
+typeCheckRules _ _ _ eAcc acc [] = (eAcc, acc)
+typeCheckRules ctxt envs argTys eAcc acc (r@(Rule _ nt _ _):rs) =
+    typeCheckRules ctxt envs argTys eAcc' (Map.insert nt (tys, ty) acc) rs
+  where (tys, mty) = case Map.lookup nt argTys of Just y -> y
+        (eAcc', ty) = 
+            case typeCheckRule ctxt envs r tys mty of
+                Left errs -> (errs <> eAcc, error "TODO: typeCheckRules")
+                Right ty' -> (eAcc, ty')
+
 typeCheckRule
     :: (Ord id, Ord nt, Ord t)
     => Context nt t id
     -> Environments nt t id
     -> Rule nt t id (Exp nt t id)
-    -> Maybe [Out]
-typeCheckRule ctxt envs (Rule _ nt ps alts) =
-    case Map.lookup nt (ruleDecls envs) of
-        Just (tys, ty) ->
-            let envs' = envs { locals = Map.fromList (zip ps tys) } -- TODO: Put these in a separate Map?
-            in foldMap (\(Alternative ts) -> typeCheckAlternative ctxt' envs' ts ty) alts
-        Nothing -> Just ["Unknown rule " <> ntOut ctxt nt]
+    -> [Ty id]
+    -> Maybe (Ty id)
+    -> Either [Out] (Ty id)
+typeCheckRule ctxt envs (Rule _ nt ps alts) tys ty =
+    let envs' = envs { locals = Map.fromList (zip ps tys) } -- TODO: Put these in a separate Map?
+    in combine <$> traverse (\(Alternative ts) -> typeCheckAlternative ctxt' envs' ts ty) alts
   where ctxt' = ctxt { currentRule = nt }
+        combine = foldr1 (\t1 t2 -> fromJust (joinTy (typeDefs envs) t1 t2)) -- TODO: Handle errors better.
 
 typeCheckAlternative
     :: (Ord id, Ord nt, Ord t)
     => Context nt t id
     -> Environments nt t id
     -> [Term nt t id (Exp nt t id)]
-    -> Ty id
-    -> Maybe [Out]
-typeCheckAlternative ctxt envs ts ty' =
+    -> Maybe (Ty id)
+    -> Either [Out] (Ty id)
+typeCheckAlternative ctxt envs ts Nothing =
     case typeSynthTerms ctxt envs ts of
-        Left errs -> Just errs
-        Right ty | ty <: ty' -> Nothing
-        Right ty -> Just [pprintType' (out ctxt) ty <> " does not match expected type "
+        Left errs -> Left errs
+        Right ty -> Right ty
+typeCheckAlternative ctxt envs ts (Just ty') =
+    case typeSynthTerms ctxt envs ts of
+        Left errs -> Left errs
+        Right ty | subTypeOf (typeDefs envs) ty ty' -> Right ty'
+        Right ty -> Left [pprintType' (out ctxt) ty <> " does not match expected type "
                           <> pprintType' (out ctxt) ty' <> " in rule "
                           <> ntOut ctxt (currentRule ctxt) <> "."]
 
@@ -245,20 +316,26 @@ typeSynthTerm ctxt envs rows (Repeat (nt, _) es l r x l0 r0) =
         (Nothing, Nothing) ->
             case typeCheckRuleInvoke ctxt envs nt es l r of
                 Left errs -> Left errs
-                Right fs ->
-                    case Map.lookup x fs of
-                        Nothing -> Left [out ctxt x <> " is not a field on " <> ntOut ctxt nt]
-                        Just ty -> Right (Map.insert (values ctxt) (ArrayTy ty) rows)
+                Right (ty', fs)
+                    | x' == "this" -> Right (Map.insert (values ctxt) (ArrayTy ty') rows)
+                    | otherwise ->
+                        case Map.lookup x fs of
+                            Nothing -> Left [out ctxt x <> " is not a field on " <> ntOut ctxt nt]
+                            Just ty -> Right (Map.insert (values ctxt) (ArrayTy ty) rows)
+  where x' = Builder.toLazyByteString (out ctxt x)
 typeSynthTerm ctxt envs rows (RepeatUntil (nt1, _) es1 l r x l0 r0 (nt2, _) es2) =
     case typeCheckRuleInvoke ctxt envs nt2 es2 l0 r0 of
         Left errs -> Left errs
         Right _ ->
             case typeCheckRuleInvoke ctxt envs nt1 es1 l r of
                 Left errs -> Left errs
-                Right fs ->
-                    case Map.lookup x fs of
-                        Nothing -> Left [out ctxt x <> " is not a field on " <> ntOut ctxt nt1]
-                        Just ty -> Right (Map.insert (values ctxt) (ArrayTy ty) rows)
+                Right (ty', fs)
+                    | x' == "this" -> Right (Map.insert (values ctxt) (ArrayTy ty') rows)
+                    | otherwise ->
+                        case Map.lookup x fs of
+                            Nothing -> Left [out ctxt x <> " is not a field on " <> ntOut ctxt nt1]
+                            Just ty -> Right (Map.insert (values ctxt) (ArrayTy ty) rows)
+  where x' = Builder.toLazyByteString (out ctxt x)
 
 typeCheckRuleInvoke
     :: (Ord id, Ord nt, Ord t)
@@ -268,7 +345,7 @@ typeCheckRuleInvoke
     -> [Exp nt t id]
     -> Exp nt t id
     -> Exp nt t id
-    -> Either [Out] (Map.Map id (Ty id))
+    -> Either [Out] (Ty id, Map.Map id (Ty id))
 typeCheckRuleInvoke ctxt envs nt es l r =
     case (typeCheckExp ctxt envs l IntTy, typeCheckExp ctxt envs r IntTy) of
         (Just lerr, Just rerr) -> Left [lerr, rerr]
@@ -278,14 +355,14 @@ typeCheckRuleInvoke ctxt envs nt es l r =
             case traverse (typeSynthExp ctxt envs) es of
                 Left err -> Left [err]
                 Right tys ->
-                    case Map.lookup nt (ruleDecls envs) of
+                    case Map.lookup nt (ruleTypes envs) of
                         Nothing -> Left ["Unknown rule " <> ntOut ctxt nt]
-                        Just (tys', RowTy fs)
-                            | and (zipWith (<:) tys (map (groundType (tyEnv envs)) tys')) ->
-                                Right fs
+                        Just (tys', ty')
+                            | and (zipWith (subTypeOf (typeDefs envs)) tys tys') ->
+                                Right (ty', fromRowTy (derefTy (typeDefs envs) ty'))
                             | otherwise -> Left ["Type mismatch in arguments when calling "
                                                  <> ntOut ctxt nt]
-                        Just _ -> error "Rule with return type that isn't a row type."
+  where fromRowTy ~(RowTy fs) = fs
 
 typeCheckExp
     :: (Ord id, Ord nt, Ord t)
@@ -297,11 +374,10 @@ typeCheckExp
 typeCheckExp ctxt envs e ty' =
     case typeSynthExp ctxt envs e of
         Left err -> Just err
-        Right ty | ty <: ty' -> Nothing
+        Right ty | subTypeOf (typeDefs envs) ty ty' -> Nothing
                  | otherwise -> Just (pprintType' (out ctxt) ty <> " is not a subtype of "
                                         <> pprintType' (out ctxt) ty')
 
--- typeSynthExp (should) always return dereferenced types.
 typeSynthExp
     :: (Ord id, Ord nt, Ord t)
     => Context nt t id
@@ -321,7 +397,7 @@ typeSynthExp ctxt envs (If b t e) =
                 (Left err, _) -> Left err
                 (_, Left err) -> Left err
                 (Right ty1, Right ty2) ->
-                    case joinTy ty1 ty2 of
+                    case joinTy (typeDefs envs) ty1 ty2 of
                         Nothing -> Left (pprintType' (out ctxt) ty1 <> " and "
                                          <> pprintType' (out ctxt) ty2
                                          <> "don't have a common supertype")
@@ -336,15 +412,15 @@ typeSynthExp ctxt envs (Bin op e1 e2) =
         Right ty1 ->
             case typeSynthExp ctxt envs e2 of
                 Left err -> Left err
-                Right ty2 -> typeSynthBinOp ctxt op ty1 ty2
+                Right ty2 -> typeSynthBinOp ctxt envs op ty1 ty2
 typeSynthExp ctxt envs (Call f es) =
     case traverse (typeSynthExp ctxt envs) es of
         Left err -> Left err
         Right tys ->
-            case Map.lookup f (fTypes envs) of
+            case Map.lookup f (funTypes envs) of
                 Nothing -> Left ("Unknown function " <> tOut ctxt f)
-                Just (tys', ty) | and (zipWith (<:) tys (map (groundType (tyEnv envs)) tys')) ->
-                                    Right (groundType (tyEnv envs) ty)
+                Just (tys', ty) | and (zipWith (subTypeOf (typeDefs envs)) tys tys') ->
+                                    Right ty
                                 | otherwise -> Left ("Type mismatch in arguments when calling "
                                                      <> tOut ctxt f)
 typeSynthExp _ _ (Ref EOI) = Right IntTy
@@ -352,52 +428,50 @@ typeSynthExp _ _ (Ref (Start _)) = Right IntTy
 typeSynthExp _ _ (Ref (End _)) = Right IntTy
 typeSynthExp ctxt envs (Ref (Id x)) =
     case Map.lookup x (locals envs) of
-        Just ty -> Right (groundType (tyEnv envs) ty)
-        _ -> case Map.lookup x (cTypes envs) of
-                Just ty -> Right (groundType (tyEnv envs) ty)
+        Just ty -> Right ty
+        _ -> case Map.lookup x (constTypes envs) of
+                Just ty -> Right ty
                 _ -> Left ("Unknown name " <> out ctxt x)
 typeSynthExp ctxt envs (Ref (Attr (nt, _) x))
     | x' == "this" =
-        case Map.lookup nt (ruleDecls envs) of
-            Just (_, ty@(RowTy _)) -> Right ty
-            Just _ -> error "Rule with return type that isn't a row type."
+        case Map.lookup nt (ruleTypes envs) of
+            Just (_, ty) -> Right ty
             Nothing -> Left ("Unknown rule " <> ntOut ctxt nt)
     | x' == "these" =
-        case Map.lookup nt (ruleDecls envs) of
-            Just (_, ty@(RowTy _)) -> Right (ArrayTy ty)
-            Just _ -> error "Rule with return type that isn't a row type."
+        case Map.lookup nt (ruleTypes envs) of
+            Just (_, ty) -> Right (ArrayTy ty)
             Nothing -> Left ("Unknown rule " <> ntOut ctxt nt)
   where x' = Builder.toLazyByteString (out ctxt x)
 typeSynthExp ctxt envs (Ref (Attr (nt, _) x)) =
-    case Map.lookup nt (ruleDecls envs) of
-        Just (_, ty'@(RowTy fs)) ->
+    case fmap (derefTy (typeDefs envs)) <$> Map.lookup nt (ruleTypes envs) of
+        Just (_, ~ty'@(RowTy fs)) ->
             case Map.lookup x fs of
-                Just ty -> Right (groundType (tyEnv envs) ty)
+                Just ty -> Right ty
                 Nothing -> Left ("Field " <> out ctxt x <> " not a field on type "
                                  <> pprintType' (out ctxt) ty')
-        Just _ -> error "Rule with return type that isn't a row type."
+        -- Just _ -> error "Rule with return type that isn't a row type."
         Nothing -> Left ("Unknown rule " <> ntOut ctxt nt)
 typeSynthExp ctxt envs (Ref (Index (nt, _) e x))
     | x' == "this" =
         case typeCheckExp ctxt envs e IntTy of
             Just err -> Left err
             Nothing ->
-                case Map.lookup nt (ruleDecls envs) of
-                    Just (_, ty@(RowTy _)) -> Right ty
-                    Just _ -> error "Rule with return type that isn't a row type."
+                case Map.lookup nt (ruleTypes envs) of
+                    Just (_, ty) -> Right ty
+                    -- Just _ -> error "Rule with return type that isn't a row type."
                     Nothing -> Left ("Unknown rule " <> ntOut ctxt nt)
   where x' = Builder.toLazyByteString (out ctxt x)
 typeSynthExp ctxt envs (Ref (Index (nt, _) e x)) =
     case typeCheckExp ctxt envs e IntTy of
         Just err -> Left err
         Nothing ->
-            case Map.lookup nt (ruleDecls envs) of
-                Just (_, ty'@(RowTy fs)) ->
+            case fmap (derefTy (typeDefs envs)) <$> Map.lookup nt (ruleTypes envs) of
+                Just (_, ~ty'@(RowTy fs)) ->
                     case Map.lookup x fs of
-                        Just ty -> Right (groundType (tyEnv envs) ty)
+                        Just ty -> Right ty
                         Nothing -> Left ("Field " <> out ctxt x <> " not a field on type "
                                          <> pprintType' (out ctxt) ty')
-                Just _ -> error "Rule with return type that isn't a row type."
+                -- Just _ -> error "Rule with return type that isn't a row type."
                 Nothing -> Left ("Unknown rule " <> ntOut ctxt nt)
 
 typeSynthUnOp :: UnOp -> Ty id -> Either Out (Ty id)
@@ -410,82 +484,89 @@ typeSynthUnOp BitwiseNeg BoolTy = Right BoolTy
 typeSynthUnOp BitwiseNeg IntTy = Right IntTy
 typeSynthUnOp BitwiseNeg _ = Left "Bitwise negation expects an integer or boolean argument"
 
-typeSynthBinOp :: (Ord id) => Context nt t id -> BinOp -> Ty id -> Ty id -> Either Out (Ty id)
-typeSynthBinOp ctxt LessThan ty1 ty2 =
-    case joinTy ty1 ty2 of
+typeSynthBinOp
+    :: (Ord id)
+    => Context nt t id
+    -> Environments nt t id
+    -> BinOp
+    -> Ty id
+    -> Ty id
+    -> Either Out (Ty id)
+typeSynthBinOp ctxt envs LessThan ty1 ty2 =
+    case joinTy (typeDefs envs) ty1 ty2 of
         Just ty | isOrderable ty -> Right BoolTy
                 | otherwise -> Left (pprintType' (out ctxt) ty <> " isn't an orderable type")
         Nothing -> Left "< expects comparable types"
-typeSynthBinOp ctxt LTE ty1 ty2 =
-    case joinTy ty1 ty2 of
+typeSynthBinOp ctxt envs LTE ty1 ty2 =
+    case joinTy (typeDefs envs) ty1 ty2 of
         Just ty | isOrderable ty -> Right BoolTy
                 | otherwise -> Left (pprintType' (out ctxt) ty <> " isn't an orderable type")
         Nothing -> Left "<= expects comparable types"
-typeSynthBinOp ctxt GreaterThan ty1 ty2 =
-    case joinTy ty1 ty2 of
+typeSynthBinOp ctxt envs GreaterThan ty1 ty2 =
+    case joinTy (typeDefs envs) ty1 ty2 of
         Just ty | isOrderable ty -> Right BoolTy
                 | otherwise -> Left (pprintType' (out ctxt) ty <> " isn't an orderable type")
         Nothing -> Left "> expects comparable types"
-typeSynthBinOp ctxt GTE ty1 ty2 =
-    case joinTy ty1 ty2 of
+typeSynthBinOp ctxt envs GTE ty1 ty2 =
+    case joinTy (typeDefs envs) ty1 ty2 of
         Just ty | isOrderable ty -> Right BoolTy
                 | otherwise -> Left (pprintType' (out ctxt) ty <> " isn't an orderable type")
         Nothing -> Left ">= expects comparable types"
-typeSynthBinOp ctxt Equal ty1 ty2 =
-    case joinTy ty1 ty2 of
+typeSynthBinOp ctxt envs Equal ty1 ty2 =
+    case joinTy (typeDefs envs) ty1 ty2 of
         Just ty | isEquatable ty -> Right BoolTy
                 | otherwise -> Left (pprintType' (out ctxt) ty <> " isn't an equatable type")
         Nothing -> Left "== expects comparable types"
-typeSynthBinOp ctxt NotEqual ty1 ty2 =
-    case joinTy ty1 ty2 of
+typeSynthBinOp ctxt envs NotEqual ty1 ty2 =
+    case joinTy (typeDefs envs) ty1 ty2 of
         Just ty | isEquatable ty -> Right BoolTy
                 | otherwise -> Left (pprintType' (out ctxt) ty <> " isn't an equatable type")
         Nothing -> Left "!= expects comparable types"
-typeSynthBinOp _ And BoolTy BoolTy = Right BoolTy
-typeSynthBinOp _ And _ _ = Left "&& expects boolean arguments"
-typeSynthBinOp _ Or BoolTy BoolTy = Right BoolTy
-typeSynthBinOp _ Or _ _ = Left "|| expects boolean arguments"
-typeSynthBinOp _ BitwiseAnd BoolTy BoolTy = Right BoolTy
-typeSynthBinOp _ BitwiseAnd IntTy IntTy = Right IntTy
-typeSynthBinOp _ BitwiseAnd _ _ = Left "& expects matching boolean or integer arguments"
-typeSynthBinOp _ BitwiseXor BoolTy BoolTy = Right BoolTy
-typeSynthBinOp _ BitwiseXor IntTy IntTy = Right IntTy
-typeSynthBinOp _ BitwiseXor _ _ = Left "^ expects matching boolean or integer arguments"
-typeSynthBinOp _ BitwiseOr BoolTy BoolTy = Right BoolTy
-typeSynthBinOp _ BitwiseOr IntTy IntTy = Right IntTy
-typeSynthBinOp _ BitwiseOr _ _ = Left "| expects matching boolean or integer arguments"
-typeSynthBinOp _ LSh IntTy IntTy = Right IntTy
-typeSynthBinOp _ LSh _ _ = Left "<< expects integer arguments"
-typeSynthBinOp _ RSh IntTy IntTy = Right IntTy
-typeSynthBinOp _ RSh _ _ = Left ">> expects integer arguments"
-typeSynthBinOp _ Add IntTy IntTy = Right IntTy
-typeSynthBinOp _ Add IntTy FloatTy = Right FloatTy
-typeSynthBinOp _ Add FloatTy IntTy = Right FloatTy
-typeSynthBinOp _ Add FloatTy FloatTy = Right FloatTy
-typeSynthBinOp _ Add StringTy StringTy = Right StringTy
-typeSynthBinOp _ Add _ _ = Left "Addition expects matching numeric or string arguments"
-typeSynthBinOp _ Sub IntTy IntTy = Right IntTy
-typeSynthBinOp _ Sub IntTy FloatTy = Right FloatTy
-typeSynthBinOp _ Sub FloatTy IntTy = Right FloatTy
-typeSynthBinOp _ Sub FloatTy FloatTy = Right FloatTy
-typeSynthBinOp _ Sub _ _ = Left "Subtraction expects numeric arguments"
-typeSynthBinOp _ Mul IntTy IntTy = Right IntTy
-typeSynthBinOp _ Mul IntTy FloatTy = Right FloatTy
-typeSynthBinOp _ Mul FloatTy IntTy = Right FloatTy
-typeSynthBinOp _ Mul FloatTy FloatTy = Right FloatTy
-typeSynthBinOp _ Mul _ _ = Left "Multiplication expects numeric arguments"
-typeSynthBinOp _ Exp IntTy IntTy = Right FloatTy
-typeSynthBinOp _ Exp IntTy FloatTy = Right FloatTy
-typeSynthBinOp _ Exp FloatTy IntTy = Right FloatTy
-typeSynthBinOp _ Exp FloatTy FloatTy = Right FloatTy
-typeSynthBinOp _ Exp _ _ = Left "Exponentiation expects numeric arguments"
-typeSynthBinOp _ Div IntTy IntTy = Right IntTy
-typeSynthBinOp _ Div IntTy FloatTy = Right FloatTy
-typeSynthBinOp _ Div FloatTy IntTy = Right FloatTy
-typeSynthBinOp _ Div FloatTy FloatTy = Right FloatTy
-typeSynthBinOp _ Div _ _ = Left "Division expects numeric arguments"
-typeSynthBinOp _ Mod IntTy IntTy = Right IntTy
-typeSynthBinOp _ Mod _ _ = Left "% expects integer arguments"
-typeSynthBinOp _ At StringTy IntTy = Right IntTy
-typeSynthBinOp _ At (ArrayTy ty) IntTy = Right ty
-typeSynthBinOp _ At _ _ = Left "Indexing expects a string or sequence first argument and an integer second argument"
+typeSynthBinOp _ _ And BoolTy BoolTy = Right BoolTy
+typeSynthBinOp _ _ And _ _ = Left "&& expects boolean arguments"
+typeSynthBinOp _ _ Or BoolTy BoolTy = Right BoolTy
+typeSynthBinOp _ _ Or _ _ = Left "|| expects boolean arguments"
+typeSynthBinOp _ _ BitwiseAnd BoolTy BoolTy = Right BoolTy
+typeSynthBinOp _ _ BitwiseAnd IntTy IntTy = Right IntTy
+typeSynthBinOp _ _ BitwiseAnd _ _ = Left "& expects matching boolean or integer arguments"
+typeSynthBinOp _ _ BitwiseXor BoolTy BoolTy = Right BoolTy
+typeSynthBinOp _ _ BitwiseXor IntTy IntTy = Right IntTy
+typeSynthBinOp _ _ BitwiseXor _ _ = Left "^ expects matching boolean or integer arguments"
+typeSynthBinOp _ _ BitwiseOr BoolTy BoolTy = Right BoolTy
+typeSynthBinOp _ _ BitwiseOr IntTy IntTy = Right IntTy
+typeSynthBinOp _ _ BitwiseOr _ _ = Left "| expects matching boolean or integer arguments"
+typeSynthBinOp _ _ LSh IntTy IntTy = Right IntTy
+typeSynthBinOp _ _ LSh _ _ = Left "<< expects integer arguments"
+typeSynthBinOp _ _ RSh IntTy IntTy = Right IntTy
+typeSynthBinOp _ _ RSh _ _ = Left ">> expects integer arguments"
+typeSynthBinOp _ _ Add IntTy IntTy = Right IntTy
+typeSynthBinOp _ _ Add IntTy FloatTy = Right FloatTy
+typeSynthBinOp _ _ Add FloatTy IntTy = Right FloatTy
+typeSynthBinOp _ _ Add FloatTy FloatTy = Right FloatTy
+typeSynthBinOp _ _ Add StringTy StringTy = Right StringTy
+typeSynthBinOp _ _ Add _ _ = Left "Addition expects matching numeric or string arguments"
+typeSynthBinOp _ _ Sub IntTy IntTy = Right IntTy
+typeSynthBinOp _ _ Sub IntTy FloatTy = Right FloatTy
+typeSynthBinOp _ _ Sub FloatTy IntTy = Right FloatTy
+typeSynthBinOp _ _ Sub FloatTy FloatTy = Right FloatTy
+typeSynthBinOp _ _ Sub _ _ = Left "Subtraction expects numeric arguments"
+typeSynthBinOp _ _ Mul IntTy IntTy = Right IntTy
+typeSynthBinOp _ _ Mul IntTy FloatTy = Right FloatTy
+typeSynthBinOp _ _ Mul FloatTy IntTy = Right FloatTy
+typeSynthBinOp _ _ Mul FloatTy FloatTy = Right FloatTy
+typeSynthBinOp _ _ Mul _ _ = Left "Multiplication expects numeric arguments"
+typeSynthBinOp _ _ Exp IntTy IntTy = Right FloatTy
+typeSynthBinOp _ _ Exp IntTy FloatTy = Right FloatTy
+typeSynthBinOp _ _ Exp FloatTy IntTy = Right FloatTy
+typeSynthBinOp _ _ Exp FloatTy FloatTy = Right FloatTy
+typeSynthBinOp _ _ Exp _ _ = Left "Exponentiation expects numeric arguments"
+typeSynthBinOp _ _ Div IntTy IntTy = Right IntTy
+typeSynthBinOp _ _ Div IntTy FloatTy = Right FloatTy
+typeSynthBinOp _ _ Div FloatTy IntTy = Right FloatTy
+typeSynthBinOp _ _ Div FloatTy FloatTy = Right FloatTy
+typeSynthBinOp _ _ Div _ _ = Left "Division expects numeric arguments"
+typeSynthBinOp _ _ Mod IntTy IntTy = Right IntTy
+typeSynthBinOp _ _ Mod _ _ = Left "% expects integer arguments"
+typeSynthBinOp _ _ At StringTy IntTy = Right IntTy
+typeSynthBinOp _ _ At (ArrayTy ty) IntTy = Right ty
+typeSynthBinOp _ _ At _ _ = Left "Indexing expects a string or sequence first argument and an integer second argument"

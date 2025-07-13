@@ -166,7 +166,7 @@ Declarations :: { [Declaration'] }
 Declaration :: { Declaration' }
     : MetaTags name ParamList '->' Alternatives ';' { RuleDef (Rule $1 $2 $3 (reverse $5)) }
     | typedef name ParamList '=' Type ';' { TypeDeclaration $2 $3 $5 }
-    | rule name TypedParamList ':' Type ';' { RuleDeclaration $2 $3 $5 }
+    | rule name TypedParamList MaybeType ';' { RuleDeclaration $2 $3 $4 }
     | const name MaybeType '=' Exp ';' { ConstDeclaration $2 $3 $5 }
     | function name TypedParamList ':' Type ';' { FunctionDeclaration $2 $3 $5 }
 
@@ -196,7 +196,6 @@ TypedParams :: { [(IdType, Ty')] }
 MaybeType :: { Maybe Ty' }
     : ':' Type { Just $2 }
     | {- empty -} { Nothing }
-
 
 Alternatives :: { [Alternative'] }
     : Alternative { [$1] }

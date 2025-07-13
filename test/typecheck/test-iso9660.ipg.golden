@@ -1,0 +1,488 @@
+const LOGICAL_SECTOR_SIZE: Int = 2048;
+
+function asHex(bs: String): String;
+
+function decodeAscii(bs: String): String;
+
+function decodeAscii2(bs: [Int]): String;
+
+function getPrimaryDescriptor(descriptors: [VolumeDescriptor]): PrimaryVolumeDescriptor;
+
+function length(xs: [{}]): Int;
+
+function getBool(o: {}, f: String): Bool;
+
+function getInt(o: {}, f: String): Int;
+
+function getRecord(o: {}, f: String): DirectoryRecord;
+
+rule ISO9660: { descriptors: [{ descriptorType: String }], directories: [{ values: [DirectoryRecord] }], directoriesRecursive: { offset: Int, record: DirectoryRecord }, logicalBlockSize: Int, pathTableLocation: Int, pathTableOffset: Int, pathTableSize: Int, paths: [PathTableRecord], primaryDescriptor: PrimaryVolumeDescriptor };
+
+%export
+ISO9660
+  -> VolumeDescriptors@0[16 * LOGICAL_SECTOR_SIZE, EOI]
+     { descriptors = VolumeDescriptors@0.values }
+     { primaryDescriptor = getPrimaryDescriptor(descriptors) }
+     { logicalBlockSize = getInt(primaryDescriptor, "logicalBlockSize") }
+     DirectoriesRecursive@0(logicalBlockSize, getRecord(primaryDescriptor, "rootDirectoryRecord"))[0, EOI]
+     { directoriesRecursive = DirectoriesRecursive@0.this }
+     { pathTableLocation = getInt(primaryDescriptor, "locationOfTypeLPathTable") }
+     { pathTableSize = getInt(primaryDescriptor, "pathTableSize") }
+     { pathTableOffset = logicalBlockSize * pathTableLocation }
+     LPathTableRecords@0[pathTableOffset, pathTableOffset + pathTableSize]
+     { paths = LPathTableRecords@0.values }
+     for i = 0 to length(paths) do DirectoryRecords@0[logicalBlockSize * getInt(paths[i], "locationOfExtent"), logicalBlockSize * getInt(paths[i], "locationOfExtent") + LOGICAL_SECTOR_SIZE]
+     { directories = DirectoryRecords@0.these };
+
+rule VolumeDescriptors: { values: [{ descriptorType: String }] };
+
+VolumeDescriptors
+  -> repeat VolumeDescriptor@0[VolumeDescriptor@0.START + LOGICAL_SECTOR_SIZE, VolumeDescriptor@0.START + 2 * LOGICAL_SECTOR_SIZE].descriptor starting on [0, LOGICAL_SECTOR_SIZE] until VolumeDescriptorSetTerminator@0;
+
+typedef VolumeDescriptor = { descriptorType: String };
+
+rule VolumeDescriptor: { descriptor: { descriptorType: String } };
+
+VolumeDescriptor
+  -> PrimaryVolumeDescriptor@0[0, EOI]
+     { descriptor = PrimaryVolumeDescriptor@0.this }
+   / SupplementaryOrEnhancedVolumeDescriptor@0[0, EOI]
+     { descriptor = SupplementaryOrEnhancedVolumeDescriptor@0.this }
+   / VolumePartitionDescriptor@0[0, EOI]
+     { descriptor = VolumePartitionDescriptor@0.this }
+   / BootRecord@0[0, EOI]
+     { descriptor = BootRecord@0.this }
+   / VolumeDescriptorSetTerminator@0[0, EOI]
+     { descriptor = VolumeDescriptorSetTerminator@0.this }
+   / UnknownVolumeDescriptor@0[0, EOI]
+     { descriptor = UnknownVolumeDescriptor@0.this };
+
+typedef PrimaryVolumeDescriptor = { abstractFileIdentifier: String, applicationIdentifier: String, applicationUse: String, bibliographicFileIdentifier: String, copyrightFileIdentifier: String, dataPreparerIdentifier: String, descriptorType: String, locationOfOptionalTypeLPathTable: Int, locationOfOptionalTypeMPathTable: Int, locationOfTypeLPathTable: Int, locationOfTypeMPathTable: Int, logicalBlockSize: Int, pathTableSize: Int, publisherIdentifier: String, rootDirectoryRecord: DirectoryRecord, systemIdentifier: String, volumeCreationDateAndTime: DateAndTime, volumeEffectiveDateAndTime: DateAndTime, volumeExpirationDateAndTime: DateAndTime, volumeIdentifier: String, volumeModificationDateAndTime: DateAndTime, volumeSequenceNumber: Int, volumeSetIdentifier: String, volumeSetSize: Int, volumeSpaceSize: Int };
+
+rule PrimaryVolumeDescriptor: PrimaryVolumeDescriptor;
+
+PrimaryVolumeDescriptor
+  -> "\x01CD001\x01\x00"[0, 8]
+     { descriptorType = "Primary Volume Descriptor" }
+     AChars@0[8, 40]
+     { systemIdentifier = AChars@0.value }
+     DChars@0[AChars@0.END, AChars@0.END + 32]
+     { volumeIdentifier = DChars@0.value }
+     NULBytes@0[DChars@0.END, DChars@0.END + 8]
+     BB_U32@0[NULBytes@0.END, EOI]
+     { volumeSpaceSize = BB_U32@0.value }
+     NULBytes@1[BB_U32@0.END, BB_U32@0.END + 32]
+     BB_U16@0[NULBytes@1.END, NULBytes@1.END + 4]
+     { volumeSetSize = BB_U16@0.value }
+     BB_U16@1[BB_U16@0.END, BB_U16@0.END + 4]
+     { volumeSequenceNumber = BB_U16@1.value }
+     BB_U16@2[BB_U16@1.END, BB_U16@1.END + 4]
+     { logicalBlockSize = BB_U16@2.value }
+     BB_U32@1[BB_U16@2.END, BB_U16@2.END + 8]
+     { pathTableSize = BB_U32@1.value }
+     LE_U32@0[BB_U32@1.END, BB_U32@1.END + 4]
+     { locationOfTypeLPathTable = LE_U32@0.value }
+     LE_U32@1[LE_U32@0.END, LE_U32@0.END + 4]
+     { locationOfOptionalTypeLPathTable = LE_U32@1.value }
+     BE_U32@0[LE_U32@1.END, LE_U32@1.END + 4]
+     { locationOfTypeMPathTable = BE_U32@0.value }
+     BE_U32@1[BE_U32@0.END, BE_U32@0.END + 4]
+     { locationOfOptionalTypeMPathTable = BE_U32@1.value }
+     DirectoryRecord@0[BE_U32@1.END, BE_U32@1.END + 34]
+     { rootDirectoryRecord = DirectoryRecord@0.this }
+     DChars@1[190, 318]
+     { volumeSetIdentifier = DChars@1.value }
+     AChars@1[DChars@1.END, DChars@1.END + 128]
+     { publisherIdentifier = AChars@1.value }
+     AChars@2[AChars@1.END, AChars@1.END + 128]
+     { dataPreparerIdentifier = AChars@2.value }
+     AChars@3[AChars@2.END, AChars@2.END + 128]
+     { applicationIdentifier = AChars@3.value }
+     DChars@2[AChars@3.END, AChars@3.END + 37]
+     { copyrightFileIdentifier = DChars@2.value }
+     DChars@3[DChars@2.END, DChars@2.END + 37]
+     { abstractFileIdentifier = DChars@3.value }
+     DChars@4[DChars@3.END, DChars@3.END + 37]
+     { bibliographicFileIdentifier = DChars@4.value }
+     DateAndTime@0[DChars@4.END, DChars@4.END + 17]
+     { volumeCreationDateAndTime = DateAndTime@0.this }
+     DateAndTime@1[DateAndTime@0.END, DateAndTime@0.END + 17]
+     { volumeModificationDateAndTime = DateAndTime@1.this }
+     DateAndTime@2[DateAndTime@1.END, DateAndTime@1.END + 17]
+     { volumeExpirationDateAndTime = DateAndTime@2.this }
+     DateAndTime@3[DateAndTime@2.END, DateAndTime@2.END + 17]
+     { volumeEffectiveDateAndTime = DateAndTime@3.this }
+     "\x01"[DateAndTime@3.END, DateAndTime@3.END + 1]
+     "\x00"[DateAndTime@3.END + 1, DateAndTime@3.END + 2]
+     HexBytes@0[DateAndTime@3.END + 2, DateAndTime@3.END + 514]
+     { applicationUse = HexBytes@0.value }
+     NULBytes@2[HexBytes@0.END, EOI];
+
+rule SupplementaryOrEnhancedVolumeDescriptor: { abstractFileIdentifier: String, applicationIdentifier: String, applicationUse: String, bibliographicFileIdentifier: String, copyrightFileIdentifier: String, dataPreparerIdentifier: String, descriptorType: String, escapeSequences: String, fileStructureVersion: Int, locationOfOptionalTypeLPathTable: Int, locationOfOptionalTypeMPathTable: Int, locationOfTypeLPathTable: Int, locationOfTypeMPathTable: Int, logicalBlockSize: Int, pathTableSize: Int, publisherIdentifier: String, rootDirectoryRecord: DirectoryRecord, systemIdentifier: String, volumeCreationDateAndTime: DateAndTime, volumeDescriptorVersion: Int, volumeEffectiveDateAndTime: DateAndTime, volumeExpirationDateAndTime: DateAndTime, volumeFlags: Int, volumeIdentifier: String, volumeModificationDateAndTime: DateAndTime, volumeSequenceNumber: Int, volumeSetIdentifier: String, volumeSetSize: Int, volumeSpaceSize: Int };
+
+SupplementaryOrEnhancedVolumeDescriptor
+  -> "\x02CD001"[0, 6]
+     { volumeDescriptorVersion = .[6] }
+     ?[ volumeDescriptorVersion == 1 || volumeDescriptorVersion == 2 ]
+     { descriptorType = volumeDescriptorVersion == 1 ? "Supplementary Volume Descriptor" : "Enhanced Volume Descriptor" }
+     { volumeFlags = .[7] }
+     String@0[8, 40]
+     { systemIdentifier = String@0.value }
+     String@1[String@0.END, String@0.END + 32]
+     { volumeIdentifier = String@1.value }
+     NULBytes@0[String@1.END, String@1.END + 8]
+     BB_U32@0[NULBytes@0.END, EOI]
+     { volumeSpaceSize = BB_U32@0.value }
+     HexBytes@0[BB_U32@0.END, BB_U32@0.END + 32]
+     { escapeSequences = HexBytes@0.value }
+     BB_U16@0[HexBytes@0.END, HexBytes@0.END + 4]
+     { volumeSetSize = BB_U16@0.value }
+     BB_U16@1[BB_U16@0.END, BB_U16@0.END + 4]
+     { volumeSequenceNumber = BB_U16@1.value }
+     BB_U16@2[BB_U16@1.END, BB_U16@1.END + 4]
+     { logicalBlockSize = BB_U16@2.value }
+     BB_U32@1[BB_U16@2.END, BB_U16@2.END + 8]
+     { pathTableSize = BB_U32@1.value }
+     LE_U32@0[BB_U32@1.END, BB_U32@1.END + 4]
+     { locationOfTypeLPathTable = LE_U32@0.value }
+     LE_U32@1[LE_U32@0.END, LE_U32@0.END + 4]
+     { locationOfOptionalTypeLPathTable = LE_U32@1.value }
+     BE_U32@0[LE_U32@1.END, LE_U32@1.END + 4]
+     { locationOfTypeMPathTable = BE_U32@0.value }
+     BE_U32@1[BE_U32@0.END, BE_U32@0.END + 4]
+     { locationOfOptionalTypeMPathTable = BE_U32@1.value }
+     DirectoryRecord@0[BE_U32@1.END, BE_U32@1.END + 34]
+     { rootDirectoryRecord = DirectoryRecord@0.this }
+     String@2[190, 318]
+     { volumeSetIdentifier = String@2.value }
+     String@3[String@2.END, String@2.END + 128]
+     { publisherIdentifier = String@3.value }
+     String@4[String@3.END, String@3.END + 128]
+     { dataPreparerIdentifier = String@4.value }
+     String@5[String@4.END, String@4.END + 128]
+     { applicationIdentifier = String@5.value }
+     String@6[String@5.END, String@5.END + 37]
+     { copyrightFileIdentifier = String@6.value }
+     String@7[String@6.END, String@6.END + 37]
+     { abstractFileIdentifier = String@7.value }
+     String@8[String@7.END, String@7.END + 37]
+     { bibliographicFileIdentifier = String@8.value }
+     DateAndTime@0[String@8.END, String@8.END + 17]
+     { volumeCreationDateAndTime = DateAndTime@0.this }
+     DateAndTime@1[DateAndTime@0.END, DateAndTime@0.END + 17]
+     { volumeModificationDateAndTime = DateAndTime@1.this }
+     DateAndTime@2[DateAndTime@1.END, DateAndTime@1.END + 17]
+     { volumeExpirationDateAndTime = DateAndTime@2.this }
+     DateAndTime@3[DateAndTime@2.END, DateAndTime@2.END + 17]
+     { volumeEffectiveDateAndTime = DateAndTime@3.this }
+     { fileStructureVersion = .[DateAndTime@3.END] }
+     "\x00"[DateAndTime@3.END + 1, DateAndTime@3.END + 2]
+     HexBytes@1[DateAndTime@3.END + 2, DateAndTime@3.END + 514]
+     { applicationUse = HexBytes@1.value }
+     NULBytes@1[HexBytes@1.END, EOI];
+
+rule VolumePartitionDescriptor: { descriptorType: String, systemIdentifier: String, systemUse: String, volumePartitionIdentifier: String, volumePartitionLocation: Int, volumePartitionSize: Int };
+
+VolumePartitionDescriptor
+  -> "\x03CD001\x01\x00"[0, 8]
+     { descriptorType = "Volume Partition Descriptor" }
+     AChars@0[8, 40]
+     { systemIdentifier = AChars@0.value }
+     DChars@0[AChars@0.END, AChars@0.END + 32]
+     { volumePartitionIdentifier = DChars@0.value }
+     BB_U32@0[DChars@0.END, EOI]
+     { volumePartitionLocation = BB_U32@0.value }
+     BB_U32@1[BB_U32@0.END, EOI]
+     { volumePartitionSize = BB_U32@1.value }
+     HexBytes@0[BB_U32@1.END, EOI]
+     { systemUse = HexBytes@0.value };
+
+rule BootRecord: { bootIdentifier: String, bootSystemIdentifier: String, descriptorType: String, systemUse: String };
+
+BootRecord
+  -> "\x00CD001\x01"[0, 7]
+     { descriptorType = "Boot Record" }
+     AChars@0[7, 39]
+     { bootSystemIdentifier = AChars@0.value }
+     AChars@1[AChars@0.END, AChars@0.END + 32]
+     { bootIdentifier = AChars@1.value }
+     HexBytes@0[AChars@1.END, EOI]
+     { systemUse = HexBytes@0.value };
+
+rule VolumeDescriptorSetTerminator: { descriptorType: String };
+
+VolumeDescriptorSetTerminator
+  -> "\xffCD001\x01"[0, 7]
+     { descriptorType = "Volume Descriptor Set Terminator" }
+     NULBytes@0[7, EOI];
+
+rule UnknownVolumeDescriptor: { data: String, descriptorType: String, typeByte: Int, version: Int };
+
+UnknownVolumeDescriptor
+  -> { typeByte = .[0] }
+     "CD001"[1, 6]
+     { version = .[6] }
+     { data = *[7, EOI] }
+     { descriptorType = "Unknown Volume Descriptor" };
+
+rule DirectoriesRecursive(logicalBlockSize: Int, node: DirectoryRecord): { offset: Int, record: DirectoryRecord };
+
+DirectoriesRecursive(logicalBlockSize, node)
+  -> ?[ getBool(node, "isDirectory") ]
+     { offset = logicalBlockSize * getInt(node, "locationOfExtent") }
+     { record = node }
+     DirectoryRecords@0[offset, offset + getInt(node, "dataLength")]
+     for i = 2 to length(DirectoryRecords@0.values) do DirectoriesRecursive@0(logicalBlockSize, DirectoryRecords@0.values[i])[0, EOI]
+     { children = DirectoriesRecursive@0.these }
+   / { offset = logicalBlockSize * getInt(node, "locationOfExtent") }
+     { record = node };
+
+rule DirectoryRecords: { values: [DirectoryRecord] };
+
+DirectoryRecords
+  -> repeat DirectoryRecord@0[DirectoryRecord@0.END, EOI].this starting on [0, EOI];
+
+typedef DirectoryRecord = { dataLength: Int, extendedAttributeRecordLength: Int, fileIdentifier: String, fileUnitSize: Int, hasPermissions: Bool, interleaveGapSize: Int, isAssociatedFile: Bool, isDirectory: Bool, isHidden: Bool, isMultiExtent: Bool, isRecord: Bool, length: Int, lengthOfFileIdentifier: Int, locationOfExtent: Int, recordingDateAndTime: RecordingDateAndTime, systemUse: String, volumeSequenceNumber: Int };
+
+rule DirectoryRecord: DirectoryRecord;
+
+DirectoryRecord
+  -> { length = .[0] }
+     ?[ length > 0 ]
+     { extendedAttributeRecordLength = .[1] }
+     BB_U32@0[2, EOI]
+     { locationOfExtent = BB_U32@0.value }
+     BB_U32@1[BB_U32@0.END, EOI]
+     { dataLength = BB_U32@1.value }
+     RecordingDateAndTime@0[BB_U32@1.END, BB_U32@1.END + 7]
+     { recordingDateAndTime = RecordingDateAndTime@0.this }
+     Byte@0[RecordingDateAndTime@0.END, EOI]
+     { isHidden = (1 & Byte@0.value) != 0 }
+     { isDirectory = (2 & Byte@0.value) != 0 }
+     { isAssociatedFile = (4 & Byte@0.value) != 0 }
+     { isRecord = (8 & Byte@0.value) != 0 }
+     { hasPermissions = (16 & Byte@0.value) != 0 }
+     { isMultiExtent = (128 & Byte@0.value) != 0 }
+     { fileUnitSize = .[Byte@0.END] }
+     { interleaveGapSize = .[Byte@0.END + 1] }
+     BB_U16@0[Byte@0.END + 2, EOI]
+     { volumeSequenceNumber = BB_U16@0.value }
+     { lengthOfFileIdentifier = .[BB_U16@0.END] }
+     String@0[BB_U16@0.END + 1, BB_U16@0.END + 1 + lengthOfFileIdentifier]
+     { fileIdentifier = String@0.value }
+     EvenPadByte@0(lengthOfFileIdentifier)[String@0.END, EOI]
+     HexBytes@0[EvenPadByte@0.END, length]
+     { systemUse = HexBytes@0.value };
+
+typedef RecordingDateAndTime = { day: Int, gmtOffset: Int, hour: Int, minute: Int, month: Int, second: Int, year: Int };
+
+rule RecordingDateAndTime: RecordingDateAndTime;
+
+RecordingDateAndTime
+  -> Byte@0[0, EOI]
+     { year = Byte@0.value + 1900 }
+     { month = .[Byte@0.END] }
+     { day = .[Byte@0.END + 1] }
+     { hour = .[Byte@0.END + 2] }
+     { minute = .[Byte@0.END + 3] }
+     { second = .[Byte@0.END + 4] }
+     { gmtOffset = .[Byte@0.END + 5] };
+
+typedef PathTableRecord = { directoryIdentifier: String, extendedAttributeRecordLength: Int, lengthOfDirectoryIdentifier: Int, locationOfExtent: Int, parentDirectoryNumber: Int };
+
+rule LPathTableRecords: { values: [PathTableRecord] };
+
+LPathTableRecords
+  -> repeat LPathTableRecord@0[LPathTableRecord@0.END, EOI].this starting on [0, EOI];
+
+rule LPathTableRecord: PathTableRecord;
+
+LPathTableRecord
+  -> { lengthOfDirectoryIdentifier = .[0] }
+     { extendedAttributeRecordLength = .[1] }
+     LE_U32@0[2, EOI]
+     { locationOfExtent = LE_U32@0.value }
+     LE_U16@0[LE_U32@0.END, EOI]
+     { parentDirectoryNumber = LE_U16@0.value }
+     String@0[LE_U16@0.END, LE_U16@0.END + lengthOfDirectoryIdentifier]
+     { directoryIdentifier = String@0.value }
+     OddPadByte@0(lengthOfDirectoryIdentifier)[String@0.END, EOI];
+
+rule MPathTableRecords: { values: [PathTableRecord] };
+
+MPathTableRecords
+  -> repeat MPathTableRecord@0[MPathTableRecord@0.END, EOI].this starting on [0, EOI];
+
+rule MPathTableRecord: PathTableRecord;
+
+MPathTableRecord
+  -> { lengthOfDirectoryIdentifier = .[0] }
+     { extendedAttributeRecordLength = .[1] }
+     BE_U32@0[2, EOI]
+     { locationOfExtent = BE_U32@0.value }
+     BE_U16@0[BE_U32@0.END, EOI]
+     { parentDirectoryNumber = BE_U16@0.value }
+     String@0[BE_U16@0.END, BE_U16@0.END + lengthOfDirectoryIdentifier]
+     { directoryIdentifier = String@0.value }
+     OddPadByte@0(lengthOfDirectoryIdentifier)[String@0.END, EOI];
+
+rule ExtendedAttributeRecord: { applicationUse: String, escapeSequences: String, fileCreationDateAndTime: DateAndTime, fileEffectiveDateAndTime: DateAndTime, fileExpirationDateAndTime: DateAndTime, fileModificationDateAndTime: DateAndTime, groupIdentification: Int, lengthOfApplicationUse: Int, lengthOfEscapeSequences: Int, ownerIdentification: Int, permissions: Int, recordAttributes: Int, recordFormat: Int, recordLength: Int, systemIdentifier: String, systemUse: String };
+
+ExtendedAttributeRecord
+  -> BB_U16@0[0, EOI]
+     { ownerIdentification = BB_U16@0.value }
+     BB_U16@1[BB_U16@0.END, EOI]
+     { groupIdentification = BB_U16@1.value }
+     BE_U16@0[BB_U16@1.END, EOI]
+     { permissions = BE_U16@0.value }
+     DateAndTime@0[BE_U16@0.END, EOI]
+     { fileCreationDateAndTime = DateAndTime@0.this }
+     DateAndTime@1[DateAndTime@0.END, EOI]
+     { fileModificationDateAndTime = DateAndTime@1.this }
+     DateAndTime@2[DateAndTime@1.END, EOI]
+     { fileExpirationDateAndTime = DateAndTime@2.this }
+     DateAndTime@3[DateAndTime@2.END, EOI]
+     { fileEffectiveDateAndTime = DateAndTime@3.this }
+     { recordFormat = .[DateAndTime@3.END] }
+     { recordAttributes = .[DateAndTime@3.END + 1] }
+     BB_U16@2[DateAndTime@3.END + 2, EOI]
+     { recordLength = BB_U16@2.value }
+     String@0[BB_U16@2.END, BB_U16@2.END + 32]
+     { systemIdentifier = String@0.value }
+     HexBytes@0[String@0.END, String@0.END + 64]
+     { systemUse = HexBytes@0.value }
+     "\x01"[HexBytes@0.END, HexBytes@0.END + 1]
+     { lengthOfEscapeSequences = .[HexBytes@0.END + 1] }
+     NULBytes@0[HexBytes@0.END + 2, HexBytes@0.END + 66]
+     BB_U16@3[NULBytes@0.END, EOI]
+     { lengthOfApplicationUse = BB_U16@3.value }
+     HexBytes@1[BB_U16@3.END, BB_U16@3.END + lengthOfApplicationUse]
+     { applicationUse = HexBytes@1.value }
+     HexBytes@2[HexBytes@1.END, HexBytes@1.END + lengthOfEscapeSequences]
+     { escapeSequences = HexBytes@2.value };
+
+rule EvenPadByte(n: Int): {};
+
+EvenPadByte(n)
+  -> ?[ n % 2 == 0 ]
+     "\x00"[0, 1]
+   / ""[0, 0];
+
+rule OddPadByte(n: Int): {};
+
+OddPadByte(n)
+  -> ?[ n % 2 == 1 ]
+     "\x00"[0, 1]
+   / ""[0, 0];
+
+rule String: { bytes: String, value: String };
+
+String
+  -> { bytes = *[0, EOI] }
+     { value = decodeAscii(bytes) };
+
+rule AChars: { bytes: String, value: String };
+
+AChars
+  -> { bytes = *[0, EOI] }
+     { value = decodeAscii(bytes) };
+
+rule DChars: { bytes: String, value: String };
+
+DChars
+  -> { bytes = *[0, EOI] }
+     { value = decodeAscii(bytes) };
+
+typedef DateAndTime = { day: String, gmtOffset: Int, hour: String, hundrethsOfSecond: String, minute: String, month: String, second: String, year: String };
+
+rule DateAndTime: DateAndTime;
+
+DateAndTime
+  -> Digits@0[0, 4]
+     { year = Digits@0.value }
+     Digits@1[Digits@0.END, Digits@0.END + 2]
+     { month = Digits@1.value }
+     Digits@2[Digits@1.END, Digits@1.END + 2]
+     { day = Digits@2.value }
+     Digits@3[Digits@2.END, Digits@2.END + 2]
+     { hour = Digits@3.value }
+     Digits@4[Digits@3.END, Digits@3.END + 2]
+     { minute = Digits@4.value }
+     Digits@5[Digits@4.END, Digits@4.END + 2]
+     { second = Digits@5.value }
+     Digits@6[Digits@5.END, Digits@5.END + 2]
+     { hundrethsOfSecond = Digits@6.value }
+     { gmtOffset = .[Digits@6.END] };
+
+rule Digits: { value: String, values: [Int] };
+
+Digits
+  -> repeat Digit@0[Digit@0.END, EOI].value starting on [0, EOI]
+     { value = decodeAscii2(values) };
+
+rule Digit: { value: Int };
+
+Digit
+  -> { value = .[0] }
+     ?[ value == 0 || value >= 48 && value <= 57 ];
+
+rule HexBytes: { value: String };
+
+HexBytes
+  -> { bytes = *[0, EOI] }
+     { value = asHex(bytes) };
+
+rule LE_U16: { b: String, value: Int };
+
+LE_U16
+  -> { b = *[0, 2] }
+     { value = b[1] << 8 | b[0] };
+
+rule BE_U16: { b: String, value: Int };
+
+BE_U16
+  -> { b = *[0, 2] }
+     { value = b[0] << 8 | b[1] };
+
+rule BB_U16: { value: Int };
+
+BB_U16
+  -> LE_U16@0[0, EOI]
+     BE_U16@0[LE_U16@0.END, EOI]
+     ?[ LE_U16@0.value == BE_U16@0.value ]
+     { value = LE_U16@0.value };
+
+rule LE_U32: { b: String, value: Int };
+
+LE_U32
+  -> { b = *[0, 4] }
+     { value = b[3] << 24 | b[2] << 16 | b[1] << 8 | b[0] };
+
+rule BE_U32: { b: String, value: Int };
+
+BE_U32
+  -> { b = *[0, 4] }
+     { value = b[0] << 24 | b[1] << 16 | b[2] << 8 | b[3] };
+
+rule BB_U32: { value: Int };
+
+BB_U32
+  -> LE_U32@0[0, EOI]
+     BE_U32@0[LE_U32@0.END, EOI]
+     ?[ LE_U32@0.value == BE_U32@0.value ]
+     { value = LE_U32@0.value };
+
+rule NULBytes: {};
+
+NULBytes
+  -> repeat NUL_BYTE@0[NUL_BYTE@0.END, EOI].this starting on [0, EOI];
+
+rule NUL_BYTE: {};
+
+NUL_BYTE
+  -> "\x00"[0, 1];
+
+rule Byte: { value: Int };
+
+Byte
+  -> { value = .[0] };

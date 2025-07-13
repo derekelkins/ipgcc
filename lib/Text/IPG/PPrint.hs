@@ -69,10 +69,16 @@ pprintTypeDeclaration n args ty =
     "typedef " <> Builder.byteString n <> "(" <> args' <> ") = " <> pprintType ty <> ";"
   where args' = mconcat (intersperse ", " (map Builder.byteString args))
 
-pprintRuleDeclaration :: T -> [(T, Ty T)] -> Ty T -> Out
-pprintRuleDeclaration n [] ty =
+pprintRuleDeclaration :: T -> [(T, Ty T)] -> Maybe (Ty T) -> Out
+pprintRuleDeclaration n [] Nothing =
+    "rule " <> Builder.byteString n <> ";"
+pprintRuleDeclaration n [] (Just ty) =
     "rule " <> Builder.byteString n <> ": " <> pprintType ty <> ";"
-pprintRuleDeclaration n args ty =
+pprintRuleDeclaration n args Nothing =
+    "rule " <> Builder.byteString n <> "(" <> args' <> ");"
+  where args' = mconcat (intersperse ", "
+                    (map (\(n', ty') -> Builder.byteString n' <> ": " <> pprintType ty') args))
+pprintRuleDeclaration n args (Just ty) =
     "rule " <> Builder.byteString n <> "(" <> args' <> "): " <> pprintType ty <> ";"
   where args' = mconcat (intersperse ", "
                     (map (\(n', ty') -> Builder.byteString n' <> ": " <> pprintType ty') args))
