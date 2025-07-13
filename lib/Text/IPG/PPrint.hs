@@ -13,7 +13,7 @@ import Data.Char ( ord ) -- base
 import Data.List ( intersperse ) -- base
 
 import Text.IPG.Core (
-    Ty(..), Grammar(..), Declaration(..), Rule(..), Alternative(..), Term(..), Ref(..),
+    Ty, Ty'(..), Grammar(..), Declaration(..), Rule(..), Alternative(..), Term(..), Ref(..),
     MetaTag(..) )
 import Text.IPG.GenericExp ( UnOp(..), BinOp(..), Exp(..) )
 
@@ -107,6 +107,7 @@ pprintType' out (RowTy fields)
                       (map (\(n, ty') -> out n <> ": " <> pprintType' out ty') args))
 pprintType' out (ArrayTy ty) = "[" <> pprintType' out ty <> "]"
 pprintType' out (ExternalTy n) = out n
+pprintType' out (TyVar n) = out n
 
 pprintRule :: Rule T T T (Exp T T T) -> Out
 pprintRule = pprintRule' (pprintExpr 0)

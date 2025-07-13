@@ -105,7 +105,7 @@ function asHex(bs: String): String;
 function decodeAscii(bs: String): String;
 function decodeAscii2(bs: [Int]): String;
 function getPrimaryDescriptor(descriptors: [VolumeDescriptor]): PrimaryVolumeDescriptor;
-function length(xs: [{}]): Int;
+function length(xs: ['a]): Int;
 function getBool(o: {}, f: String): Bool;
 function getInt(o: {}, f: String): Int;
 function getRecord(o: {}, f: String): DirectoryRecord;
@@ -498,3 +498,8 @@ NULBytes -> repeat NUL_BYTE.this;
 NUL_BYTE -> "\x00";
 
 Byte -> { value = . };
+
+rule Identity(x: 'a);
+Identity(x) -> { value = x };
+
+Foo -> Identity(3) { foo = Identity.value };

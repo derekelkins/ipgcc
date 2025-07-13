@@ -10,7 +10,7 @@ import qualified Data.ByteString.Lazy.Char8 as CLBS -- bytestring
 import qualified Data.Map as Map -- containers
 import Data.List ( intersperse ) -- base
 
-import Text.IPG.Core ( Ty(..), Declaration(..), Ref(..), MetaTag(..) )
+import Text.IPG.Core ( Ty, Ty'(..), Declaration(..), Ref(..), MetaTag(..) )
 import Text.IPG.Full ( Grammar(..), Rule(..), Alternative(..), Term(..), StartingOn(..) )
 import Text.IPG.GenericExp ( UnOp(..), BinOp(..), Exp(..) )
 import Text.IPG.Lexer (
@@ -55,6 +55,7 @@ import Text.IPG.Lexer (
     double  { TokenDouble $$ }
     string  { TokenString $$ }
     name    { TokenName $$ }
+    tyvar   { TokenTyVar $$ }
     nt      { TokenNonTerminal $$ }
     '?['    { TokenGuard }
     '?'     { TokenQuestion }
@@ -139,9 +140,10 @@ import Text.IPG.Lexer (
 Top :: { (Grammar', [IdType], [IdType]) }
     : ExternDeclarations Grammar { ($2, fst $1, snd $1) }
 
-Type :: { Ty' }
+Type :: { Type' }
     : '[' Type ']'  { ArrayTy $2 }
     | '{' TypedParams '}' { RowTy (Map.fromList $2) }
+    | tyvar { TyVar $1 }
     | name { typeFromName $1 }
 
 ExternDeclarations :: { ([IdType], [IdType]) }
@@ -184,16 +186,16 @@ Params :: { [IdType] }
     | name { [$1] }
     | Params ',' name { $3 : $1 }
 
-TypedParamList :: { [(IdType, Ty')] }
+TypedParamList :: { [(IdType, Type')] }
     : '(' TypedParams ')' { reverse $2 }
     | {- empty -} { [] }
 
-TypedParams :: { [(IdType, Ty')] }
+TypedParams :: { [(IdType, Type')] }
     : {- empty -} { [] }
     | name ':' Type { [($1, $3)] }
     | TypedParams ',' name ':' Type { ($3, $5) : $1 }
 
-MaybeType :: { Maybe Ty' }
+MaybeType :: { Maybe Type' }
     : ':' Type { Just $2 }
     | {- empty -} { Nothing }
 
@@ -313,7 +315,7 @@ Args :: { [Exp'] }
 type IdType = BS.ByteString
 type NT = (IdType, Int)
 type Exp' = Exp IdType IdType IdType
-type Ty' = Ty IdType
+type Type' = Ty IdType
 type Grammar' = Grammar IdType IdType IdType Exp'
 type Declaration' = Declaration Rule IdType IdType IdType Exp'
 type Rule' = Rule IdType IdType IdType Exp'
@@ -323,7 +325,7 @@ type Term' = Term IdType IdType IdType Exp'
 type StartingOn' = StartingOn Exp'
 type Ref' = Ref IdType IdType Exp'
 
-typeFromName :: IdType -> Ty'
+typeFromName :: IdType -> Type'
 typeFromName name
     | name == "Bool" = BoolTy
     | name == "Int" = IntTy

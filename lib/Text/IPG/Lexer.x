@@ -100,6 +100,8 @@ tokens :-
 <0>    "-"     { token $ \_ _ -> TokenSub }
 <0>    "*"     { token $ \_ _ -> TokenMul }
 <0>    "/"     { token $ \_ _ -> TokenDiv }
+<0>    "'" [_ $alpha] [_ $alpha $digit]*
+               { token $ \inp len -> TokenTyVar (LBS.toStrict (current inp len)) }
 <0>    [_ $alpha] [_ $alpha $digit]* "@" $digit+
                { token $ \inp len -> tokenNonTerminal (LBS.toStrict (current inp len)) }
 <0>    [_ $alpha] [_ $alpha $digit]*
@@ -133,9 +135,10 @@ data Token
     | TokenDo
     | TokenInt !Int64
     | TokenDouble !Double
-    | TokenString BS.ByteString
+    | TokenString !BS.ByteString
     | TokenNonTerminal (BS.ByteString, Int)
-    | TokenName BS.ByteString
+    | TokenTyVar !BS.ByteString
+    | TokenName !BS.ByteString
     | TokenGuard
     | TokenQuestion
     | TokenColon

@@ -1,10 +1,10 @@
 module Text.IPG.GenericExp (
-    UnOp(..), BinOp(..), Exp(..), crushRef, mapRef, simplify, simplifyExp
+    UnOp(..), BinOp(..), Exp(..), crushRef, mapRef, simplify, simplifyExp, trimap,
 ) where
 import Data.Bits ( shift, complement, xor, (.&.), (.|.) ) -- base
 import Data.Int ( Int64 ) -- base
 
-import Text.IPG.Core ( Grammar, Ref )
+import Text.IPG.Core ( Grammar, Ref, trimapRef )
 
 data UnOp = Not | Neg | BitwiseNeg deriving ( Eq, Ord, Show )
 
@@ -43,6 +43,18 @@ data Exp nt t id
     | Call t [Exp nt t id]
     | Ref (Ref nt id (Exp nt t id))
   deriving ( Show )
+
+trimap :: (nt -> nt') -> (t -> t') -> (id -> id') -> Exp nt t id -> Exp nt' t' id'
+trimap _ _ _ T = T
+trimap _ _ _ F = F
+trimap _ _ _ (Int n) = Int n
+trimap _ _ _ (Float n) = Float n
+trimap _ g _ (String s) = String (g s)
+trimap f g h (Un op e) = Un op (trimap f g h e)
+trimap f g h (Bin op e1 e2) = Bin op (trimap f g h e1) (trimap f g h e2)
+trimap f g h (If b t e) = If (trimap f g h b) (trimap f g h t) (trimap f g h e)
+trimap f g h (Call p es) = Call (g p) (map (trimap f g h) es)
+trimap f g h (Ref r) = Ref (trimapRef f h (trimap f g h) r)
 
 mapRef :: (Ref nt id (Exp nt t id) -> Ref nt' id (Exp nt' t id)) -> Exp nt t id -> Exp nt' t id
 mapRef _ T = T

@@ -1,20 +1,21 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, Rank2Types #-}
 module Text.IPG.TypeCheck (
-    Context(..), ConstTypes, FunTypes, RuleTypes, TypeDefs,
+    Context(..), ConstTypes, FunTypes, RuleTypes, TypeDefs, Bindings, Bindings',
     Environments(typeDefs, constTypes, funTypes, ruleTypes),
-    annotate, groundType, isEquatable, isOrderable, joinTy, subTypeOf, (<:), typeCheck, 
+    annotate, fullyDereference, isEquatable, isOrderable, joinTy, subTypeOf, (<:), typeCheck, 
 ) where
+import qualified Data.ByteString.Lazy as LBS -- bytestring
 import qualified Data.ByteString.Builder as Builder -- bytestring
 import qualified Data.Map as Map -- containers
 import qualified Data.Set as Set -- containers
 
-import Data.Maybe ( catMaybes, fromJust ) -- base -- TODO: Remove me.
+import Data.Maybe ( catMaybes, fromJust ) -- base -- TODO: Remove fromJust.
 
 import Text.IPG.Core (
-    Ty(..), Grammar(..), Declaration(..), Rule(..), Alternative(..), Term(..), Ref(..),
-    partitionDeclarations )
-import Text.IPG.GenericExp ( BinOp(..), Exp(..), UnOp(..) )
-import Text.IPG.PPrint ( Out, pprintType' )
+    Ty, Ty'(..), Grammar(..), Declaration(..), Rule(..), Alternative(..), Term(..), Ref(..),
+    mapTyVar, partitionDeclarations )
+import Text.IPG.GenericExp ( BinOp(..), Exp(..), UnOp(..), trimap )
+import Text.IPG.PPrint ( Out, pprintExpr, pprintType' )
 
 -- Bidirectional
 
@@ -46,9 +47,12 @@ isOrderable (RowTy _) = False
 isOrderable (ExternalTy _) = False
 isOrderable _ = True
 
+aOut :: (nt -> Out) -> (nt, Int) -> Out
+aOut ntOut' (nt, i) = ntOut' nt <> "@" <> Builder.intDec i
+
 -- TODO: Using this willy-nilly is expensive.
-groundType :: (Ord id) => TypeDefs id -> Ty id -> Ty id
-groundType env = go Set.empty Set.empty
+fullyDereference :: (Ord id) => TypeDefs id -> Ty id -> Ty id
+fullyDereference env = go Set.empty Set.empty
   where go seen guarded ty@(ExternalTy x)
             | x `Set.member` guarded = error "(Guarded) circular typedefs" -- TODO: For now.
             | x `Set.member` seen = error "Circular typedefs"
@@ -63,21 +67,75 @@ groundType env = go Set.empty Set.empty
 ty1 <: ty2 = subTypeOf Map.empty ty1 ty2
 
 subTypeOf :: (Ord id) => TypeDefs id -> Ty id -> Ty id -> Bool
-subTypeOf tyEnv t1 t2 = go (derefTy tyEnv t1) (derefTy tyEnv t2)
-    where go BoolTy BoolTy = True
-          go IntTy IntTy = True
-          go IntTy FloatTy = True
-          go FloatTy FloatTy = True
-          go StringTy StringTy = True
-          go (ExternalTy x) (ExternalTy y) = x == y
-          go (ArrayTy t) (ArrayTy t') = subTypeOf tyEnv t t'
-          go (RowTy _) (RowTy fs') | Map.null fs' = True
-          go (RowTy fs) (RowTy fs') =
-              case foldMap (\(x', t') -> fmap (\t -> [(t, t')]) (Map.lookup x' fs)) (Map.toList fs') of
-                  Nothing -> False
-                  Just ps -> all (\(t, t') -> subTypeOf tyEnv t t') ps
-          go _ _ = False
+subTypeOf tyEnv ty ty' = fst (subTypeOf' tyEnv True Map.empty ty ty')
 
+type Bindings' v id = Map.Map v (Ty' v id)
+type Bindings id = Bindings' id id
+
+subTypeOf'
+    :: (Ord id, Ord v)
+    => TypeDefs id
+    -> Bool
+    -> Bindings' v id
+    -> Ty' v id
+    -> Ty' v id
+    -> (Bool, Bindings' v id)
+subTypeOf' tyEnv rigid bs0 t1 t2 = go bs0 (derefTy tyEnv t1) (derefTy tyEnv t2)
+    where go bs BoolTy BoolTy = (True, bs)
+          go bs IntTy IntTy = (True, bs)
+          go bs IntTy FloatTy = (True, bs)
+          go bs FloatTy FloatTy = (True, bs)
+          go bs StringTy StringTy = (True, bs)
+          go bs (TyVar v) (TyVar v') | v == v' = (True, bs)
+          go bs ty (TyVar v) | rigid = (False, bs)
+                             | otherwise = (True, Map.insert v ty bs)
+          go bs (TyVar v) ty = (True, Map.insert v ty bs)
+          go bs (ExternalTy x) (ExternalTy y) = (x == y, bs)
+          go bs (ArrayTy t) (ArrayTy t') = go bs (deref bs t) (deref bs t')
+          go bs (RowTy fs) (RowTy fs') = process bs (Map.toList fs')
+            where process bs' ((x', t'):rest) =
+                    case Map.lookup x' fs of
+                        Nothing -> (False, bs')
+                        Just t ->
+                            case go bs' (deref bs' t) (deref bs' t') of
+                                (True, bs'') -> process bs'' rest
+                                r -> r
+                  process bs' [] = (True, bs')
+          go bs _ _ = (False, bs)
+          deref _ ty@(ExternalTy _) = derefTy tyEnv ty
+          deref bs ty@(TyVar v) =
+            case Map.lookup v bs of
+                Nothing -> ty
+                Just ty' -> deref bs ty'
+          deref _ ty = ty
+
+groundType :: (Ord v) => Bindings' v id -> Ty' v id -> Ty' v id
+groundType bs = mapTyVar f
+    where f v =
+            case Map.lookup v bs of
+                Nothing -> TyVar v
+                Just ty@(TyVar v') | v == v' -> ty
+                Just ty -> groundType bs ty
+
+typeCheckArgs :: (Ord id) => TypeDefs id -> [Ty id] ->  [Ty id] -> Maybe (Bindings id)
+typeCheckArgs tyEnv lTys rTys = go Map.empty lTys' rTys'
+  where lTys' = map (mapTyVar (TyVar . Left)) lTys
+        rTys' = map (mapTyVar (TyVar . Right)) rTys
+        f _ (Left _, _) = Nothing
+        f bs (Right v, ty) = Just (v, mapTyVar (TyVar . either id id) (groundType bs ty))
+        go _ [] (_:_) = error "Arity mismatch in typeCheckArgs"
+        go _ (_:_) [] = error "Arity mismatch in typeCheckArgs"
+        go bs [] [] = Just (Map.fromList (catMaybes (map (f bs) (Map.toList bs))))
+        go bs (ty:tys) (ty':tys') =
+            case subTypeOf' tyEnv False bs ty ty' of
+                (False, _) -> Nothing
+                (True, bs') -> go bs' tys tys'
+
+applyBindings :: (Ord id) => Bindings id -> Ty id -> Ty id
+applyBindings bs = mapTyVar go
+    where go v = case Map.lookup v bs of Nothing -> TyVar v; Just ty -> ty
+
+-- TODO: Handle type variables.
 joinTy :: (Ord id) => TypeDefs id -> Ty id -> Ty id -> Maybe (Ty id)
 joinTy _ ty@(ExternalTy x) (ExternalTy y) | x == y = Just ty
 joinTy tyEnv t1 t2 = go (derefTy tyEnv t1) (derefTy tyEnv t2)
@@ -95,17 +153,18 @@ joinTy tyEnv t1 t2 = go (derefTy tyEnv t1) (derefTy tyEnv t2)
                      | subTypeOf tyEnv ty2 ty1 = Just ty1
                      | otherwise = Nothing
 
-derefTy :: (Ord id) => TypeDefs id -> Ty id -> Ty id
+derefTy :: (Ord id) => TypeDefs id -> Ty' v id -> Ty' v id
 derefTy tyEnv' = go Set.empty
     where go seen ty@(ExternalTy x)
-            | Set.member x seen = error "Circular typedefs"
+            | x `Set.member` seen = error "Circular typedefs"
             | otherwise =
                 case Map.lookup x tyEnv' of
                     Nothing -> ty
                     Just ty' -> go (Set.insert x seen) ty'
           go _ ty = ty
 
-type TypeDefs id = Map.Map id (Ty id) -- TODO: Handle arguments.
+type TypeDefs' v id = Map.Map id (Ty' v id) -- TODO: Handle arguments.
+type TypeDefs id = forall v. TypeDefs' v id
 type ConstTypes id = Map.Map id (Ty id)
 type FunTypes t id = Map.Map t ([Ty id], Ty id)
 type RuleTypes nt id = Map.Map nt ([Ty id], Ty id)
@@ -115,7 +174,8 @@ data Environments nt t id = Environments {
     constTypes :: ConstTypes id,
     funTypes :: FunTypes t id,
     ruleTypes :: RuleTypes nt id,
-    locals :: Map.Map id (Ty id)
+    locals :: Map.Map id (Ty id),
+    localRuleTypes :: Map.Map (nt, Int) (Ty id)
   }
 
 data Context nt t id = Context {
@@ -154,7 +214,8 @@ typeCheck ctxt (Grammar decls)
     | otherwise = Left (cErrs <> rErrs)                
   where (rules, consts, tyEnv, ruleDecls, funDecls) = partitionDeclarations decls
         -- TODO: Need to handle mutual recursion and args.
-        tyEnv' = Map.fromList (map (\(n, _, ty) -> (n, ty)) tyEnv)
+        noTyVars = mapTyVar (\_ -> error "There should be no free type variables in typedefs.")
+        tyEnv' = Map.fromList (map (\(n, _, ty) -> (n, noTyVars ty)) tyEnv)
         fTypes' = Map.fromList (map (\(n, tys, ty) -> (n, (map snd tys, ty))) funDecls)
         -- Add zero-arity rules that don't have explicit declarations so we don't need to write them.
         zeroArityRules = catMaybes
@@ -168,7 +229,8 @@ typeCheck ctxt (Grammar decls)
                  constTypes = cTypes,
                  funTypes = fTypes',
                  ruleTypes = rTypes,
-                 locals = Map.empty
+                 locals = Map.empty,
+                 localRuleTypes = Map.empty
                }
 
 typeCheckConsts
@@ -259,13 +321,17 @@ typeSynthTerms
     -> Environments nt t id
     -> [Term nt t id (Exp nt t id)]
     -> Either [Out] (Ty id)
-typeSynthTerms ctxt envs = go Map.empty
-  where go rows [] = Right (RowTy rows)
-        go rows (t:ts) =
-            let envs' = envs { locals = Map.union rows (locals envs) } -- TODO: Currently, this causes local fields to shadow parameters.
+typeSynthTerms ctxt envs = go Map.empty (localRuleTypes envs)
+  where go rows _ [] = Right (RowTy rows)
+        go rows ntbs (t:ts) =
+            let envs' = envs {
+                            -- TODO: Currently, this causes local fields to shadow parameters.
+                            locals = Map.union rows (locals envs),
+                            localRuleTypes = ntbs
+                        }
             in case typeSynthTerm ctxt envs' rows t of
                 Left errs -> Left errs
-                Right rows' -> go rows' ts
+                Right (rows', ntbs') -> go rows' (Map.union ntbs' ntbs) ts
 
 typeSynthTerm
     :: (Ord id, Ord nt, Ord t)
@@ -273,42 +339,43 @@ typeSynthTerm
     -> Environments nt t id
     -> Map.Map id (Ty id)
     -> Term nt t id (Exp nt t id)
-    -> Either [Out] (Map.Map id (Ty id))
+    -> Either [Out] (Map.Map id (Ty id), Map.Map (nt, Int) (Ty id))
 typeSynthTerm ctxt envs rows (Terminal _ l r) =
     case (typeCheckExp ctxt envs l IntTy, typeCheckExp ctxt envs r IntTy) of
         (Just lerr, Just rerr) -> Left [lerr, rerr]
         (Just lerr, _) -> Left [lerr]
         (_, Just rerr) -> Left [rerr]
-        (Nothing, Nothing) -> Right rows
+        (Nothing, Nothing) -> Right (rows, Map.empty)
 typeSynthTerm ctxt envs rows (x := e) =
     case typeSynthExp ctxt envs e of
         Left err -> Left [err]
-        Right ty -> Right (Map.insert x ty rows)
+        Right ty -> Right (Map.insert x ty rows, Map.empty)
 typeSynthTerm ctxt envs rows (Guard e) =
     case typeCheckExp ctxt envs e BoolTy of
         Just err -> Left [err]
-        Nothing -> Right rows
+        Nothing -> Right (rows, Map.empty)
 typeSynthTerm ctxt envs rows (Any x e) =
     case typeCheckExp ctxt envs e IntTy of
         Just err -> Left [err]
-        Nothing -> Right (Map.insert x IntTy rows)
+        Nothing -> Right (Map.insert x IntTy rows, Map.empty)
 typeSynthTerm ctxt envs rows (Slice x l r) =
     case (typeCheckExp ctxt envs l IntTy, typeCheckExp ctxt envs r IntTy) of
         (Just lerr, Just rerr) -> Left [lerr, rerr]
         (Just lerr, _) -> Left [lerr]
         (_, Just rerr) -> Left [rerr]
-        (Nothing, Nothing) -> Right (Map.insert x StringTy rows)
-typeSynthTerm ctxt envs rows (NonTerminal (nt, _) es l r) =
-    const rows <$> typeCheckRuleInvoke ctxt envs nt es l r
-typeSynthTerm ctxt envs rows (Array j s e (nt, _) es l r) =
+        (Nothing, Nothing) -> Right (Map.insert x StringTy rows, Map.empty)
+typeSynthTerm ctxt envs rows (NonTerminal a@(nt, _) es l r) =
+    (\(ty, _) -> (rows, Map.singleton a ty)) <$> typeCheckRuleInvoke ctxt envs nt es l r
+typeSynthTerm ctxt envs rows (Array j s e a@(nt, _) es l r) =
     case (typeCheckExp ctxt envs s IntTy, typeCheckExp ctxt envs e IntTy) of
         (Just lerr, Just rerr) -> Left [lerr, rerr]
         (Just lerr, _) -> Left [lerr]
         (_, Just rerr) -> Left [rerr]
         (Nothing, Nothing) -> -- TODO: Probably need to do something for `these` here.
             let envs' = envs { locals = Map.insert j IntTy (locals envs) }
-            in const rows <$> typeCheckRuleInvoke ctxt envs' nt es l r
-typeSynthTerm ctxt envs rows (Repeat (nt, _) es l r x l0 r0) =
+            in (\(ty, _) -> (rows, Map.singleton a ty))
+                <$> typeCheckRuleInvoke ctxt envs' nt es l r
+typeSynthTerm ctxt envs rows (Repeat a@(nt, _) es l r x l0 r0) =
     case (typeCheckExp ctxt envs l0 IntTy, typeCheckExp ctxt envs r0 IntTy) of
         (Just lerr, Just rerr) -> Left [lerr, rerr]
         (Just lerr, _) -> Left [lerr]
@@ -317,24 +384,28 @@ typeSynthTerm ctxt envs rows (Repeat (nt, _) es l r x l0 r0) =
             case typeCheckRuleInvoke ctxt envs nt es l r of
                 Left errs -> Left errs
                 Right (ty', fs)
-                    | x' == "this" -> Right (Map.insert (values ctxt) (ArrayTy ty') rows)
+                    | x' == "this" -> Right (Map.insert (values ctxt) (ArrayTy ty') rows,
+                                             Map.singleton a ty')
                     | otherwise ->
                         case Map.lookup x fs of
                             Nothing -> Left [out ctxt x <> " is not a field on " <> ntOut ctxt nt]
-                            Just ty -> Right (Map.insert (values ctxt) (ArrayTy ty) rows)
+                            Just ty -> Right (Map.insert (values ctxt) (ArrayTy ty) rows,
+                                              Map.singleton a ty')
   where x' = Builder.toLazyByteString (out ctxt x)
-typeSynthTerm ctxt envs rows (RepeatUntil (nt1, _) es1 l r x l0 r0 (nt2, _) es2) =
+typeSynthTerm ctxt envs rows (RepeatUntil a1@(nt1, _) es1 l r x l0 r0 a2@(nt2, _) es2) =
     case typeCheckRuleInvoke ctxt envs nt2 es2 l0 r0 of
         Left errs -> Left errs
-        Right _ ->
+        Right (ty2', _) ->
             case typeCheckRuleInvoke ctxt envs nt1 es1 l r of
                 Left errs -> Left errs
-                Right (ty', fs)
-                    | x' == "this" -> Right (Map.insert (values ctxt) (ArrayTy ty') rows)
+                Right (ty1', fs)
+                    | x' == "this" -> Right (Map.insert (values ctxt) (ArrayTy ty1') rows,
+                                             Map.fromList [(a2, ty2'), (a1, ty1')])
                     | otherwise ->
                         case Map.lookup x fs of
                             Nothing -> Left [out ctxt x <> " is not a field on " <> ntOut ctxt nt1]
-                            Just ty -> Right (Map.insert (values ctxt) (ArrayTy ty) rows)
+                            Just ty -> Right (Map.insert (values ctxt) (ArrayTy ty) rows,
+                                              Map.fromList [(a2, ty2'), (a1, ty1')])
   where x' = Builder.toLazyByteString (out ctxt x)
 
 typeCheckRuleInvoke
@@ -357,11 +428,13 @@ typeCheckRuleInvoke ctxt envs nt es l r =
                 Right tys ->
                     case Map.lookup nt (ruleTypes envs) of
                         Nothing -> Left ["Unknown rule " <> ntOut ctxt nt]
-                        Just (tys', ty')
-                            | and (zipWith (subTypeOf (typeDefs envs)) tys tys') ->
-                                Right (ty', fromRowTy (derefTy (typeDefs envs) ty'))
-                            | otherwise -> Left ["Type mismatch in arguments when calling "
+                        Just (tys', ty') ->
+                            case typeCheckArgs (typeDefs envs) tys tys' of
+                                Nothing -> Left ["Type mismatch in arguments when invoking "
                                                  <> ntOut ctxt nt]
+                                Just bs ->
+                                    let ty'' = applyBindings bs ty'
+                                    in Right (ty'', fromRowTy (derefTy (typeDefs envs) ty''))
   where fromRowTy ~(RowTy fs) = fs
 
 typeCheckExp
@@ -378,18 +451,33 @@ typeCheckExp ctxt envs e ty' =
                  | otherwise -> Just (pprintType' (out ctxt) ty <> " is not a subtype of "
                                         <> pprintType' (out ctxt) ty')
 
+ppExp :: Context nt t id -> Exp nt t id -> Out
+ppExp ctxt = pprintExpr 0 . trimap (toS . ntOut ctxt) (toS . tOut ctxt) (toS . out ctxt)
+  where toS = LBS.toStrict . Builder.toLazyByteString
+
 typeSynthExp
     :: (Ord id, Ord nt, Ord t)
     => Context nt t id
     -> Environments nt t id
     -> Exp nt t id
     -> Either Out (Ty id)
-typeSynthExp _ _ T = Right BoolTy
-typeSynthExp _ _ F = Right BoolTy
-typeSynthExp _ _ (Int _) = Right IntTy
-typeSynthExp _ _ (Float _) = Right FloatTy
-typeSynthExp _ _ (String _) = Right StringTy
-typeSynthExp ctxt envs (If b t e) =
+typeSynthExp ctxt envs e =
+    case typeSynthExp' ctxt envs e of
+        Left err -> Left (err <> "\n  In expression: " <> ppExp ctxt e)
+        Right x -> Right x
+
+typeSynthExp'
+    :: (Ord id, Ord nt, Ord t)
+    => Context nt t id
+    -> Environments nt t id
+    -> Exp nt t id
+    -> Either Out (Ty id)
+typeSynthExp' _ _ T = Right BoolTy
+typeSynthExp' _ _ F = Right BoolTy
+typeSynthExp' _ _ (Int _) = Right IntTy
+typeSynthExp' _ _ (Float _) = Right FloatTy
+typeSynthExp' _ _ (String _) = Right StringTy
+typeSynthExp' ctxt envs (If b t e) =
     case typeCheckExp ctxt envs b BoolTy of
         Just err -> Left err
         Nothing ->
@@ -402,77 +490,78 @@ typeSynthExp ctxt envs (If b t e) =
                                          <> pprintType' (out ctxt) ty2
                                          <> "don't have a common supertype")
                         Just ty -> Right ty
-typeSynthExp ctxt envs (Un op e) =
+typeSynthExp' ctxt envs (Un op e) =
     case typeSynthExp ctxt envs e of
         Left err -> Left err
         Right ty -> typeSynthUnOp op ty
-typeSynthExp ctxt envs (Bin op e1 e2) =
+typeSynthExp' ctxt envs (Bin op e1 e2) =
     case typeSynthExp ctxt envs e1 of
         Left err -> Left err
         Right ty1 ->
             case typeSynthExp ctxt envs e2 of
                 Left err -> Left err
                 Right ty2 -> typeSynthBinOp ctxt envs op ty1 ty2
-typeSynthExp ctxt envs (Call f es) =
+typeSynthExp' ctxt envs (Call f es) =
     case traverse (typeSynthExp ctxt envs) es of
         Left err -> Left err
         Right tys ->
             case Map.lookup f (funTypes envs) of
                 Nothing -> Left ("Unknown function " <> tOut ctxt f)
-                Just (tys', ty) | and (zipWith (subTypeOf (typeDefs envs)) tys tys') ->
-                                    Right ty
-                                | otherwise -> Left ("Type mismatch in arguments when calling "
-                                                     <> tOut ctxt f)
-typeSynthExp _ _ (Ref EOI) = Right IntTy
-typeSynthExp _ _ (Ref (Start _)) = Right IntTy
-typeSynthExp _ _ (Ref (End _)) = Right IntTy
-typeSynthExp ctxt envs (Ref (Id x)) =
+                Just (tys', ty') ->
+                    case typeCheckArgs (typeDefs envs) tys tys' of
+                        Nothing -> Left ("Type mismatch in arguments when calling "
+                                         <> tOut ctxt f)
+                        Just bs -> Right (applyBindings bs ty')
+typeSynthExp' _ _ (Ref EOI) = Right IntTy
+typeSynthExp' _ _ (Ref (Start _)) = Right IntTy
+typeSynthExp' _ _ (Ref (End _)) = Right IntTy
+typeSynthExp' ctxt envs (Ref (Id x)) =
     case Map.lookup x (locals envs) of
         Just ty -> Right ty
         _ -> case Map.lookup x (constTypes envs) of
                 Just ty -> Right ty
                 _ -> Left ("Unknown name " <> out ctxt x)
-typeSynthExp ctxt envs (Ref (Attr (nt, _) x))
+typeSynthExp' ctxt envs (Ref (Attr a x))
     | x' == "this" =
-        case Map.lookup nt (ruleTypes envs) of
-            Just (_, ty) -> Right ty
-            Nothing -> Left ("Unknown rule " <> ntOut ctxt nt)
+        case Map.lookup a (localRuleTypes envs) of
+            Just ty -> Right ty
+            Nothing -> Left ("Unknown local rule binding " <> aOut (ntOut ctxt) a)
     | x' == "these" =
-        case Map.lookup nt (ruleTypes envs) of
-            Just (_, ty) -> Right (ArrayTy ty)
-            Nothing -> Left ("Unknown rule " <> ntOut ctxt nt)
+        case Map.lookup a (localRuleTypes envs) of
+            Just ty -> Right (ArrayTy ty)
+            Nothing -> Left ("Unknown local rule binding " <> aOut (ntOut ctxt) a)
   where x' = Builder.toLazyByteString (out ctxt x)
-typeSynthExp ctxt envs (Ref (Attr (nt, _) x)) =
-    case fmap (derefTy (typeDefs envs)) <$> Map.lookup nt (ruleTypes envs) of
-        Just (_, ~ty'@(RowTy fs)) ->
+typeSynthExp' ctxt envs (Ref (Attr a x)) =
+    case derefTy (typeDefs envs) <$> Map.lookup a (localRuleTypes envs) of
+        Just ~ty'@(RowTy fs) ->
             case Map.lookup x fs of
                 Just ty -> Right ty
                 Nothing -> Left ("Field " <> out ctxt x <> " not a field on type "
                                  <> pprintType' (out ctxt) ty')
         -- Just _ -> error "Rule with return type that isn't a row type."
-        Nothing -> Left ("Unknown rule " <> ntOut ctxt nt)
-typeSynthExp ctxt envs (Ref (Index (nt, _) e x))
+        Nothing -> Left ("Unknown local rule binding " <> aOut (ntOut ctxt) a)
+typeSynthExp' ctxt envs (Ref (Index a e x))
     | x' == "this" =
         case typeCheckExp ctxt envs e IntTy of
             Just err -> Left err
             Nothing ->
-                case Map.lookup nt (ruleTypes envs) of
-                    Just (_, ty) -> Right ty
+                case Map.lookup a (localRuleTypes envs) of
+                    Just ty -> Right ty
                     -- Just _ -> error "Rule with return type that isn't a row type."
-                    Nothing -> Left ("Unknown rule " <> ntOut ctxt nt)
+                    Nothing -> Left ("Unknown local rule binding " <> aOut (ntOut ctxt) a)
   where x' = Builder.toLazyByteString (out ctxt x)
-typeSynthExp ctxt envs (Ref (Index (nt, _) e x)) =
+typeSynthExp' ctxt envs (Ref (Index a e x)) =
     case typeCheckExp ctxt envs e IntTy of
         Just err -> Left err
         Nothing ->
-            case fmap (derefTy (typeDefs envs)) <$> Map.lookup nt (ruleTypes envs) of
-                Just (_, ~ty'@(RowTy fs)) ->
+            case derefTy (typeDefs envs) <$> Map.lookup a (localRuleTypes envs) of
+                Just ~ty'@(RowTy fs) ->
                     case Map.lookup x fs of
                         Just ty -> Right ty
                         Nothing -> Left ("Field " <> out ctxt x <> " not a field on type "
                                          <> pprintType' (out ctxt) ty')
                 -- Just _ -> error "Rule with return type that isn't a row type."
-                Nothing -> Left ("Unknown rule " <> ntOut ctxt nt)
+                Nothing -> Left ("Unknown local rule binding " <> aOut (ntOut ctxt) a)
 
 typeSynthUnOp :: UnOp -> Ty id -> Either Out (Ty id)
 typeSynthUnOp Not BoolTy = Right BoolTy

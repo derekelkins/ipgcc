@@ -8,7 +8,7 @@ function decodeAscii2(bs: [Int]): String;
 
 function getPrimaryDescriptor(descriptors: [VolumeDescriptor]): PrimaryVolumeDescriptor;
 
-function length(xs: [{}]): Int;
+function length(xs: ['a]): Int;
 
 function getBool(o: {}, f: String): Bool;
 
@@ -486,3 +486,14 @@ rule Byte: { value: Int };
 
 Byte
   -> { value = .[0] };
+
+rule Identity(x: 'a): { value: 'a };
+
+Identity(x)
+  -> { value = x };
+
+rule Foo: { foo: Int };
+
+Foo
+  -> Identity@0(3)[0, EOI]
+     { foo = Identity@0.value };

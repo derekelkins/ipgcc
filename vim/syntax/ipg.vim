@@ -7,33 +7,33 @@ syntax keyword IPGKeyword typedef rule
 highlight link IPGKeyword Keyword
 
 syntax keyword IPGType Bool Int Float String
-highlight link IPGType Identifier
+highlight link IPGType Type
 
-syntax match IPGDelimiter "?\[\|:\|?\|(\|)\|\[\|\]\|,\|;\|{\|}"
+syntax match IPGDelimiter /?\[\|:\|?\|(\|)\|\[\|\]\|,\|;\|{\|}/
 highlight link IPGDelimiter Delimiter
 
-syntax match IPGOperator "\v\*\*"
-syntax match IPGOperator "\v\<\<"
-syntax match IPGOperator "\v\>\>"
-syntax match IPGOperator "\v\<\="
-syntax match IPGOperator "\v\>\="
-syntax match IPGOperator "\v\<"
-syntax match IPGOperator "\v\>"
-syntax match IPGOperator "\v-\>"
-syntax match IPGOperator "\v\=\="
-syntax match IPGOperator "\v!\="
-syntax match IPGOperator "\v!"
-syntax match IPGOperator "\v\="
-syntax match IPGOperator "\v\&\&"
-syntax match IPGOperator "\v\|\|"
-syntax match IPGOperator "\v\&"
-syntax match IPGOperator "\v\|"
-syntax match IPGOperator "\v\^"
-syntax match IPGOperator "\v\%"
-syntax match IPGOperator "\v\~"
-syntax match IPGOperator "\v\+"
-syntax match IPGOperator "\v-"
-syntax match IPGOperator "\v\*"
+syntax match IPGOperator /\v\*\*/
+syntax match IPGOperator /\v\<\</
+syntax match IPGOperator /\v\>\>/
+syntax match IPGOperator /\v\<\=/
+syntax match IPGOperator /\v\>\=/
+syntax match IPGOperator /\v\</
+syntax match IPGOperator /\v\>/
+syntax match IPGOperator /\v-\>/
+syntax match IPGOperator /\v\=\=/
+syntax match IPGOperator /\v!\=/
+syntax match IPGOperator /\v!/
+syntax match IPGOperator /\v\=/
+syntax match IPGOperator /\v\&\&/
+syntax match IPGOperator /\v\|\|/
+syntax match IPGOperator /\v\&/
+syntax match IPGOperator /\v\|/
+syntax match IPGOperator /\v\^/
+syntax match IPGOperator /\v\%/
+syntax match IPGOperator /\v\~/
+syntax match IPGOperator /\v\+/
+syntax match IPGOperator /\v-/
+syntax match IPGOperator /\v\*/
 syntax match IPGOperator "\v/"
 highlight link IPGOperator Operator
 
@@ -49,11 +49,15 @@ highlight link IPGEscape Special
 
 syntax match IPGDeclare /\v\%end/
 syntax match IPGDeclare /\v^\%declare/
+syntax match IPGDeclare /\v^\%declare_type/
 syntax match IPGDeclare /\v^\%export/
 syntax match IPGDeclare /\v^\%instrument/
 syntax match IPGDeclare /\v^\%preamble_end/
 syntax match IPGDeclare /\v^\%postamble_begin/
 highlight link IPGDeclare PreProc
+
+syntax match IPGTyVar /\v'[_a-zA-Z][_a-zA-Z0-9]*/
+highlight link IPGTyVar Type
 
 syntax keyword IPGTodo TODO FIXME XXX TBD contained
 highlight link IPGTodo Todo

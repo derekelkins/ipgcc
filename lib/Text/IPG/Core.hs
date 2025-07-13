@@ -1,8 +1,9 @@
 {-# LANGUAGE DeriveFunctor #-}
 module Text.IPG.Core (
-    Ty(..), Grammar(..), Declaration(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..),
+    Ty, Ty'(..), Grammar(..), Declaration(..), Rule(..), Alternative(..), Term(..), Ref(..),
+    MetaTag(..),
     nonTerminals, arrayNonTerminals, renumber, rearrange, crushUses, partitionDeclarations,
-    foldDeclaration
+    foldDeclaration, mapTyVar, trimapRef,
 ) where
 import Data.List ( nub ) -- base
 import qualified Data.Graph as G
@@ -15,16 +16,29 @@ data MetaTag
     | EXPORT     -- %export
   deriving ( Eq, Ord, Show )
 
-data Ty id
+type Ty id = Ty' id id
+
+data Ty' v id
     = BoolTy                        -- Bool
     | IntTy                         -- Int
     | FloatTy                       -- Float
     | StringTy                      -- String
-    | RowTy (Map.Map id (Ty id))    -- { f_1: ty_1, ..., f_n: ty_n }
-    | ArrayTy (Ty id)               -- [ty]
-    -- | TyApp id [Ty id]              -- T(ty_1, ..., ty_n) -- TODO
+    | RowTy (Map.Map id (Ty' v id)) -- { f_1: ty_1, ..., f_n: ty_n }
+    | ArrayTy (Ty' v id)            -- [ty]
+    -- | TyApp id [Ty' v id]          -- T(ty_1, ..., ty_n) -- TODO
     | ExternalTy id                 -- External
+    | TyVar v                       -- 'a
   deriving ( Show )
+
+mapTyVar :: (v -> Ty' v' id) -> Ty' v id -> Ty' v' id
+mapTyVar f (TyVar v) = f v
+mapTyVar f (RowTy fs) = RowTy (mapTyVar f <$> fs)
+mapTyVar f (ArrayTy ty) = ArrayTy (mapTyVar f ty)
+mapTyVar _ BoolTy = BoolTy
+mapTyVar _ IntTy = IntTy
+mapTyVar _ FloatTy = FloatTy
+mapTyVar _ StringTy = StringTy
+mapTyVar _ (ExternalTy x) = ExternalTy x
 
 newtype Grammar nt t id e = Grammar [Declaration Rule nt t id e]
     deriving ( Functor, Show )
@@ -107,6 +121,14 @@ data Ref nt id e
     | Start (nt, Int)       -- A.START
     | End (nt, Int)         -- A.END
   deriving ( Functor, Show )
+
+trimapRef :: (nt -> nt') -> (id -> id') -> (e -> e') -> Ref nt id e -> Ref nt' id' e'
+trimapRef _ g _ (Id x) = Id (g x)
+trimapRef f g _ (Attr (nt, i) x) = Attr (f nt, i) (g x)
+trimapRef f g h (Index (nt, i) e x) = Index (f nt, i) (h e) (g x)
+trimapRef _ _ _ EOI = EOI
+trimapRef f _ _ (Start (nt, i)) = Start (f nt, i)
+trimapRef f _ _ (End (nt, i)) = End (f nt, i)
 
 renumber
     :: (Ord nt, Show nt)
