@@ -3,7 +3,7 @@ module Text.IPG.Core (
     Ty, Ty'(..), Grammar(..), Declaration(..), Rule(..), Alternative(..), Term(..), Ref(..),
     MetaTag(..),
     nonTerminals, arrayNonTerminals, renumber, rearrange, crushUses, partitionDeclarations,
-    foldDeclaration, mapTyVar, trimapRef,
+    foldDeclaration, mapTyVar, trimapRef, trimapTerm,
 ) where
 import Data.List ( nub ) -- base
 import qualified Data.Graph as G
@@ -112,6 +112,26 @@ data Term nt t id e
     | RepeatUntil (nt, Int) [e] e e id e e (nt, Int) [e]
         -- repeat A@n(a_1, ..., a_m)[e_l, e_r].id starting on [e_l0, e_r0] until B@m(b_1, ..., b_k)
   deriving ( Functor, Show )
+
+trimapTerm
+    :: (nt -> nt')
+    -> (t -> t')
+    -> (id -> id')
+    -> (e -> e')
+    -> Term nt t id e
+    -> Term nt' t' id' e'
+trimapTerm f _ _ k (NonTerminal (nt, i) es l r) = NonTerminal (f nt, i) (map k es) (k l) (k r)
+trimapTerm _ g _ k (Terminal t l r) = Terminal (g t) (k l) (k r)
+trimapTerm _ _ h k (x := e) = h x := k e
+trimapTerm _ _ _ k (Guard e) = Guard (k e)
+trimapTerm f _ h k (Array j s e (nt, i) es l r) =
+    Array (h j) (k s) (k e) (f nt, i) (map k es) (k l) (k r)
+trimapTerm _ _ h k (Any x e) = Any (h x) (k e)
+trimapTerm _ _ h k (Slice x l r) = Slice (h x) (k l) (k r)
+trimapTerm f _ h k (Repeat (nt, i) es l r x l0 r0) =
+    Repeat (f nt, i) (map k es) (k l) (k r) (h x) (k l0) (k r0)
+trimapTerm f _ h k (RepeatUntil (nt1, i1) es1 l r x l0 r0 (nt2, i2) es2) =
+    RepeatUntil (f nt1, i1) (map k es1) (k l) (k r) (h x) (k l0) (k r0) (f nt2, i2) (map k es2)
 
 data Ref nt id e
     = Id id                 -- id, essentially self.id

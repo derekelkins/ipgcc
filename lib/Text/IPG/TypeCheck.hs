@@ -13,9 +13,9 @@ import Data.Maybe ( catMaybes, fromJust ) -- base -- TODO: Remove fromJust.
 
 import Text.IPG.Core (
     Ty, Ty'(..), Grammar(..), Declaration(..), Rule(..), Alternative(..), Term(..), Ref(..),
-    mapTyVar, partitionDeclarations )
+    mapTyVar, partitionDeclarations, trimapTerm )
 import Text.IPG.GenericExp ( BinOp(..), Exp(..), UnOp(..), trimap )
-import Text.IPG.PPrint ( Out, pprintExpr, pprintType' )
+import Text.IPG.PPrint ( Out, pprintExpr, pprintTerm, pprintType' )
 
 -- Bidirectional
 
@@ -330,7 +330,9 @@ typeSynthTerms ctxt envs = go Map.empty (localRuleTypes envs)
                             localRuleTypes = ntbs
                         }
             in case typeSynthTerm ctxt envs' rows t of
-                Left errs -> Left errs
+                Left errs -> Left (errs <> [
+                    "\n  In term: " <> ppTerm ctxt t <>
+                    "\n  In rule: " <> ntOut ctxt (currentRule ctxt)])
                 Right (rows', ntbs') -> go rows' (Map.union ntbs' ntbs) ts
 
 typeSynthTerm
@@ -453,6 +455,11 @@ typeCheckExp ctxt envs e ty' =
 
 ppExp :: Context nt t id -> Exp nt t id -> Out
 ppExp ctxt = pprintExpr 0 . trimap (toS . ntOut ctxt) (toS . tOut ctxt) (toS . out ctxt)
+  where toS = LBS.toStrict . Builder.toLazyByteString
+
+ppTerm :: Context nt t id -> Term nt t id (Exp nt t id) -> Out
+ppTerm ctxt = pprintTerm . trimapTerm (toS . ntOut ctxt) (toS . tOut ctxt) (toS . out ctxt) 
+                            (trimap (toS . ntOut ctxt) (toS . tOut ctxt) (toS . out ctxt))
   where toS = LBS.toStrict . Builder.toLazyByteString
 
 typeSynthExp
