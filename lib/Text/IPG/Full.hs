@@ -108,7 +108,9 @@ toCoreDeclaration h ctxt (Core.ConstDeclaration name ty e) =
 toCoreDeclaration h ctxt (Core.FunctionDeclaration name args ty) =
     Core.externalizeDeclaration (externalTypes ctxt) (mapType h)
         (Core.FunctionDeclaration name args ty)
-toCoreDeclaration h ctxt (Core.RuleDef r) = Core.RuleDef (toCoreRule h ctxt r)
+toCoreDeclaration h ctxt (Core.RuleDef r) =
+    Core.externalizeDeclaration (externalTypes ctxt) (mapType h)
+        (Core.RuleDef (toCoreRule h ctxt r))
 
 toCoreRule
     :: (Ord id, Ord nt, Show nt)
