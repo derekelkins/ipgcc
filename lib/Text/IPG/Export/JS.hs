@@ -57,9 +57,9 @@ refToJS c _   (Attr nt "these")
     | otherwise = [i|seq_#{u nt}.map(({_ipg_start,_ipg_end,...o}) => o)|]
 refToJS _ _   (Attr nt f) = [i|nt_#{u nt}.#{f}|]
 refToJS c env (Index nt e "this")
-    | leaveExtraFields c = -- Probably still need to clone
+    | leaveExtraFields c = [i|seq_#{u nt}[#{exprToJS c env e} - seq_#{u nt}_start]|]
+    | otherwise =
         [i|(({_ipg_start,_ipg_end,...o}) => o)(seq_#{u nt}[#{exprToJS c env e} - seq_#{u nt}_start])|]
-    | otherwise = [i|seq_#{u nt}[#{exprToJS c env e} - seq_#{u nt}_start]|]
 refToJS c env (Index nt e f) = [i|seq_#{u nt}[#{exprToJS c env e} - seq_#{u nt}_start].#{f}|]
 refToJS _ _   EOI = "EOI";
 refToJS _ _   (Start nt) = [i|nt_#{u nt}._ipg_start|]
