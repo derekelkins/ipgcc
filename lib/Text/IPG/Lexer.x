@@ -67,6 +67,7 @@ tokens :-
 <0>    do      { token $ \_ _ -> TokenDo }
 <0>    "?["    { token $ \_ _ -> TokenGuard }
 <0>    "?"     { token $ \_ _ -> TokenQuestion }
+<0>    "::"    { token $ \_ _ -> TokenDoubleColon }
 <0>    ":"     { token $ \_ _ -> TokenColon }
 <0>    ";"     { token $ \_ _ -> TokenSemicolon }
 <0>    "."     { token $ \_ _ -> TokenDot }
@@ -141,6 +142,7 @@ data Token
     | TokenName !BS.ByteString
     | TokenGuard
     | TokenQuestion
+    | TokenDoubleColon
     | TokenColon
     | TokenSemicolon
     | TokenDot

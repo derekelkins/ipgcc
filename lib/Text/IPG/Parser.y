@@ -59,6 +59,7 @@ import Text.IPG.Lexer (
     nt      { TokenNonTerminal $$ }
     '?['    { TokenGuard }
     '?'     { TokenQuestion }
+    '::'    { TokenDoubleColon }
     ':'     { TokenColon }
     ';'     { TokenSemicolon }
     '.'     { TokenDot }
@@ -120,6 +121,7 @@ import Text.IPG.Lexer (
 
 %right ':'
 %right '=' '?'              -- 2
+%left '::'
 %left '||'                  -- 3
 %left '&&'                  -- 4
 %left '|'                   -- 5
@@ -301,6 +303,7 @@ Exp :: { Exp' }
     | '~' Exp { Un BitwiseNeg $2 }
     | Exp '?' Exp ':' Exp { If $1 $3 $5 }
     | Exp '[' Exp ']' { Bin At $1 $3 }
+    | Exp '::' Type { Annotate $1 $3 }
     | '(' Exp ')' { $2 }
     | EOI { Ref EOI }
     | nt '.' START { makeExp $1 Start' }

@@ -10,11 +10,7 @@ function getPrimaryDescriptor(descriptors: [VolumeDescriptor]): PrimaryVolumeDes
 
 function length(xs: ['a]): Int;
 
-function getBool(o: {}, f: String): Bool;
-
-function getInt(o: {}, f: String): Int;
-
-function getRecord(o: {}, f: String): DirectoryRecord;
+function get(o: {}, f: String): 'a;
 
 rule ISO9660: { descriptors: [{ descriptorType: String }], directories: [{ values: [DirectoryRecord] }], directoriesRecursive: { offset: Int, record: DirectoryRecord }, logicalBlockSize: Int, pathTableLocation: Int, pathTableOffset: Int, pathTableSize: Int, paths: [PathTableRecord], primaryDescriptor: PrimaryVolumeDescriptor };
 
@@ -23,15 +19,15 @@ ISO9660
   -> VolumeDescriptors@0[16 * LOGICAL_SECTOR_SIZE, EOI]
      { descriptors = VolumeDescriptors@0.values }
      { primaryDescriptor = getPrimaryDescriptor(descriptors) }
-     { logicalBlockSize = getInt(primaryDescriptor, "logicalBlockSize") }
-     DirectoriesRecursive@0(logicalBlockSize, getRecord(primaryDescriptor, "rootDirectoryRecord"))[0, EOI]
+     { logicalBlockSize = get(primaryDescriptor, "logicalBlockSize") :: Int }
+     DirectoriesRecursive@0(logicalBlockSize, get(primaryDescriptor, "rootDirectoryRecord"))[0, EOI]
      { directoriesRecursive = DirectoriesRecursive@0.this }
-     { pathTableLocation = getInt(primaryDescriptor, "locationOfTypeLPathTable") }
-     { pathTableSize = getInt(primaryDescriptor, "pathTableSize") }
+     { pathTableLocation = get(primaryDescriptor, "locationOfTypeLPathTable") :: Int }
+     { pathTableSize = get(primaryDescriptor, "pathTableSize") :: Int }
      { pathTableOffset = logicalBlockSize * pathTableLocation }
      LPathTableRecords@0[pathTableOffset, pathTableOffset + pathTableSize]
      { paths = LPathTableRecords@0.values }
-     for i = 0 to length(paths) do DirectoryRecords@0[logicalBlockSize * getInt(paths[i], "locationOfExtent"), logicalBlockSize * getInt(paths[i], "locationOfExtent") + LOGICAL_SECTOR_SIZE]
+     for i = 0 to length(paths) do DirectoryRecords@0[logicalBlockSize * get(paths[i], "locationOfExtent"), logicalBlockSize * get(paths[i], "locationOfExtent") + LOGICAL_SECTOR_SIZE]
      { directories = DirectoryRecords@0.these };
 
 rule VolumeDescriptors: { values: [{ descriptorType: String }] };
@@ -228,13 +224,13 @@ UnknownVolumeDescriptor
 rule DirectoriesRecursive(logicalBlockSize: Int, node: DirectoryRecord): { offset: Int, record: DirectoryRecord };
 
 DirectoriesRecursive(logicalBlockSize, node)
-  -> ?[ getBool(node, "isDirectory") ]
-     { offset = logicalBlockSize * getInt(node, "locationOfExtent") }
+  -> ?[ get(node, "isDirectory") ]
+     { offset = logicalBlockSize * get(node, "locationOfExtent") }
      { record = node }
-     DirectoryRecords@0[offset, offset + getInt(node, "dataLength")]
+     DirectoryRecords@0[offset, offset + get(node, "dataLength")]
      for i = 2 to length(DirectoryRecords@0.values) do DirectoriesRecursive@0(logicalBlockSize, DirectoryRecords@0.values[i])[0, EOI]
      { children = DirectoriesRecursive@0.these }
-   / { offset = logicalBlockSize * getInt(node, "locationOfExtent") }
+   / { offset = logicalBlockSize * get(node, "locationOfExtent") }
      { record = node };
 
 rule DirectoryRecords: { values: [DirectoryRecord] };

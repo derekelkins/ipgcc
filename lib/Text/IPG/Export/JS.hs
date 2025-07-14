@@ -125,6 +125,7 @@ exprToJS' c env _ (Call t es) =
     Builder.byteString t <> "(" <> mconcat (intersperse ", " $ map (exprToJS' c env 0) es) <> ")"
 exprToJS' c env p (Bin At l r) =
     outParen (p > 17) (exprToJS' c env 17 l <> "[" <> exprToJS' c env 0 r <> "]")
+exprToJS' c env p (Annotate e _) = exprToJS' c env p e
 exprToJS' c env _ (Ref r) = refToJS c env r
 
 paramList :: [T] -> T

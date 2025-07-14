@@ -4,6 +4,7 @@ module Text.IPG.Core (
     MetaTag(..),
     nonTerminals, arrayNonTerminals, renumber, rearrange, crushUses, partitionDeclarations,
     foldDeclaration, mapTyVar, trimapRef, trimapTerm, externalizeType, externalizeDeclaration,
+    bimapTy,
 ) where
 import Data.List ( nub ) -- base
 import qualified Data.Graph as G
@@ -29,6 +30,17 @@ data Ty' v id
     | ExternalTy id                 -- External
     | TyVar v                       -- 'a
   deriving ( Show )
+
+bimapTy :: (v -> v') -> (id -> id') -> Ty' v id -> Ty' v' id'
+bimapTy _ _ BoolTy = BoolTy
+bimapTy _ _ IntTy = IntTy
+bimapTy _ _ FloatTy = FloatTy
+bimapTy _ _ StringTy = StringTy
+bimapTy f g (RowTy fs) = RowTy (Map.mapKeysMonotonic g (fmap (bimapTy f g) fs)) -- TODO: mapKeysMonotonic is iffy.
+bimapTy f g (ArrayTy ty) = ArrayTy (bimapTy f g ty)
+bimapTy f g (TyApp t ts) = TyApp (g t) (map (bimapTy f g) ts)
+bimapTy _ g (ExternalTy x) = ExternalTy (g x)
+bimapTy f _ (TyVar v) = TyVar (f v)
 
 externalizeType :: (Ord id) => Set.Set id -> Ty' v id -> Ty' v id
 externalizeType externals ty@(TyApp x [])
@@ -59,18 +71,20 @@ data Declaration rule nt t id e
   deriving ( Functor, Show )
 
 externalizeDeclaration
-    :: (Ord id)
+    :: (Functor (rule nt t id), Ord id)
     => Set.Set id
+    -> ((Ty id -> Ty id) -> e -> e)
     -> Declaration rule nt t id e
     -> Declaration rule nt t id e
-externalizeDeclaration exts =
+externalizeDeclaration exts mapType =
     foldDeclaration
-        RuleDef
-        (\x ty e -> ConstDeclaration x (externalizeType exts <$> ty) e)
+        (RuleDef . fmap extExp)
+        (\x ty e -> ConstDeclaration x (externalizeType exts <$> ty) (extExp e))
         (\t args ty -> TypeDeclaration t args (externalizeType exts ty))
         (\nt args ty -> RuleDeclaration nt (map (fmap (externalizeType exts)) args)
                         (externalizeType exts <$> ty))
         (\f args ty -> FunctionDeclaration f args (externalizeType exts ty))
+  where extExp = mapType (externalizeType exts)
 
 partitionDeclarations
     :: [Declaration rule nt t id e]

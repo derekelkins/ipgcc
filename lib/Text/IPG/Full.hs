@@ -76,6 +76,7 @@ data ExpHelpers nt t id e = ExpHelpers {
     num :: Int -> e,
     ref :: Core.Ref nt id e -> e,
     mapRef :: (Core.Ref nt id e -> Core.Ref nt id e) -> e -> e,
+    mapType :: (Core.Ty id -> Core.Ty id) -> e -> e,
     crushRef :: forall m. (Monoid m) => (Core.Ref nt id e -> m) -> e -> m
   }
 
@@ -98,14 +99,15 @@ toCoreDeclaration
     -> Context id
     -> Core.Declaration Rule nt t id e
     -> Core.Declaration Core.Rule nt t id e
-toCoreDeclaration _ ctxt (Core.TypeDeclaration name args ty) =
-    Core.externalizeDeclaration (externalTypes ctxt) (Core.TypeDeclaration name args ty)
-toCoreDeclaration _ ctxt (Core.RuleDeclaration name args ty) =
-    Core.externalizeDeclaration (externalTypes ctxt) (Core.RuleDeclaration name args ty)
-toCoreDeclaration _ ctxt (Core.ConstDeclaration name ty e) =
-    Core.externalizeDeclaration (externalTypes ctxt) (Core.ConstDeclaration name ty e)
-toCoreDeclaration _ ctxt (Core.FunctionDeclaration name args ty) =
-    Core.externalizeDeclaration (externalTypes ctxt) (Core.FunctionDeclaration name args ty)
+toCoreDeclaration h ctxt (Core.TypeDeclaration name args ty) =
+    Core.externalizeDeclaration (externalTypes ctxt) (mapType h) (Core.TypeDeclaration name args ty)
+toCoreDeclaration h ctxt (Core.RuleDeclaration name args ty) =
+    Core.externalizeDeclaration (externalTypes ctxt) (mapType h) (Core.RuleDeclaration name args ty)
+toCoreDeclaration h ctxt (Core.ConstDeclaration name ty e) =
+    Core.externalizeDeclaration (externalTypes ctxt) (mapType h) (Core.ConstDeclaration name ty e)
+toCoreDeclaration h ctxt (Core.FunctionDeclaration name args ty) =
+    Core.externalizeDeclaration (externalTypes ctxt) (mapType h)
+        (Core.FunctionDeclaration name args ty)
 toCoreDeclaration h ctxt (Core.RuleDef r) = Core.RuleDef (toCoreRule h ctxt r)
 
 toCoreRule

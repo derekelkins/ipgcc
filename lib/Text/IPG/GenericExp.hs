@@ -1,10 +1,10 @@
 module Text.IPG.GenericExp (
-    UnOp(..), BinOp(..), Exp(..), crushRef, mapRef, simplify, simplifyExp, trimap,
+    UnOp(..), BinOp(..), Exp(..), crushRef, mapRef, simplify, simplifyExp, trimap, mapType,
 ) where
 import Data.Bits ( shift, complement, xor, (.&.), (.|.) ) -- base
 import Data.Int ( Int64 ) -- base
 
-import Text.IPG.Core ( Grammar, Ref, trimapRef )
+import Text.IPG.Core ( Grammar, Ref, Ty, bimapTy, trimapRef )
 
 data UnOp = Not | Neg | BitwiseNeg deriving ( Eq, Ord, Show )
 
@@ -41,6 +41,7 @@ data Exp nt t id
     | Bin BinOp (Exp nt t id) (Exp nt t id)
     | If (Exp nt t id) (Exp nt t id) (Exp nt t id)
     | Call t [Exp nt t id]
+    | Annotate (Exp nt t id) (Ty id)
     | Ref (Ref nt id (Exp nt t id))
   deriving ( Show )
 
@@ -54,7 +55,16 @@ trimap f g h (Un op e) = Un op (trimap f g h e)
 trimap f g h (Bin op e1 e2) = Bin op (trimap f g h e1) (trimap f g h e2)
 trimap f g h (If b t e) = If (trimap f g h b) (trimap f g h t) (trimap f g h e)
 trimap f g h (Call p es) = Call (g p) (map (trimap f g h) es)
+trimap f g h (Annotate e t) = Annotate (trimap f g h e) (bimapTy h h t)
 trimap f g h (Ref r) = Ref (trimapRef f h (trimap f g h) r)
+
+mapType :: (Ty id -> Ty id) -> Exp nt t id -> Exp nt t id
+mapType f (Un op l) = Un op (mapType f l)
+mapType f (Bin op l r) = Bin op (mapType f l) (mapType f r)
+mapType f (If b t e) = If (mapType f b) (mapType f t) (mapType f e)
+mapType f (Call t es) = Call t (map (mapType f) es)
+mapType f (Annotate e t) = Annotate (mapType f e) (f t)
+mapType _ e = e
 
 mapRef :: (Ref nt id (Exp nt t id) -> Ref nt' id (Exp nt' t id)) -> Exp nt t id -> Exp nt' t id
 mapRef _ T = T
@@ -64,6 +74,7 @@ mapRef f (Bin op l r) = Bin op (mapRef f l) (mapRef f r)
 mapRef f (If b t e) = If (mapRef f b) (mapRef f t) (mapRef f e)
 mapRef f (Call t es) = Call t (map (mapRef f) es)
 mapRef f (Ref r) = Ref (f r)
+mapRef f (Annotate e t) = Annotate (mapRef f e) t
 mapRef _ (Int n) = Int n
 mapRef _ (Float n) = Float n
 mapRef _ (String s) = String s
@@ -233,4 +244,5 @@ simplifyExp (If b t e) = if_ (simplifyExp b) (simplifyExp t) (simplifyExp e)
           if_ x y z = If x y z
 simplifyExp (Call t es) = Call t (map simplifyExp es)
 simplifyExp (Bin At e ix) = Bin At (simplifyExp e) (simplifyExp ix)
+simplifyExp (Annotate e t) = Annotate (simplifyExp e) t
 simplifyExp (Ref r) = Ref (fmap simplifyExp r)

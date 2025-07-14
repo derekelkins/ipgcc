@@ -24,6 +24,7 @@ helper = ExpHelpers {
     num = E.Int . fromIntegral,
     ref = E.Ref,
     mapRef = E.mapRef,
+    mapType = E.mapType,
     crushRef = E.crushRef
   }
 

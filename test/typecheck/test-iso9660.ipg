@@ -90,9 +90,7 @@ function getPrimaryDescriptor(descriptors) {
 
 function length(xs) { return xs.length; }
 
-function getBool(o, f) { return o[f]; }
-function getInt(o, f) { return o[f]; }
-function getRecord(o, f) { return o[f]; }
+function get(o, f) { return o[f]; }
 
 %preamble_end
 
@@ -106,9 +104,7 @@ function decodeAscii(bs: String): String;
 function decodeAscii2(bs: [Int]): String;
 function getPrimaryDescriptor(descriptors: [VolumeDescriptor]): PrimaryVolumeDescriptor;
 function length(xs: ['a]): Int;
-function getBool(o: {}, f: String): Bool;
-function getInt(o: {}, f: String): Int;
-function getRecord(o: {}, f: String): DirectoryRecord;
+function get(o: {}, f: String): 'a;
 
 // The System Area plus the Data Area form the Volume Space which is effectively the whole file.
 // Logical blocks count from the beginning of the Volume Space and start at 0.
@@ -123,23 +119,25 @@ ISO9660
        { descriptors = VolumeDescriptors.values }
 
        { primaryDescriptor = getPrimaryDescriptor(descriptors) }
-       { logicalBlockSize = getInt(primaryDescriptor, "logicalBlockSize") }
+       { logicalBlockSize = get(primaryDescriptor, "logicalBlockSize") :: Int }
 
        // Get directory structure from the DirectoryRecords.
        // The following approach via the LPathTable is simpler and probably better,
        // but this approach illustrates a non-trivial use of absolute offsets.
-       DirectoriesRecursive(logicalBlockSize, getRecord(primaryDescriptor, "rootDirectoryRecord"))[0, EOI]
+       DirectoriesRecursive(logicalBlockSize, get(primaryDescriptor, "rootDirectoryRecord"))[0, EOI]
        { directoriesRecursive = DirectoriesRecursive.this }
 
        // Get directory structure from the LPathTable.
-       { pathTableLocation = getInt(primaryDescriptor, "locationOfTypeLPathTable") }
-       { pathTableSize = getInt(primaryDescriptor, "pathTableSize") }
+       { pathTableLocation = get(primaryDescriptor, "locationOfTypeLPathTable") :: Int }
+       { pathTableSize = get(primaryDescriptor, "pathTableSize") :: Int }
        { pathTableOffset = logicalBlockSize * pathTableLocation }
        LPathTableRecords[pathTableOffset, pathTableOffset + pathTableSize]
        { paths = LPathTableRecords.values }
        for i = 0 to length(paths) do
-         DirectoryRecords[logicalBlockSize*getInt(paths[i], "locationOfExtent"),
-                          logicalBlockSize*getInt(paths[i], "locationOfExtent") + LOGICAL_SECTOR_SIZE]
+         DirectoryRecords[
+            logicalBlockSize*get(paths[i], "locationOfExtent"),
+            logicalBlockSize*get(paths[i], "locationOfExtent") + LOGICAL_SECTOR_SIZE
+         ]
        { directories = DirectoryRecords.these };
 
 // Volume descriptors are stored at the start of each logical sector.
@@ -305,14 +303,14 @@ rule DirectoriesRecursive(logicalBlockSize: Int, node: DirectoryRecord); /*: {
     offset: Int, record: DirectoryRecord
 };*/
 DirectoriesRecursive(logicalBlockSize, node)
-    -> ?[ getBool(node, "isDirectory") ]
-       { offset = logicalBlockSize * getInt(node, "locationOfExtent") }
+    -> ?[ get(node, "isDirectory") ]
+       { offset = logicalBlockSize * get(node, "locationOfExtent") }
        { record = node }
-       DirectoryRecords[offset, offset + getInt(node, "dataLength")]
+       DirectoryRecords[offset, offset + get(node, "dataLength")]
        for i = 2 to length(DirectoryRecords.values) do // First two records are '.' and '..'.
          DirectoriesRecursive(logicalBlockSize, DirectoryRecords.values[i])[0, EOI]
        { children = DirectoriesRecursive.these }
-     / { offset = logicalBlockSize * getInt(node, "locationOfExtent") }
+     / { offset = logicalBlockSize * get(node, "locationOfExtent") }
        { record = node };
 
 DirectoryRecords -> repeat DirectoryRecord.this;

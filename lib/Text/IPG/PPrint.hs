@@ -231,4 +231,6 @@ pprintExpr _ (Call t es) =
     Builder.byteString t <> "(" <> mconcat (intersperse ", " $ map (pprintExpr 0) es) <> ")"
 pprintExpr p (Bin At l r) =
     outParen (p > 17) (pprintExpr 17 l <> "[" <> pprintExpr 0 r <> "]")
+pprintExpr p (Annotate e t) =
+    outParen (p > 0) (pprintExpr 0 e <> " :: " <> pprintType t)
 pprintExpr _ (Ref r) = pprintRef r
