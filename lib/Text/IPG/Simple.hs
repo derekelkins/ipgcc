@@ -8,7 +8,7 @@ import qualified Data.Map as Map -- containers
 
 import Text.IPG.Check ( validate )
 import qualified Text.IPG.Core as Core
-import Text.IPG.Full ( ExpHelpers(..), toCore )
+import Text.IPG.Full ( ExpHelpers(..), Context(..), toCore )
 import qualified Text.IPG.GenericExp as E
 import qualified Text.IPG.Interpreter as I
 import qualified Text.IPG.Parser as P
@@ -51,7 +51,8 @@ parse doValidation ipgInput' = do
     case P.parseWithStartPos byteOffset startLine startCol ipgInput of
         Left err -> Left [err]
         Right (g, decls, typeDecls) -> do
-            let core = E.simplify (toCore helper "values" g)
+            let ctxt = Context { values = "values", externalTypes = Set.fromList typeDecls }
+            let core = E.simplify (toCore helper ctxt g)
             if doValidation then
                 case validate (Set.fromList decls) core of -- TODO: validate sholud take typeDecls
                     Just errs -> Left (map CBS.unpack errs)

@@ -144,7 +144,7 @@ Type :: { Type' }
     : '[' Type ']'  { ArrayTy $2 }
     | '{' TypedParams '}' { RowTy (Map.fromList $2) }
     | tyvar { TyVar $1 }
-    | name { typeFromName $1 }
+    | name TypesList { typeFromName $1 $2 }
 
 ExternDeclarations :: { ([IdType], [IdType]) }
     : ExternDeclarations ExternDeclaration { (fst $2 ++ fst $1, snd $2 ++ snd $1) }
@@ -167,7 +167,7 @@ Declarations :: { [Declaration'] }
 
 Declaration :: { Declaration' }
     : MetaTags name ParamList '->' Alternatives ';' { RuleDef (Rule $1 $2 $3 (reverse $5)) }
-    | typedef name ParamList '=' Type ';' { TypeDeclaration $2 $3 $5 }
+    | typedef name TyVarList '=' Type ';' { TypeDeclaration $2 $3 $5 }
     | rule name TypedParamList MaybeType ';' { RuleDeclaration $2 $3 $4 }
     | const name MaybeType '=' Exp ';' { ConstDeclaration $2 $3 $5 }
     | function name TypedParamList ':' Type ';' { FunctionDeclaration $2 $3 $5 }
@@ -177,6 +177,15 @@ MetaTags :: { [MetaTag] }
     | '%export' MetaTags { (EXPORT:$2) }
     | {- empty -} { [] }
 
+TypesList :: { [Type'] }
+    : '(' Types ')' { reverse $2 }
+    | {- empty -} { [] }
+
+Types :: { [Type'] }
+    : {- empty -} { [] }
+    | Type { [$1] }
+    | Types ',' Type { $3 : $1 }
+
 ParamList :: { [IdType] }
     : '(' Params ')' { reverse $2 }
     | {- empty -} { [] }
@@ -185,6 +194,15 @@ Params :: { [IdType] }
     : {- empty -} { [] }
     | name { [$1] }
     | Params ',' name { $3 : $1 }
+
+TyVarList :: { [IdType] }
+    : '(' TyVars ')' { reverse $2 }
+    | {- empty -} { [] }
+
+TyVars :: { [IdType] }
+    : {- empty -} { [] }
+    | tyvar { [$1] }
+    | TyVars ',' tyvar { $3 : $1 }
 
 TypedParamList :: { [(IdType, Type')] }
     : '(' TypedParams ')' { reverse $2 }
@@ -325,13 +343,14 @@ type Term' = Term IdType IdType IdType Exp'
 type StartingOn' = StartingOn Exp'
 type Ref' = Ref IdType IdType Exp'
 
-typeFromName :: IdType -> Type'
-typeFromName name
+typeFromName :: IdType -> [Type'] -> Type'
+typeFromName name []
     | name == "Bool" = BoolTy
     | name == "Int" = IntTy
     | name == "Float" = FloatTy
     | name == "String" = StringTy
-    | otherwise = ExternalTy name
+    | otherwise = TyApp name []
+typeFromName name ts = TyApp name ts
 
 data NameExpTail
     = Start'                -- name '.' START               { Ref (Start $1) }

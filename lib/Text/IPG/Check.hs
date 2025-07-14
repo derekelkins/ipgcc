@@ -35,6 +35,7 @@ u (nt, n) = [i|#{nt}@#{show n}|]
 --   - consts don't refer to rules
 --   - Rule type is a row type -- TODO
 --   - Function calls match arity of function declarations. -- TODO
+--   - All type variables in a parameterized typedef are bound by the typedef. -- TODO
 --   - TODO: Various sanity checks on types
 validate :: Set.Set T -> Grammar' -> Maybe [T]
 validate externalRules (Grammar decls) =

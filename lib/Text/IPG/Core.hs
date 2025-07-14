@@ -3,7 +3,7 @@ module Text.IPG.Core (
     Ty, Ty'(..), Grammar(..), Declaration(..), Rule(..), Alternative(..), Term(..), Ref(..),
     MetaTag(..),
     nonTerminals, arrayNonTerminals, renumber, rearrange, crushUses, partitionDeclarations,
-    foldDeclaration, mapTyVar, trimapRef, trimapTerm,
+    foldDeclaration, mapTyVar, trimapRef, trimapTerm, externalizeType, externalizeDeclaration,
 ) where
 import Data.List ( nub ) -- base
 import qualified Data.Graph as G
@@ -25,14 +25,21 @@ data Ty' v id
     | StringTy                      -- String
     | RowTy (Map.Map id (Ty' v id)) -- { f_1: ty_1, ..., f_n: ty_n }
     | ArrayTy (Ty' v id)            -- [ty]
-    -- | TyApp id [Ty' v id]          -- T(ty_1, ..., ty_n) -- TODO
+    | TyApp id [Ty' v id]           -- T(ty_1, ..., ty_n)
     | ExternalTy id                 -- External
     | TyVar v                       -- 'a
   deriving ( Show )
 
+externalizeType :: (Ord id) => Set.Set id -> Ty' v id -> Ty' v id
+externalizeType externals ty@(TyApp x [])
+    | x `Set.member` externals = ExternalTy x
+    | otherwise = ty
+externalizeType _ ty = ty
+
 mapTyVar :: (v -> Ty' v' id) -> Ty' v id -> Ty' v' id
 mapTyVar f (TyVar v) = f v
 mapTyVar f (RowTy fs) = RowTy (mapTyVar f <$> fs)
+mapTyVar f (TyApp t xs) = TyApp t (mapTyVar f <$> xs)
 mapTyVar f (ArrayTy ty) = ArrayTy (mapTyVar f ty)
 mapTyVar _ BoolTy = BoolTy
 mapTyVar _ IntTy = IntTy
@@ -50,6 +57,20 @@ data Declaration rule nt t id e
     | RuleDeclaration nt [(id, Ty id)] (Maybe (Ty id)) -- rule A(a_1: ty_1, ..., a_m: ty_m): ty;
     | FunctionDeclaration t [(id, Ty id)] (Ty id)      -- function f(a_1: ty_1, ..., a_m: ty_m): ty;
   deriving ( Functor, Show )
+
+externalizeDeclaration
+    :: (Ord id)
+    => Set.Set id
+    -> Declaration rule nt t id e
+    -> Declaration rule nt t id e
+externalizeDeclaration exts =
+    foldDeclaration
+        RuleDef
+        (\x ty e -> ConstDeclaration x (externalizeType exts <$> ty) e)
+        (\t args ty -> TypeDeclaration t args (externalizeType exts ty))
+        (\nt args ty -> RuleDeclaration nt (map (fmap (externalizeType exts)) args)
+                        (externalizeType exts <$> ty))
+        (\f args ty -> FunctionDeclaration f args (externalizeType exts ty))
 
 partitionDeclarations
     :: [Declaration rule nt t id e]

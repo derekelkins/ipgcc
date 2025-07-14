@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveFunctor, Rank2Types #-}
 module Text.IPG.Full (
     Grammar(..), Rule(..), Alternative(..), Term(..), StartingOn(..),
-    ExpHelpers(..),
+    ExpHelpers(..), Context(..),
     toCore, toCoreRule, toCoreAlternative, toCoreTerm,
 ) where
 import qualified Data.IntSet as IntSet -- containers
@@ -79,43 +79,52 @@ data ExpHelpers nt t id e = ExpHelpers {
     crushRef :: forall m. (Monoid m) => (Core.Ref nt id e -> m) -> e -> m
   }
 
+data Context id = Context {
+    values :: id,
+    externalTypes :: Set.Set id
+  }
+
 toCore
     :: (Ord id, Ord nt, Show nt)
     => ExpHelpers nt t id e
-    -> id
+    -> Context id
     -> Grammar nt t id e
     -> Core.Grammar nt t id e
-toCore h v (Grammar rules) = Core.Grammar (map (toCoreDeclaration h v) rules)
+toCore h ctxt (Grammar rules) = Core.Grammar (map (toCoreDeclaration h ctxt) rules)
 
 toCoreDeclaration 
     :: (Ord id, Ord nt, Show nt)
     => ExpHelpers nt t id e
-    -> id
+    -> Context id
     -> Core.Declaration Rule nt t id e
     -> Core.Declaration Core.Rule nt t id e
-toCoreDeclaration _ _ (Core.TypeDeclaration name args ty) = Core.TypeDeclaration name args ty
-toCoreDeclaration _ _ (Core.RuleDeclaration name args ty) = Core.RuleDeclaration name args ty
-toCoreDeclaration _ _ (Core.ConstDeclaration name ty e) = Core.ConstDeclaration name ty e
-toCoreDeclaration _ _ (Core.FunctionDeclaration name args ty) =
-    Core.FunctionDeclaration name args ty
-toCoreDeclaration h v (Core.RuleDef r) = Core.RuleDef (toCoreRule h v r)
+toCoreDeclaration _ ctxt (Core.TypeDeclaration name args ty) =
+    Core.externalizeDeclaration (externalTypes ctxt) (Core.TypeDeclaration name args ty)
+toCoreDeclaration _ ctxt (Core.RuleDeclaration name args ty) =
+    Core.externalizeDeclaration (externalTypes ctxt) (Core.RuleDeclaration name args ty)
+toCoreDeclaration _ ctxt (Core.ConstDeclaration name ty e) =
+    Core.externalizeDeclaration (externalTypes ctxt) (Core.ConstDeclaration name ty e)
+toCoreDeclaration _ ctxt (Core.FunctionDeclaration name args ty) =
+    Core.externalizeDeclaration (externalTypes ctxt) (Core.FunctionDeclaration name args ty)
+toCoreDeclaration h ctxt (Core.RuleDef r) = Core.RuleDef (toCoreRule h ctxt r)
 
 toCoreRule
     :: (Ord id, Ord nt, Show nt)
     => ExpHelpers nt t id e
-    -> id
+    -> Context id
     -> Rule nt t id e
     -> Core.Rule nt t id e
-toCoreRule h v (Rule mt nt args alts) = Core.Rule mt nt args (map (toCoreAlternative h v) alts)
+toCoreRule h ctxt (Rule mt nt args alts) =
+    Core.Rule mt nt args (map (toCoreAlternative h ctxt) alts)
 
 toCoreAlternative
     :: (Ord id, Ord nt, Show nt)
     => ExpHelpers nt t id e
-    -> id
+    -> Context id
     -> Alternative nt t id e
     -> Core.Alternative nt t id e
-toCoreAlternative h values (Alternative terms) =
-    Core.Alternative (Core.rearrange g values
+toCoreAlternative h ctxt (Alternative terms) =
+    Core.Alternative (Core.rearrange g (values ctxt)
                         (Core.renumber (mapRef h) (go terms (num h 0) Map.empty [])))
   where go [] _ _ acc = reverse acc
         go (t:ts) nt seen acc = let (t', nt', seen') = toCoreTerm h nt seen t

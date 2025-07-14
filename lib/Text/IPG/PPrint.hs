@@ -99,6 +99,9 @@ pprintType' _ BoolTy = "Bool"
 pprintType' _ IntTy = "Int"
 pprintType' _ FloatTy = "Float"
 pprintType' _ StringTy = "String"
+pprintType' out (TyApp t []) = out t
+pprintType' out (TyApp t xs) =
+    out t <> "(" <> mconcat (intersperse ", " (map (pprintType' out) xs)) <> ")"
 pprintType' out (RowTy fields)
     | Map.null fields = "{}"
     | otherwise = "{ " <> fields' <> " }"

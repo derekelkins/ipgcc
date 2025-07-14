@@ -1,15 +1,15 @@
-{-# LANGUAGE OverloadedStrings, Rank2Types #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Text.IPG.TypeCheck (
-    Context(..), ConstTypes, FunTypes, RuleTypes, TypeDefs, Bindings, Bindings',
+    Context(..), ConstTypes, FunTypes, RuleTypes, TypeDefs, TypeDefs', Bindings, Bindings',
     Environments(typeDefs, constTypes, funTypes, ruleTypes),
-    annotate, fullyDereference, isEquatable, isOrderable, joinTy, subTypeOf, (<:), typeCheck, 
+    annotate, isEquatable, isOrderable, joinTy, subTypeOf, (<:), typeCheck, 
 ) where
 import qualified Data.ByteString.Lazy as LBS -- bytestring
 import qualified Data.ByteString.Builder as Builder -- bytestring
 import qualified Data.Map as Map -- containers
 import qualified Data.Set as Set -- containers
 
-import Data.Maybe ( catMaybes, fromJust ) -- base -- TODO: Remove fromJust.
+import Data.Maybe ( catMaybes ) -- base
 
 import Text.IPG.Core (
     Ty, Ty'(..), Grammar(..), Declaration(..), Rule(..), Alternative(..), Term(..), Ref(..),
@@ -35,34 +35,23 @@ import Text.IPG.PPrint ( Out, pprintExpr, pprintTerm, pprintType' )
 -- lexer positions.
 
 -- TODO: Consider these.
-isEquatable :: Ty id -> Bool
-isEquatable (ArrayTy _) = False
-isEquatable (RowTy _) = False
-isEquatable (ExternalTy _) = False -- TODO: Do I want to allow this?
-isEquatable _ = True
+isEquatable :: (Ord id) => Environments nt t id -> Ty id -> Bool
+isEquatable _ (ArrayTy _) = False
+isEquatable _ (RowTy _) = False
+isEquatable _ (ExternalTy _) = False -- TODO: Do I want to allow this?
+isEquatable envs (TyApp t ts) = isEquatable envs (tyApp (typeDefs envs) t ts)
+isEquatable _ _ = True
 
-isOrderable :: Ty id -> Bool
-isOrderable (ArrayTy _) = False
-isOrderable (RowTy _) = False
-isOrderable (ExternalTy _) = False
-isOrderable _ = True
+isOrderable :: (Ord id) => Environments nt t id -> Ty id -> Bool
+isOrderable _ (ArrayTy _) = False
+isOrderable _ (RowTy _) = False
+isOrderable _ (ExternalTy _) = False
+isOrderable envs (TyApp t ts) = isOrderable envs (tyApp (typeDefs envs) t ts)
+isOrderable _ _ = True
 
 aOut :: (nt -> Out) -> (nt, Int) -> Out
 aOut ntOut' (nt, i) = ntOut' nt <> "@" <> Builder.intDec i
 
--- TODO: Using this willy-nilly is expensive.
-fullyDereference :: (Ord id) => TypeDefs id -> Ty id -> Ty id
-fullyDereference env = go Set.empty Set.empty
-  where go seen guarded ty@(ExternalTy x)
-            | x `Set.member` guarded = error "(Guarded) circular typedefs" -- TODO: For now.
-            | x `Set.member` seen = error "Circular typedefs"
-            -- | x `Set.member` guarded = ty
-            | otherwise = go (Set.insert x seen) guarded (case Map.lookup x env of Just y -> y)
-        go seen guarded (ArrayTy ty) = ArrayTy (go Set.empty (Set.union seen guarded) ty)
-        go seen guarded (RowTy fs) = RowTy (go Set.empty (Set.union seen guarded) <$> fs)
-        go _ _ ty = ty
-
--- TODO: We need to deref types during this unless we fully ground a type first.
 (<:) :: (Ord id) => Ty id -> Ty id -> Bool
 ty1 <: ty2 = subTypeOf Map.empty ty1 ty2
 
@@ -73,8 +62,8 @@ type Bindings' v id = Map.Map v (Ty' v id)
 type Bindings id = Bindings' id id
 
 subTypeOf'
-    :: (Ord id, Ord v)
-    => TypeDefs id
+    :: (Ord id, Ord u, Ord v)
+    => TypeDefs' u id
     -> Bool
     -> Bindings' v id
     -> Ty' v id
@@ -102,7 +91,7 @@ subTypeOf' tyEnv rigid bs0 t1 t2 = go bs0 (derefTy tyEnv t1) (derefTy tyEnv t2)
                                 r -> r
                   process bs' [] = (True, bs')
           go bs _ _ = (False, bs)
-          deref _ ty@(ExternalTy _) = derefTy tyEnv ty
+          deref _ (TyApp t ts) = tyApp tyEnv t ts
           deref bs ty@(TyVar v) =
             case Map.lookup v bs of
                 Nothing -> ty
@@ -137,7 +126,7 @@ applyBindings bs = mapTyVar go
 
 -- TODO: Handle type variables.
 joinTy :: (Ord id) => TypeDefs id -> Ty id -> Ty id -> Maybe (Ty id)
-joinTy _ ty@(ExternalTy x) (ExternalTy y) | x == y = Just ty
+joinTy _ ty@(TyApp x []) (TyApp y []) | x == y = Just ty
 joinTy tyEnv t1 t2 = go (derefTy tyEnv t1) (derefTy tyEnv t2)
     where go (RowTy fs1) (RowTy fs2) =
               case traverse (\k -> (,) k <$> joinTy tyEnv (fs1 Map.! k) (fs2 Map.! k))
@@ -153,18 +142,21 @@ joinTy tyEnv t1 t2 = go (derefTy tyEnv t1) (derefTy tyEnv t2)
                      | subTypeOf tyEnv ty2 ty1 = Just ty1
                      | otherwise = Nothing
 
-derefTy :: (Ord id) => TypeDefs id -> Ty' v id -> Ty' v id
-derefTy tyEnv' = go Set.empty
-    where go seen ty@(ExternalTy x)
-            | x `Set.member` seen = error "Circular typedefs"
-            | otherwise =
-                case Map.lookup x tyEnv' of
-                    Nothing -> ty
-                    Just ty' -> go (Set.insert x seen) ty'
-          go _ ty = ty
+derefTy :: (Ord id, Ord u) => TypeDefs' u id -> Ty' v id -> Ty' v id
+derefTy tyEnv (TyApp t ts) = derefTy tyEnv (tyApp tyEnv t ts)
+derefTy _ ty = ty
 
-type TypeDefs' v id = Map.Map id (Ty' v id) -- TODO: Handle arguments.
-type TypeDefs id = forall v. TypeDefs' v id
+tyApp :: (Ord id, Ord u) => TypeDefs' u id -> id -> [Ty' v id] -> Ty' v id
+tyApp tyEnv t ts =
+    case Map.lookup t tyEnv of
+        Just (vs, ty) -> -- TODO: Check that length vs == length ts
+            let bindings = Map.fromList (zip vs ts)
+            in mapTyVar (f bindings) ty
+        -- Nothing -> error ("Unknown typedef name" <> t)
+  where f bs v = case Map.lookup v bs of Just ty -> ty; Nothing -> error "tyApp: Extra type variables"
+
+type TypeDefs' v id = Map.Map id ([v], Ty' v id)
+type TypeDefs id = TypeDefs' id id
 type ConstTypes id = Map.Map id (Ty id)
 type FunTypes t id = Map.Map t ([Ty id], Ty id)
 type RuleTypes nt id = Map.Map nt ([Ty id], Ty id)
@@ -214,8 +206,7 @@ typeCheck ctxt (Grammar decls)
     | otherwise = Left (cErrs <> rErrs)                
   where (rules, consts, tyEnv, ruleDecls, funDecls) = partitionDeclarations decls
         -- TODO: Need to handle mutual recursion and args.
-        noTyVars = mapTyVar (\_ -> error "There should be no free type variables in typedefs.")
-        tyEnv' = Map.fromList (map (\(n, _, ty) -> (n, noTyVars ty)) tyEnv)
+        tyEnv' = Map.fromList (map (\(n, vs, ty) -> (n, (vs, ty))) tyEnv)
         fTypes' = Map.fromList (map (\(n, tys, ty) -> (n, (map snd tys, ty))) funDecls)
         -- Add zero-arity rules that don't have explicit declarations so we don't need to write them.
         zeroArityRules = catMaybes
@@ -294,7 +285,7 @@ typeCheckRule ctxt envs (Rule _ nt ps alts) tys ty =
     let envs' = envs { locals = Map.fromList (zip ps tys) } -- TODO: Put these in a separate Map?
     in combine <$> traverse (\(Alternative ts) -> typeCheckAlternative ctxt' envs' ts ty) alts
   where ctxt' = ctxt { currentRule = nt }
-        combine = foldr1 (\t1 t2 -> fromJust (joinTy (typeDefs envs) t1 t2)) -- TODO: Handle errors better.
+        combine = foldr1 (\t1 t2 -> case joinTy (typeDefs envs) t1 t2 of ~(Just x) -> x) -- TODO: Handle errors better.
 
 typeCheckAlternative
     :: (Ord id, Ord nt, Ord t)
@@ -590,32 +581,32 @@ typeSynthBinOp
     -> Either Out (Ty id)
 typeSynthBinOp ctxt envs LessThan ty1 ty2 =
     case joinTy (typeDefs envs) ty1 ty2 of
-        Just ty | isOrderable ty -> Right BoolTy
+        Just ty | isOrderable envs ty -> Right BoolTy
                 | otherwise -> Left (pprintType' (out ctxt) ty <> " isn't an orderable type")
         Nothing -> Left "< expects comparable types"
 typeSynthBinOp ctxt envs LTE ty1 ty2 =
     case joinTy (typeDefs envs) ty1 ty2 of
-        Just ty | isOrderable ty -> Right BoolTy
+        Just ty | isOrderable envs ty -> Right BoolTy
                 | otherwise -> Left (pprintType' (out ctxt) ty <> " isn't an orderable type")
         Nothing -> Left "<= expects comparable types"
 typeSynthBinOp ctxt envs GreaterThan ty1 ty2 =
     case joinTy (typeDefs envs) ty1 ty2 of
-        Just ty | isOrderable ty -> Right BoolTy
+        Just ty | isOrderable envs ty -> Right BoolTy
                 | otherwise -> Left (pprintType' (out ctxt) ty <> " isn't an orderable type")
         Nothing -> Left "> expects comparable types"
 typeSynthBinOp ctxt envs GTE ty1 ty2 =
     case joinTy (typeDefs envs) ty1 ty2 of
-        Just ty | isOrderable ty -> Right BoolTy
+        Just ty | isOrderable envs ty -> Right BoolTy
                 | otherwise -> Left (pprintType' (out ctxt) ty <> " isn't an orderable type")
         Nothing -> Left ">= expects comparable types"
 typeSynthBinOp ctxt envs Equal ty1 ty2 =
     case joinTy (typeDefs envs) ty1 ty2 of
-        Just ty | isEquatable ty -> Right BoolTy
+        Just ty | isEquatable envs ty -> Right BoolTy
                 | otherwise -> Left (pprintType' (out ctxt) ty <> " isn't an equatable type")
         Nothing -> Left "== expects comparable types"
 typeSynthBinOp ctxt envs NotEqual ty1 ty2 =
     case joinTy (typeDefs envs) ty1 ty2 of
-        Just ty | isEquatable ty -> Right BoolTy
+        Just ty | isEquatable envs ty -> Right BoolTy
                 | otherwise -> Left (pprintType' (out ctxt) ty <> " isn't an equatable type")
         Nothing -> Left "!= expects comparable types"
 typeSynthBinOp _ _ And BoolTy BoolTy = Right BoolTy

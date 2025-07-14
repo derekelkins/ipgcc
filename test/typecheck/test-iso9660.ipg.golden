@@ -482,7 +482,9 @@ rule NUL_BYTE: {};
 NUL_BYTE
   -> "\x00"[0, 1];
 
-rule Byte: { value: Int };
+typedef Valued('a) = { value: 'a };
+
+rule Byte: Valued(Int);
 
 Byte
   -> { value = .[0] };
