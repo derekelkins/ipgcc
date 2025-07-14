@@ -3,7 +3,7 @@ if exists("b:current_syntax")
 endif
 
 syntax keyword IPGKeyword EOI where repeat until START END for to do starting on true false const
-syntax keyword IPGKeyword typedef rule
+syntax keyword IPGKeyword typedef rule function
 highlight link IPGKeyword Keyword
 
 syntax keyword IPGType Bool Int Float String
@@ -34,6 +34,7 @@ syntax match IPGOperator /\v\~/
 syntax match IPGOperator /\v\+/
 syntax match IPGOperator /\v-/
 syntax match IPGOperator /\v\*/
+syntax match IPGOperator /\v::/
 syntax match IPGOperator "\v/"
 highlight link IPGOperator Operator
 

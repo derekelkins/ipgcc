@@ -91,7 +91,10 @@ toCore
     -> Context id
     -> Grammar nt t id e
     -> Core.Grammar nt t id e
-toCore h ctxt (Grammar rules) = Core.Grammar (map (toCoreDeclaration h ctxt) rules)
+toCore h ctxt (Grammar rules) =
+    Core.Grammar (map
+        (Core.externalizeDeclaration (externalTypes ctxt) (mapType h)
+            . toCoreDeclaration h ctxt) rules)
 
 toCoreDeclaration 
     :: (Ord id, Ord nt, Show nt)
@@ -99,18 +102,12 @@ toCoreDeclaration
     -> Context id
     -> Core.Declaration Rule nt t id e
     -> Core.Declaration Core.Rule nt t id e
-toCoreDeclaration h ctxt (Core.TypeDeclaration name args ty) =
-    Core.externalizeDeclaration (externalTypes ctxt) (mapType h) (Core.TypeDeclaration name args ty)
-toCoreDeclaration h ctxt (Core.RuleDeclaration name args ty) =
-    Core.externalizeDeclaration (externalTypes ctxt) (mapType h) (Core.RuleDeclaration name args ty)
-toCoreDeclaration h ctxt (Core.ConstDeclaration name ty e) =
-    Core.externalizeDeclaration (externalTypes ctxt) (mapType h) (Core.ConstDeclaration name ty e)
-toCoreDeclaration h ctxt (Core.FunctionDeclaration name args ty) =
-    Core.externalizeDeclaration (externalTypes ctxt) (mapType h)
-        (Core.FunctionDeclaration name args ty)
-toCoreDeclaration h ctxt (Core.RuleDef r) =
-    Core.externalizeDeclaration (externalTypes ctxt) (mapType h)
-        (Core.RuleDef (toCoreRule h ctxt r))
+toCoreDeclaration _ _ (Core.TypeDeclaration name args ty) = Core.TypeDeclaration name args ty
+toCoreDeclaration _ _ (Core.RuleDeclaration name args ty) = Core.RuleDeclaration name args ty
+toCoreDeclaration _ _ (Core.ConstDeclaration name ty e) = Core.ConstDeclaration name ty e
+toCoreDeclaration _ _ (Core.FunctionDeclaration name args ty) =
+    Core.FunctionDeclaration name args ty
+toCoreDeclaration h ctxt (Core.RuleDef r) = Core.RuleDef (toCoreRule h ctxt r)
 
 toCoreRule
     :: (Ord id, Ord nt, Show nt)

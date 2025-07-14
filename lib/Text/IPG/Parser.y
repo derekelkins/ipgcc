@@ -172,7 +172,7 @@ Declaration :: { Declaration' }
     | typedef name TyVarList '=' Type ';' { TypeDeclaration $2 $3 $5 }
     | rule name TypedParamList MaybeType ';' { RuleDeclaration $2 $3 $4 }
     | const name MaybeType '=' Exp ';' { ConstDeclaration $2 $3 $5 }
-    | function name TypedParamList ':' Type ';' { FunctionDeclaration $2 $3 $5 }
+    | function name '(' TypedParams ')' ':' Type ';' { FunctionDeclaration $2 (reverse $4) $7 }
 
 MetaTags :: { [MetaTag] }
     : '%instrument' MetaTags { (INSTRUMENT:$2) }

@@ -83,7 +83,8 @@ externalizeDeclaration exts mapType =
         (\t args ty -> TypeDeclaration t args (externalizeType exts ty))
         (\nt args ty -> RuleDeclaration nt (map (fmap (externalizeType exts)) args)
                         (externalizeType exts <$> ty))
-        (\f args ty -> FunctionDeclaration f args (externalizeType exts ty))
+        (\f args ty -> FunctionDeclaration f (map (fmap (externalizeType exts)) args)
+                        (externalizeType exts ty))
   where extExp = mapType (externalizeType exts)
 
 partitionDeclarations

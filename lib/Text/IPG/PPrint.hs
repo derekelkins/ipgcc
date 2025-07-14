@@ -84,8 +84,6 @@ pprintRuleDeclaration n args (Just ty) =
                     (map (\(n', ty') -> Builder.byteString n' <> ": " <> pprintType ty') args))
 
 pprintFunctionDeclaration :: T -> [(T, Ty T)] -> Ty T -> Out
-pprintFunctionDeclaration n [] ty =
-    "function " <> Builder.byteString n <> ": " <> pprintType ty <> ";"
 pprintFunctionDeclaration n args ty =
     "function " <> Builder.byteString n <> "(" <> args' <> "): " <> pprintType ty <> ";"
   where args' = mconcat (intersperse ", "

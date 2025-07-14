@@ -82,7 +82,7 @@ main = do
     case parse (not (noValidation opts)) ipgInput of
         Left errs -> mapM_ (hPutStrLn stderr) errs
         Right (preamble, core', _, _, postamble) -> do
-            core <- if (typeCheckFlag opts) then do
+            core <- if typeCheckFlag opts then do
                         let ctxt = TC.Context {
                                        TC.currentRule = "",
                                        TC.values = "values",
@@ -92,8 +92,8 @@ main = do
                                    }
                         case typeCheck ctxt core' of
                             Right envs -> return (TC.annotate envs core')
-                            Left errs -> do
-                                mapM_ (LBS.hPutStrLn stderr . Builder.toLazyByteString) errs
+                            Left err -> do
+                                LBS.hPutStrLn stderr (Builder.toLazyByteString err)
                                 return core'
                       else return core'
             case exportType opts of
@@ -119,11 +119,19 @@ main = do
 
 externalFuncs :: Map.Map NT ([Value a] -> Value a)
 externalFuncs = Map.fromList [
-    ("empty", \[] -> BINDINGS Map.empty),
     ("decodeAscii", \[SEQUENCE cs] ->
         STRING (BS.pack $ map (\(INT c) -> fromIntegral c) cs)),
     ("makeEntry", \[name, descr, typ] ->
         BINDINGS (Map.fromList [("name", name), ("descriptor", descr), ("type", typ)])),
     ("projectSections", \[SEQUENCE sections] ->
-        SEQUENCE (map (\(BINDINGS b) -> b Map.! "section") sections))
+        SEQUENCE (map (\(BINDINGS b) -> b Map.! "section") sections)),
+    ("nil", \[] -> SEQUENCE []),
+    ("cons", \[x, SEQUENCE xs] -> SEQUENCE (x:xs)),
+    ("null", \[SEQUENCE xs] -> BOOL (null xs)),
+    ("head", \[SEQUENCE (x:_)] -> x),
+    ("tail", \[SEQUENCE (_:xs)] -> SEQUENCE xs),
+    ("empty", \[] -> BINDINGS Map.empty),
+    ("insert", \[STRING k, v, BINDINGS bs] -> BINDINGS (Map.insert k v bs)),
+    ("contains", \[STRING k, BINDINGS bs] -> BOOL (Map.member k bs)),
+    ("lookup", \[STRING k, BINDINGS bs] -> bs Map.! k)
   ]

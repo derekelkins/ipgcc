@@ -37,7 +37,7 @@ tc f = do
                        }
             case TC.typeCheck ctxt g of
                 Right envs -> return (toLazyByteString (pprint (TC.annotate envs g)))
-                Left errs -> return $ LBS.concat (intersperse "\n" (map toLazyByteString errs))
+                Left err -> return $ toLazyByteString err
 
 goldenTests :: IO TestTree
 goldenTests = do

@@ -55,7 +55,7 @@ parse doValidation ipgInput' = do
             let ctxt = Context { values = "values", externalTypes = Set.fromList typeDecls }
             let core = E.simplify (toCore helper ctxt g)
             if doValidation then
-                case validate (Set.fromList decls) core of -- TODO: validate sholud take typeDecls
+                case validate (Set.fromList decls) core of
                     Just errs -> Left (map CBS.unpack errs)
                     Nothing -> Right (preamble, core, decls, typeDecls, postamble)
               else Right (preamble, core, decls, typeDecls, postamble)

@@ -1,0 +1,225 @@
+function emptyTable(): [{ b: Int, g: Int, r: Int }];
+
+function getNull(): 'a;
+
+function concat(chunks: [String]): String;
+
+function decodeAscii(bytes: String): String;
+
+function makeGraphicBlock(extension: Extension, renderingBlock: {}): { type: String };
+
+function makeGraphicControlExtension(disposalMethod: Int, userInputFlag: Bool, transparentColorFlag: Bool, delayTime: Int, transparentColorIndex: Int): Extension;
+
+rule GIF: { blocks: [{ type: String }], logicalScreen: { descriptor: { backgroundColorIndex: Int, colorResolution: Int, globalColorTableSize: Int, hasGlobalColorTable: Bool, height: Int, packedFields: Int, pixelAspectRation: Int, sorted: Int, width: Int }, globalColorTable: [{ b: Int, g: Int, r: Int }] } };
+
+GIF
+  -> Header@0[0, EOI]
+     LogicalScreen@0[Header@0.END, EOI]
+     { logicalScreen = LogicalScreen@0.this }
+     Blocks@0[LogicalScreen@0.END, EOI]
+     { blocks = Blocks@0.values };
+
+rule Header: {};
+
+Header
+  -> "GIF89a"[0, 6];
+
+rule LogicalScreen: { descriptor: { backgroundColorIndex: Int, colorResolution: Int, globalColorTableSize: Int, hasGlobalColorTable: Bool, height: Int, packedFields: Int, pixelAspectRation: Int, sorted: Int, width: Int }, globalColorTable: [{ b: Int, g: Int, r: Int }] };
+
+LogicalScreen
+  -> LogicalScreenDescriptor@0[0, EOI]
+     { descriptor = LogicalScreenDescriptor@0.this }
+     MaybeColorTable@0(LogicalScreenDescriptor@0.hasGlobalColorTable)[LogicalScreenDescriptor@0.END, LogicalScreenDescriptor@0.END + 3 * LogicalScreenDescriptor@0.globalColorTableSize]
+     { globalColorTable = MaybeColorTable@0.table };
+
+rule LogicalScreenDescriptor: { backgroundColorIndex: Int, colorResolution: Int, globalColorTableSize: Int, hasGlobalColorTable: Bool, height: Int, packedFields: Int, pixelAspectRation: Int, sorted: Int, width: Int };
+
+LogicalScreenDescriptor
+  -> U16@0[0, EOI]
+     { width = U16@0.value }
+     U16@1[U16@0.END, EOI]
+     { height = U16@1.value }
+     { packedFields = .[U16@1.END] }
+     { backgroundColorIndex = .[U16@1.END + 1] }
+     { pixelAspectRation = .[U16@1.END + 2] }
+     { hasGlobalColorTable = packedFields >> 7 == 1 }
+     { colorResolution = (packedFields >> 4 & 7) + 1 }
+     { sorted = packedFields >> 3 & 1 }
+     { globalColorTableSize = 2 << (packedFields & 7) };
+
+rule MaybeColorTable(hasColorTable: Bool): { table: [{ b: Int, g: Int, r: Int }] };
+
+MaybeColorTable(hasColorTable)
+  -> ?[ hasColorTable ]
+     { table = emptyTable() }
+   / ColorTable@0[0, EOI]
+     { table = ColorTable@0.table };
+
+rule ColorTable: { table: [{ b: Int, g: Int, r: Int }] };
+
+ColorTable
+  -> for i = 0 to EOI / 3 do RGB@0[3 * i, 3 * i + 3]
+     { table = RGB@0.these };
+
+rule Blocks: { values: [{ type: String }] };
+
+Blocks
+  -> repeat Block@0[Block@0.END, EOI].block starting on [0, EOI] until Trailer@0;
+
+rule Block: { block: { type: String } };
+
+Block
+  -> GraphicBlock@0[0, EOI]
+     { block = GraphicBlock@0.block }
+   / ApplicationExtension@0[0, EOI]
+     { block = ApplicationExtension@0.this }
+   / CommentExtension@0[0, EOI]
+     { block = CommentExtension@0.this };
+
+rule GraphicBlock: { block: { type: String } };
+
+GraphicBlock
+  -> MaybeGraphicControlExtension@0[0, EOI]
+     GraphicRenderingBlock@0[MaybeGraphicControlExtension@0.END, EOI]
+     { block = makeGraphicBlock(MaybeGraphicControlExtension@0.extension, GraphicRenderingBlock@0.block) };
+
+rule MaybeGraphicControlExtension: { extension: Extension };
+
+MaybeGraphicControlExtension
+  -> "!\xf9"[0, 2]
+     "\x04"[2, 3]
+     { packedFields = .[3] }
+     { disposalMethod = packedFields >> 2 & 7 }
+     { userInputFlag = (packedFields >> 1 & 1) == 1 }
+     { transparentColorFlag = (packedFields & 1) == 1 }
+     U16@0[4, EOI]
+     { delayTime = U16@0.value }
+     { transparentColorIndex = .[U16@0.END] }
+     BlockTerminator@0[U16@0.END + 1, EOI]
+     { extension = makeGraphicControlExtension(disposalMethod, userInputFlag, transparentColorFlag, delayTime, transparentColorIndex) }
+   / { extension = getNull() };
+
+rule GraphicRenderingBlock: { block: { type: String } };
+
+GraphicRenderingBlock
+  -> TableBasedImage@0[0, EOI]
+     { block = TableBasedImage@0.this }
+   / PlainTextExtension@0[0, EOI]
+     { block = PlainTextExtension@0.this };
+
+rule TableBasedImage: { data: { imageData: String, lzwMinimumCodeSize: Int }, descriptor: { imageHeight: Int, imageLeftPosition: Int, imageTopPosition: Int, imageWidth: Int, interlaceFlag: Bool, localColorTableFlag: Bool, localColorTableSize: Int, packedFields: Int, sorted: Bool }, localColorTable: [{ b: Int, g: Int, r: Int }], type: String };
+
+TableBasedImage
+  -> { type = "tableBasedImage" }
+     ImageDescriptor@0[0, EOI]
+     { descriptor = ImageDescriptor@0.this }
+     MaybeColorTable@0(ImageDescriptor@0.localColorTableFlag)[ImageDescriptor@0.END, ImageDescriptor@0.END + 3 * ImageDescriptor@0.localColorTableSize]
+     { localColorTable = MaybeColorTable@0.table }
+     ImageData@0[MaybeColorTable@0.END, EOI]
+     { data = ImageData@0.this };
+
+rule ImageDescriptor: { imageHeight: Int, imageLeftPosition: Int, imageTopPosition: Int, imageWidth: Int, interlaceFlag: Bool, localColorTableFlag: Bool, localColorTableSize: Int, packedFields: Int, sorted: Bool };
+
+ImageDescriptor
+  -> ","[0, 1]
+     U16@0[1, EOI]
+     { imageLeftPosition = U16@0.value }
+     U16@1[U16@0.END, EOI]
+     { imageTopPosition = U16@1.value }
+     U16@2[U16@1.END, EOI]
+     { imageWidth = U16@2.value }
+     U16@3[U16@2.END, EOI]
+     { imageHeight = U16@3.value }
+     { packedFields = .[U16@3.END] }
+     { localColorTableFlag = packedFields >> 7 == 1 }
+     { interlaceFlag = (packedFields >> 6 & 1) == 1 }
+     { sorted = (packedFields >> 5 & 1) == 1 }
+     { localColorTableSize = 2 << (packedFields & 7) };
+
+rule ImageData: { imageData: String, lzwMinimumCodeSize: Int };
+
+ImageData
+  -> { lzwMinimumCodeSize = .[0] }
+     Subblocks@0[1, EOI]
+     { imageData = concat(Subblocks@0.values) };
+
+rule PlainTextExtension: { characterCellHeight: Int, characterCellWidth: Int, plainTextData: String, textBackgroundColorIndex: Int, textForegroundColorIndex: Int, textGridHeight: Int, textGridLeftPosition: Int, textGridTopPosition: Int, textGridWidth: Int, type: String };
+
+PlainTextExtension
+  -> "!\x01"[0, 2]
+     "\x03"[2, 3]
+     { type = "plainTextExtension" }
+     U16@0[3, EOI]
+     { textGridLeftPosition = U16@0.value }
+     U16@1[U16@0.END, EOI]
+     { textGridTopPosition = U16@1.value }
+     U16@2[U16@1.END, EOI]
+     { textGridWidth = U16@2.value }
+     U16@3[U16@2.END, EOI]
+     { textGridHeight = U16@3.value }
+     { characterCellWidth = .[U16@3.END] }
+     { characterCellHeight = .[U16@3.END + 1] }
+     { textForegroundColorIndex = .[U16@3.END + 2] }
+     { textBackgroundColorIndex = .[U16@3.END + 3] }
+     Subblocks@0[U16@3.END + 4, EOI]
+     { plainTextData = concat(Subblocks@0.values) };
+
+rule B(n: Int): { value: String };
+
+B(n)
+  -> { value = *[0, n] };
+
+rule ApplicationExtension: { applicationAuthenticationCode: String, applicationData: String, applicationIdentifier: String, type: String };
+
+ApplicationExtension
+  -> "!\xff"[0, 2]
+     "\x0b"[2, 3]
+     { type = "applicationExtension" }
+     B@0(8)[3, EOI]
+     { applicationIdentifier = decodeAscii(B@0.value) }
+     B@1(3)[B@0.END, EOI]
+     { applicationAuthenticationCode = decodeAscii(B@1.value) }
+     Subblocks@0[B@1.END, EOI]
+     { applicationData = concat(Subblocks@0.values) };
+
+rule CommentExtension: { commentData: String, type: String };
+
+CommentExtension
+  -> "!\xfe"[0, 2]
+     { type = "commentExtension" }
+     Subblocks@0[2, EOI]
+     { commentData = decodeAscii(concat(Subblocks@0.values)) };
+
+rule Subblocks: { values: [String] };
+
+Subblocks
+  -> repeat Subblock@0[Subblock@0.END, EOI].data starting on [0, EOI] until BlockTerminator@0;
+
+rule Subblock: { data: String, size: Int };
+
+Subblock
+  -> { size = .[0] }
+     { data = *[1, 1 + size] };
+
+rule Trailer: {};
+
+Trailer
+  -> ";"[0, 1];
+
+rule U16: { bs: String, value: Int };
+
+U16
+  -> { bs = *[0, 2] }
+     { value = bs[0] | bs[1] << 8 };
+
+rule BlockTerminator: {};
+
+BlockTerminator
+  -> "\x00"[0, 1];
+
+rule RGB: { b: Int, g: Int, r: Int };
+
+RGB
+  -> { r = .[0] }
+     { g = .[1] }
+     { b = .[2] };
