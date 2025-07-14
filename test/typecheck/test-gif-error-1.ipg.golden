@@ -1,0 +1,6 @@
+Type mismatch in arguments when calling makeGraphicControlExtension.
+Argument: transparentColorFlag
+Error: Bool is not a subtype of Int
+  In expression: makeGraphicControlExtension(disposalMethod, userInputFlag, transparentColorFlag, delayTime, transparentColorIndex)
+  In term: { extension = makeGraphicControlExtension(disposalMethod, userInputFlag, transparentColorFlag, delayTime, transparentColorIndex) }
+  In rule: MaybeGraphicControlExtension

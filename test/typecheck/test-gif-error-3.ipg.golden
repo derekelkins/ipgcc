@@ -1,0 +1,5 @@
+{ block: GraphicBlock }
+
+failed to join with
+
+{ block: { applicationAuthenticationCode: String, applicationData: String, applicationIdentifier: String, type: String } }
