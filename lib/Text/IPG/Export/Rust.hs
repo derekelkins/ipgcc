@@ -238,7 +238,7 @@ termToRust indent c env z@(Any x l)
    <> indent <> [i|left = #{lExp} as usize;\n|]
    <> indent <>   "right = left + 1;\n"
    <> indent <>   "if right > EOI { break '_ipg_alt; }\n"
-   <> indent <> [i|let self_#{x} = input[begin + left] as i64;\n|]
+   <> indent <> [i|let self_#{x} = input[begin + left];\n|]
    <> indent <>   "self_ipg_start = self_ipg_start.min(left);\n"
    <> indent <>   "self_ipg_end = self_ipg_end.max(right);\n\n"
   where lExp = exprToRust' c env 14 l
@@ -425,13 +425,7 @@ toRustWithContext c (Grammar decls) =
 
 toRustWithContext' :: Context -> TC.Environments T T T -> Grammar T T T T Expr -> LBS.ByteString
 toRustWithContext' c envs (Grammar decls) = Builder.toLazyByteString $
-       "#![allow(non_snake_case)]\n"
-    <> "#![allow(dead_code)]\n"
-    <> "#![allow(unreachable_code)]\n"
-    <> "#![allow(unused_mut)]\n"
-    <> "#![allow(unused_assignments)]\n"
-    <> "#![allow(unused_variables)]\n\n"
-    <> foldMap (typeDeclToRust c') typeDecls
+    foldMap (typeDeclToRust c') typeDecls
     <> foldMap (constToRust c') constDecls
     <> foldMap (ruleDeclToRust c') ruleDecls -- If the return type is a row type, make a struct with the name of the rule with some prefix.
     <> foldMap (ruleToRust c') ruleDefs
