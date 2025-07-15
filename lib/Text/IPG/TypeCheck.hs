@@ -565,14 +565,23 @@ typeSynthExp' ctxt envs (If b t e) =
 typeSynthExp' ctxt envs (Un op e) =
     case typeSynthExp ctxt envs e of
         Left err -> Left err
-        Right ty -> typeSynthUnOp envs op ty
+        Right ty ->
+            case typeSynthUnOp envs op ty of
+                Left err -> Left (err <> "\nType was: " <> ppType ctxt ty)
+                r -> r
 typeSynthExp' ctxt envs (Bin op e1 e2) =
     case typeSynthExp ctxt envs e1 of
         Left err -> Left err
         Right ty1 ->
             case typeSynthExp ctxt envs e2 of
                 Left err -> Left err
-                Right ty2 -> typeSynthBinOp ctxt envs op ty1 ty2
+                Right ty2 -> 
+                    case typeSynthBinOp ctxt envs op ty1 ty2 of
+                        Left err ->
+                            Left (err 
+                              <> "\nTypes were: " <> ppType ctxt ty1
+                              <> "\nand: " <> ppType ctxt ty2)
+                        r -> r
 typeSynthExp' ctxt envs (Call f es) =
     case traverse (typeSynthExp ctxt envs) es of
         Left err -> Left err
