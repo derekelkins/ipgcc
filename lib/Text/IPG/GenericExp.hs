@@ -4,6 +4,7 @@ module Text.IPG.GenericExp (
 ) where
 import Data.Bits ( shift, complement, xor, (.&.), (.|.) ) -- base
 import Data.Int ( Int64 ) -- base
+import Data.Word ( Word8 ) -- base
 
 import Text.IPG.Core ( Grammar, Ref, Ty, bimapTy, trimapRef )
 
@@ -35,6 +36,7 @@ data BinOp
 data Exp nt t id x
     = T
     | F
+    | U8 Word8
     | Int Int64
     | Float Double
     | String t
@@ -49,6 +51,7 @@ data Exp nt t id x
 trimap :: (nt -> nt') -> (t -> t') -> (id -> id') -> Exp nt t id x -> Exp nt' t' id' x
 trimap _ _ _ T = T
 trimap _ _ _ F = F
+trimap _ _ _ (U8 n) = U8 n
 trimap _ _ _ (Int n) = Int n
 trimap _ _ _ (Float n) = Float n
 trimap _ g _ (String s) = String (g s)
@@ -67,6 +70,7 @@ mapType f (Call t es) = Call t (map (mapType f) es)
 mapType f (Annotate e t) = Annotate (mapType f e) (f t)
 mapType _ T = T
 mapType _ F = F
+mapType _ (U8 n) = U8 n
 mapType _ (Int n) = Int n
 mapType _ (Float n) = Float n
 mapType _ (String s) = String s
@@ -84,6 +88,7 @@ mapRef f (If b t e) = If (mapRef f b) (mapRef f t) (mapRef f e)
 mapRef f (Call t es) = Call t (map (mapRef f) es)
 mapRef f (Ref r) = Ref (f r)
 mapRef f (Annotate e t) = Annotate (mapRef f e) t
+mapRef _ (U8 n) = U8 n
 mapRef _ (Int n) = Int n
 mapRef _ (Float n) = Float n
 mapRef _ (String s) = String s
@@ -104,11 +109,12 @@ simplify = fmap simplifyExp
 simplifyExp :: (Ord t) => Exp nt t id x -> Exp nt t id x
 simplifyExp T = T
 simplifyExp F = F
+simplifyExp (U8 n) = U8 n
 simplifyExp (Int n) = Int n
 simplifyExp (Float n) = Float n
 simplifyExp (String s) = String s
 simplifyExp (Bin Add l r) = add (simplifyExp l) (simplifyExp r)
-    where add (Int 0) y = y
+    where add (Int 0) y = y -- TODO: Add U8 cases for all this.
           add x (Int 0) = x
           add (Int x) (Int y) = Int (x + y)
           add (Float 0) y = y

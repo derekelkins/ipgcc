@@ -1,4 +1,4 @@
-function emptyTable(): [{ b: Int, g: Int, r: Int }];
+function emptyTable(): [{ b: U8, g: U8, r: U8 }];
 
 function getNull(): 'a;
 
@@ -8,9 +8,9 @@ function decodeAscii(bytes: String): String;
 
 function makeGraphicBlock(extension: Extension, renderingBlock: {}): { type: String };
 
-function makeGraphicControlExtension(disposalMethod: Int, userInputFlag: Bool, transparentColorFlag: Bool, delayTime: Int, transparentColorIndex: Int): Extension;
+function makeGraphicControlExtension(disposalMethod: U8, userInputFlag: Bool, transparentColorFlag: Bool, delayTime: Int, transparentColorIndex: U8): Extension;
 
-rule GIF: { blocks: [{ type: String }], logicalScreen: /* LogicalScreen */ { descriptor: /* LogicalScreenDescriptor */ { backgroundColorIndex: Int, colorResolution: Int, globalColorTableSize: Int, hasGlobalColorTable: Bool, height: Int, packedFields: Int, pixelAspectRation: Int, sorted: Int, width: Int }, globalColorTable: [{ b: Int, g: Int, r: Int }] } };
+rule GIF: { blocks: [{ type: String }], logicalScreen: /* LogicalScreen */ { descriptor: /* LogicalScreenDescriptor */ { backgroundColorIndex: U8, colorResolution: Int, globalColorTableSize: Int, hasGlobalColorTable: Bool, height: Int, packedFields: U8, pixelAspectRation: U8, sorted: Int, width: Int }, globalColorTable: [{ b: U8, g: U8, r: U8 }] } };
 
 GIF
   -> Header@0[0, EOI]
@@ -24,7 +24,7 @@ rule Header: {};
 Header
   -> "GIF89a"[0, 6];
 
-rule LogicalScreen: { descriptor: /* LogicalScreenDescriptor */ { backgroundColorIndex: Int, colorResolution: Int, globalColorTableSize: Int, hasGlobalColorTable: Bool, height: Int, packedFields: Int, pixelAspectRation: Int, sorted: Int, width: Int }, globalColorTable: [{ b: Int, g: Int, r: Int }] };
+rule LogicalScreen: { descriptor: /* LogicalScreenDescriptor */ { backgroundColorIndex: U8, colorResolution: Int, globalColorTableSize: Int, hasGlobalColorTable: Bool, height: Int, packedFields: U8, pixelAspectRation: U8, sorted: Int, width: Int }, globalColorTable: [{ b: U8, g: U8, r: U8 }] };
 
 LogicalScreen
   -> LogicalScreenDescriptor@0[0, EOI]
@@ -32,7 +32,7 @@ LogicalScreen
      MaybeColorTable@0(LogicalScreenDescriptor@0.hasGlobalColorTable)[LogicalScreenDescriptor@0.END, LogicalScreenDescriptor@0.END + 3 * LogicalScreenDescriptor@0.globalColorTableSize]
      { globalColorTable = MaybeColorTable@0.table };
 
-rule LogicalScreenDescriptor: { backgroundColorIndex: Int, colorResolution: Int, globalColorTableSize: Int, hasGlobalColorTable: Bool, height: Int, packedFields: Int, pixelAspectRation: Int, sorted: Int, width: Int };
+rule LogicalScreenDescriptor: { backgroundColorIndex: U8, colorResolution: Int, globalColorTableSize: Int, hasGlobalColorTable: Bool, height: Int, packedFields: U8, pixelAspectRation: U8, sorted: Int, width: Int };
 
 LogicalScreenDescriptor
   -> U16@0[0, EOI]
@@ -47,7 +47,7 @@ LogicalScreenDescriptor
      { sorted = packedFields >> 3 & 1 }
      { globalColorTableSize = 2 << (packedFields & 7) };
 
-rule MaybeColorTable(hasColorTable: Bool): { table: [{ b: Int, g: Int, r: Int }] };
+rule MaybeColorTable(hasColorTable: Bool): { table: [{ b: U8, g: U8, r: U8 }] };
 
 MaybeColorTable(hasColorTable)
   -> ?[ hasColorTable ]
@@ -55,7 +55,7 @@ MaybeColorTable(hasColorTable)
    / ColorTable@0[0, EOI]
      { table = ColorTable@0.table };
 
-rule ColorTable: { table: [/* RGB */ { b: Int, g: Int, r: Int }] };
+rule ColorTable: { table: [/* RGB */ { b: U8, g: U8, r: U8 }] };
 
 ColorTable
   -> for i = 0 to EOI / 3 do RGB@0[3 * i, 3 * i + 3]
@@ -107,7 +107,7 @@ GraphicRenderingBlock
    / PlainTextExtension@0[0, EOI]
      { block = PlainTextExtension@0.this };
 
-rule TableBasedImage: { data: /* ImageData */ { imageData: String, lzwMinimumCodeSize: Int }, descriptor: /* ImageDescriptor */ { imageHeight: Int, imageLeftPosition: Int, imageTopPosition: Int, imageWidth: Int, interlaceFlag: Bool, localColorTableFlag: Bool, localColorTableSize: Int, packedFields: Int, sorted: Bool }, localColorTable: [{ b: Int, g: Int, r: Int }], type: String };
+rule TableBasedImage: { data: /* ImageData */ { imageData: String, lzwMinimumCodeSize: U8 }, descriptor: /* ImageDescriptor */ { imageHeight: Int, imageLeftPosition: Int, imageTopPosition: Int, imageWidth: Int, interlaceFlag: Bool, localColorTableFlag: Bool, localColorTableSize: Int, packedFields: U8, sorted: Bool }, localColorTable: [{ b: U8, g: U8, r: U8 }], type: String };
 
 TableBasedImage
   -> { type = "tableBasedImage" }
@@ -118,7 +118,7 @@ TableBasedImage
      ImageData@0[MaybeColorTable@0.END, EOI]
      { data = ImageData@0.this };
 
-rule ImageDescriptor: { imageHeight: Int, imageLeftPosition: Int, imageTopPosition: Int, imageWidth: Int, interlaceFlag: Bool, localColorTableFlag: Bool, localColorTableSize: Int, packedFields: Int, sorted: Bool };
+rule ImageDescriptor: { imageHeight: Int, imageLeftPosition: Int, imageTopPosition: Int, imageWidth: Int, interlaceFlag: Bool, localColorTableFlag: Bool, localColorTableSize: Int, packedFields: U8, sorted: Bool };
 
 ImageDescriptor
   -> ","[0, 1]
@@ -136,14 +136,14 @@ ImageDescriptor
      { sorted = (packedFields >> 5 & 1) == 1 }
      { localColorTableSize = 2 << (packedFields & 7) };
 
-rule ImageData: { imageData: String, lzwMinimumCodeSize: Int };
+rule ImageData: { imageData: String, lzwMinimumCodeSize: U8 };
 
 ImageData
   -> { lzwMinimumCodeSize = .[0] }
      Subblocks@0[1, EOI]
      { imageData = concat(Subblocks@0.values) };
 
-rule PlainTextExtension: { characterCellHeight: Int, characterCellWidth: Int, plainTextData: String, textBackgroundColorIndex: Int, textForegroundColorIndex: Int, textGridHeight: Int, textGridLeftPosition: Int, textGridTopPosition: Int, textGridWidth: Int, type: String };
+rule PlainTextExtension: { characterCellHeight: U8, characterCellWidth: U8, plainTextData: String, textBackgroundColorIndex: U8, textForegroundColorIndex: U8, textGridHeight: Int, textGridLeftPosition: Int, textGridTopPosition: Int, textGridWidth: Int, type: String };
 
 PlainTextExtension
   -> "!\x01"[0, 2]
@@ -195,7 +195,7 @@ rule Subblocks: { values: [String] };
 Subblocks
   -> repeat Subblock@0[Subblock@0.END, EOI].data starting on [0, EOI] until BlockTerminator@0;
 
-rule Subblock: { data: String, size: Int };
+rule Subblock: { data: String, size: U8 };
 
 Subblock
   -> { size = .[0] }
@@ -210,14 +210,14 @@ rule U16: { bs: String, value: Int };
 
 U16
   -> { bs = *[0, 2] }
-     { value = bs[0] | bs[1] << 8 };
+     { value = (bs[0] :: Int) | (bs[1] :: Int) << 8 };
 
 rule BlockTerminator: {};
 
 BlockTerminator
   -> "\x00"[0, 1];
 
-rule RGB: { b: Int, g: Int, r: Int };
+rule RGB: { b: U8, g: U8, r: U8 };
 
 RGB
   -> { r = .[0] }

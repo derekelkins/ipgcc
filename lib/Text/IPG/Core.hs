@@ -21,6 +21,7 @@ type Ty id = Ty' id id
 
 data Ty' v id x
     = BoolTy                          -- Bool
+    | U8Ty                            -- U8
     | IntTy                           -- Int
     | FloatTy                         -- Float
     | StringTy                        -- String
@@ -34,6 +35,7 @@ data Ty' v id x
 
 bimapTy :: (v -> v') -> (id -> id') -> Ty' v id x -> Ty' v' id' x
 bimapTy _ _ BoolTy = BoolTy
+bimapTy _ _ U8Ty = U8Ty
 bimapTy _ _ IntTy = IntTy
 bimapTy _ _ FloatTy = FloatTy
 bimapTy _ _ StringTy = StringTy
@@ -50,6 +52,7 @@ externalizeType externals (TyApp x [])
     | otherwise = TyApp x []
 externalizeType externals (TyApp x ts) = TyApp x (map (externalizeType externals) ts)
 externalizeType _ BoolTy = BoolTy
+externalizeType _ U8Ty = U8Ty
 externalizeType _ IntTy = IntTy
 externalizeType _ FloatTy = FloatTy
 externalizeType _ StringTy = StringTy
@@ -65,6 +68,7 @@ mapTyVar f (RowTy fs) = RowTy (mapTyVar f <$> fs)
 mapTyVar f (TyApp t xs) = TyApp t (mapTyVar f <$> xs)
 mapTyVar f (ArrayTy ty) = ArrayTy (mapTyVar f ty)
 mapTyVar _ BoolTy = BoolTy
+mapTyVar _ U8Ty = U8Ty
 mapTyVar _ IntTy = IntTy
 mapTyVar _ FloatTy = FloatTy
 mapTyVar _ StringTy = StringTy

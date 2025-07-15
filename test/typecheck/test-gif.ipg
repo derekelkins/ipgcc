@@ -36,17 +36,17 @@ function makeGraphicControlExtension(
 
 %declare_type Extension %end
 
-function emptyTable(): [{ r: Int, g: Int, b: Int }];
+function emptyTable(): [{ r: U8, g: U8, b: U8 }];
 function getNull(): 'a;
 function concat(chunks: [String]): String;
 function decodeAscii(bytes: String): String;
 function makeGraphicBlock(extension: Extension, renderingBlock: {}): { type: String };
 function makeGraphicControlExtension(
-    disposalMethod: Int,
+    disposalMethod: U8,
     userInputFlag: Bool,
     transparentColorFlag: Bool,
     delayTime: Int,
-    transparentColorIndex: Int
+    transparentColorIndex: U8
 ): Extension;
 
 // Instead of adapting the versions from the paper's resources, I'm just going to implement from
@@ -98,7 +98,7 @@ MaybeGraphicControlExtension
     -> "!\xF9"
        "\x04" // size
        { packedFields = . } // { reserved:3, disposalMethod:3, userInputFlag:1, transparentColorFlag: 1 }
-       { disposalMethod = (packedFields >> 2) & 0x07 }
+       { disposalMethod = (packedFields >> 2) & 0x07u8 }
        { userInputFlag = ((packedFields >> 1) & 0x01) == 1 }
        { transparentColorFlag = (packedFields & 0x01) == 1 }
        U16 { delayTime = U16.value }
@@ -171,7 +171,7 @@ Subblock -> { size = . } { data = *[size] };
 
 Trailer -> ";";
 
-U16 -> { bs = *[2] } { value = bs[0] | (bs[1] << 8) }; // Little-endian
+U16 -> { bs = *[2] } { value = (bs[0] :: Int) | (bs[1] :: Int << 8) }; // Little-endian
 
 BlockTerminator -> "\x00";
 

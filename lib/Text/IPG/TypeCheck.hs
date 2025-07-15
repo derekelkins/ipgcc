@@ -103,6 +103,9 @@ subTypeOf'
     -> (Bool, Bindings' x v id)
 subTypeOf' tyEnv rigid bs0 t1 t2 = go bs0 (derefTy tyEnv t1) (derefTy tyEnv t2)
     where go bs BoolTy BoolTy = (True, bs)
+          go bs U8Ty U8Ty = (True, bs)
+          go bs U8Ty IntTy = (True, bs)
+          go bs U8Ty FloatTy = (True, bs)
           go bs IntTy IntTy = (True, bs)
           go bs IntTy FloatTy = (True, bs)
           go bs FloatTy FloatTy = (True, bs)
@@ -425,7 +428,7 @@ typeSynthTerm ctxt envs rows (Guard e) =
 typeSynthTerm ctxt envs rows (Any x e) =
     case typeCheckExp ctxt envs e IntTy of
         Just err -> Left err
-        Nothing -> Right (Map.insert x IntTy rows, Map.empty)
+        Nothing -> Right (Map.insert x U8Ty rows, Map.empty)
 typeSynthTerm ctxt envs rows (Slice x l r) =
     case (typeCheckExp ctxt envs l IntTy, typeCheckExp ctxt envs r IntTy) of
         (Just lerr, Just rerr) -> Left (lerr <> "\n" <> rerr)
@@ -545,6 +548,7 @@ typeSynthExp'
     -> Either Out (Ty id (Note nt t id))
 typeSynthExp' _ _ T = Right BoolTy
 typeSynthExp' _ _ F = Right BoolTy
+typeSynthExp' _ _ (U8 _) = Right U8Ty
 typeSynthExp' _ _ (Int _) = Right IntTy
 typeSynthExp' _ _ (Float _) = Right FloatTy
 typeSynthExp' _ _ (String _) = Right StringTy
@@ -701,10 +705,12 @@ typeSynthUnOp
     -> Either Out (Ty id (Note nt t id))
 typeSynthUnOp envs Not ty | unCheck envs ty BoolTy = Right BoolTy
 typeSynthUnOp    _ Not  _ = Left "! expects a boolean argument"
+typeSynthUnOp envs Neg ty | unCheck envs ty U8Ty = Right U8Ty
 typeSynthUnOp envs Neg ty | unCheck envs ty IntTy = Right IntTy
 typeSynthUnOp envs Neg ty | unCheck envs ty FloatTy = Right FloatTy
 typeSynthUnOp    _ Neg  _ = Left "Negation expects a numeric argument"
 typeSynthUnOp envs BitwiseNeg ty | unCheck envs ty BoolTy = Right BoolTy
+typeSynthUnOp envs BitwiseNeg ty | unCheck envs ty U8Ty = Right U8Ty
 typeSynthUnOp envs BitwiseNeg ty | unCheck envs ty IntTy = Right IntTy
 typeSynthUnOp    _ BitwiseNeg  _ = Left "Bitwise negation expects an integer or boolean argument"
 
@@ -751,32 +757,38 @@ typeSynthBinOp _    _ And _ _ = Left "&& expects boolean arguments"
 typeSynthBinOp _ envs Or ty1 ty2 | binCheck envs ty1 BoolTy ty2 BoolTy = Right BoolTy
 typeSynthBinOp _    _ Or _ _ = Left "|| expects boolean arguments"
 typeSynthBinOp _ envs BitwiseAnd ty1 ty2 | binCheck envs ty1 BoolTy ty2 BoolTy = Right BoolTy
+typeSynthBinOp _ envs BitwiseAnd ty1 ty2 | binCheck envs ty1 U8Ty ty2 U8Ty = Right U8Ty
 typeSynthBinOp _ envs BitwiseAnd ty1 ty2 | binCheck envs ty1 IntTy ty2 IntTy = Right IntTy
 typeSynthBinOp _    _ BitwiseAnd _ _ = Left "& expects matching boolean or integer arguments"
 typeSynthBinOp _ envs BitwiseXor ty1 ty2 | binCheck envs ty1 BoolTy ty2 BoolTy = Right BoolTy
+typeSynthBinOp _ envs BitwiseXor ty1 ty2 | binCheck envs ty1 U8Ty ty2 U8Ty = Right U8Ty
 typeSynthBinOp _ envs BitwiseXor ty1 ty2 | binCheck envs ty1 IntTy ty2 IntTy = Right IntTy
 typeSynthBinOp _    _ BitwiseXor _ _ = Left "^ expects matching boolean or integer arguments"
 typeSynthBinOp _ envs BitwiseOr ty1 ty2 | binCheck envs ty1 BoolTy ty2 BoolTy = Right BoolTy
+typeSynthBinOp _ envs BitwiseOr ty1 ty2 | binCheck envs ty1 U8Ty ty2 U8Ty = Right U8Ty
 typeSynthBinOp _ envs BitwiseOr ty1 ty2 | binCheck envs ty1 IntTy ty2 IntTy = Right IntTy
 typeSynthBinOp _    _ BitwiseOr _ _ = Left "| expects matching boolean or integer arguments"
+typeSynthBinOp _ envs LSh ty1 ty2 | binCheck envs ty1 U8Ty ty2 IntTy = Right U8Ty
 typeSynthBinOp _ envs LSh ty1 ty2 | binCheck envs ty1 IntTy ty2 IntTy = Right IntTy
 typeSynthBinOp _    _ LSh _ _ = Left "<< expects integer arguments"
+typeSynthBinOp _ envs RSh ty1 ty2 | binCheck envs ty1 U8Ty ty2 IntTy = Right U8Ty
 typeSynthBinOp _ envs RSh ty1 ty2 | binCheck envs ty1 IntTy ty2 IntTy = Right IntTy
 typeSynthBinOp _    _ RSh _ _ = Left ">> expects integer arguments"
+typeSynthBinOp _ envs Add ty1 ty2 | binCheck envs ty1 U8Ty ty2 U8Ty = Right U8Ty
 typeSynthBinOp _ envs Add ty1 ty2 | binCheck envs ty1 IntTy ty2 IntTy = Right IntTy
 typeSynthBinOp _ envs Add ty1 ty2 | binCheck envs ty1 IntTy ty2 FloatTy = Right FloatTy
 typeSynthBinOp _ envs Add ty1 ty2 | binCheck envs ty1 FloatTy ty2 IntTy = Right FloatTy
 typeSynthBinOp _ envs Add ty1 ty2 | binCheck envs ty1 FloatTy ty2 FloatTy = Right FloatTy
 typeSynthBinOp _ envs Add ty1 ty2 | binCheck envs ty1 StringTy ty2 StringTy = Right StringTy
 typeSynthBinOp _    _ Add _ _ = Left "Addition expects matching numeric or string arguments"
+typeSynthBinOp _ envs Sub ty1 ty2 | binCheck envs ty1 U8Ty ty2 U8Ty = Right U8Ty
 typeSynthBinOp _ envs Sub ty1 ty2 | binCheck envs ty1 IntTy ty2 IntTy = Right IntTy
 typeSynthBinOp _ envs Sub ty1 ty2 | binCheck envs ty1 IntTy ty2 FloatTy = Right FloatTy
 typeSynthBinOp _ envs Sub ty1 ty2 | binCheck envs ty1 FloatTy ty2 IntTy = Right FloatTy
 typeSynthBinOp _ envs Sub ty1 ty2 | binCheck envs ty1 FloatTy ty2 FloatTy = Right FloatTy
 typeSynthBinOp _    _ Sub _ _ = Left "Subtraction expects numeric arguments"
+typeSynthBinOp _ envs Mul ty1 ty2 | binCheck envs ty1 U8Ty ty2 U8Ty = Right U8Ty
 typeSynthBinOp _ envs Mul ty1 ty2 | binCheck envs ty1 IntTy ty2 IntTy = Right IntTy
-typeSynthBinOp _ envs Mul ty1 ty2 | binCheck envs ty1 IntTy ty2 FloatTy = Right FloatTy
-typeSynthBinOp _ envs Mul ty1 ty2 | binCheck envs ty1 FloatTy ty2 IntTy = Right FloatTy
 typeSynthBinOp _ envs Mul ty1 ty2 | binCheck envs ty1 FloatTy ty2 FloatTy = Right FloatTy
 typeSynthBinOp _    _ Mul _ _ = Left "Multiplication expects numeric arguments"
 typeSynthBinOp _ envs Exp ty1 ty2 | binCheck envs ty1 IntTy ty2 IntTy = Right FloatTy
@@ -784,13 +796,15 @@ typeSynthBinOp _ envs Exp ty1 ty2 | binCheck envs ty1 IntTy ty2 FloatTy = Right 
 typeSynthBinOp _ envs Exp ty1 ty2 | binCheck envs ty1 FloatTy ty2 IntTy = Right FloatTy
 typeSynthBinOp _ envs Exp ty1 ty2 | binCheck envs ty1 FloatTy ty2 FloatTy = Right FloatTy
 typeSynthBinOp _    _ Exp _ _ = Left "Exponentiation expects numeric arguments"
+typeSynthBinOp _ envs Div ty1 ty2 | binCheck envs ty1 U8Ty ty2 U8Ty = Right U8Ty
 typeSynthBinOp _ envs Div ty1 ty2 | binCheck envs ty1 IntTy ty2 IntTy = Right IntTy
 typeSynthBinOp _ envs Div ty1 ty2 | binCheck envs ty1 IntTy ty2 FloatTy = Right FloatTy
 typeSynthBinOp _ envs Div ty1 ty2 | binCheck envs ty1 FloatTy ty2 IntTy = Right FloatTy
 typeSynthBinOp _ envs Div ty1 ty2 | binCheck envs ty1 FloatTy ty2 FloatTy = Right FloatTy
 typeSynthBinOp _    _ Div _ _ = Left "Division expects numeric arguments"
+typeSynthBinOp _ envs Mod ty1 ty2 | binCheck envs ty1 U8Ty ty2 U8Ty = Right U8Ty
 typeSynthBinOp _ envs Mod ty1 ty2 | binCheck envs ty1 IntTy ty2 IntTy = Right IntTy
 typeSynthBinOp _    _ Mod _ _ = Left "% expects integer arguments"
-typeSynthBinOp _ envs At ty1 ty2 | binCheck envs ty1 StringTy ty2 IntTy = Right IntTy
+typeSynthBinOp _ envs At ty1 ty2 | binCheck envs ty1 StringTy ty2 IntTy = Right U8Ty
 typeSynthBinOp _ envs At (ArrayTy ty) ty2 | unCheck envs ty2 IntTy = Right ty -- TODO
 typeSynthBinOp _    _ At _ _ = Left "Indexing expects a string or sequence first argument and an integer second argument"

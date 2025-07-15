@@ -80,9 +80,11 @@ exprToRust :: Context -> Env -> Expr -> Out
 exprToRust ctxt env e = exprToRust' ctxt env 0 e
 
 -- TODO: Compare the precedences to the Rust precedences.
+-- See https://doc.rust-lang.org/reference/expressions.html
 exprToRust' :: Context -> Env -> Int -> Expr -> Out
 exprToRust' _ _ _ T = "true"
 exprToRust' _ _ _ F = "false"
+exprToRust' _ _ _ (U8 n) = Builder.word8Dec n
 exprToRust' _ _ _ (Int n) = Builder.int64Dec n
 exprToRust' _ _ _ (Float n) = floatToOut n
 exprToRust' _ _ _ (String s) = hexyString s <> ".as_bytes().to_vec()"
@@ -357,6 +359,7 @@ constToRust c (n, Nothing, e) = [i|let #{n} = #{exprToRust c Set.empty e};\n|]
 
 typeToRust :: Context -> Ty T T -> Out
 typeToRust _ BoolTy = "bool"
+typeToRust _ U8Ty = "u8"
 typeToRust _ IntTy = "i64"
 typeToRust _ FloatTy = "f64"
 typeToRust _ StringTy = "Vec<u8>" -- "String" -- TODO: Change based on whether this is a parameter or not?
@@ -425,6 +428,7 @@ toRustWithContext' c envs (Grammar decls) = Builder.toLazyByteString $
        "#![allow(non_snake_case)]\n"
     <> "#![allow(dead_code)]\n"
     <> "#![allow(unreachable_code)]\n"
+    <> "#![allow(unused_mut)]\n"
     <> "#![allow(unused_assignments)]\n"
     <> "#![allow(unused_variables)]\n\n"
     <> foldMap (typeDeclToRust c') typeDecls

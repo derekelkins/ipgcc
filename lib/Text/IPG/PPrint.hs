@@ -94,6 +94,7 @@ pprintType = pprintType' Builder.byteString
 
 pprintType' :: (id -> Out) -> Ty id T -> Out
 pprintType' _ BoolTy = "Bool"
+pprintType' _ U8Ty = "U8"
 pprintType' _ IntTy = "Int"
 pprintType' _ FloatTy = "Float"
 pprintType' _ StringTy = "String"
@@ -176,6 +177,7 @@ pprintRef' _ (End nt) = pprintNT nt <> ".END"
 pprintExpr :: Int -> Exp T T T T -> Out
 pprintExpr _ T = "true"
 pprintExpr _ F = "false"
+pprintExpr _ (U8 n) = Builder.word8Dec n
 pprintExpr _ (Int n) = Builder.int64Dec n
 pprintExpr _ (Float n) = floatToOut n
 pprintExpr _ (String s) = hexyString s

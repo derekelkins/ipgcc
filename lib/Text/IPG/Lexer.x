@@ -10,6 +10,7 @@ import qualified Data.ByteString.Lazy as LBS -- bytestring
 import qualified Data.ByteString.Lazy.Char8 as CLBS -- bytestring
 import qualified Data.ByteString.Lex.Integral as I -- bytestring-lexing
 import qualified Data.ByteString.Lex.Fractional as F -- bytestring-lexing
+import Data.Word ( Word8 ) -- base
 
 -- Decent intro: https://serokell.io/blog/lexing-with-alex
 }
@@ -34,10 +35,14 @@ tokens :-
 <cmt>  "*/"    { unnestComment }
 <cmt>  .       ;
 <cmt>  \n      ;
+<0>    "0x" $hex $hex? "u8"
+               { token $ \inp len -> TokenU8 (readHexU8 (current inp len)) }
 <0>    "0x" $hex+
                { token $ \inp len -> TokenInt (readHex (current inp len)) }
 <0>    $digit+ \. $digit*
                { token $ \inp len -> TokenDouble (readDouble (current inp len)) }
+<0>    $digit+ "u8"
+               { token $ \inp len -> TokenU8 (readIntegerU8 (current inp len)) }
 <0>    $digit+ { token $ \inp len -> TokenInt (readInteger (current inp len)) }
 <0>    ^"%declare"
                { token $ \_ _ -> TokenDeclare }
@@ -134,6 +139,7 @@ data Token
     | TokenFor
     | TokenTo
     | TokenDo
+    | TokenU8 !Word8
     | TokenInt !Int64
     | TokenDouble !Double
     | TokenString !BS.ByteString
@@ -182,6 +188,12 @@ tokenNonTerminal :: BS.ByteString -> Token
 tokenNonTerminal s = TokenNonTerminal (name, idx)
     where (name, idxString) = CBS.break ('@' ==) s
           idx = case I.readDecimal (BS.tail idxString) of Just (n, _) -> n
+
+readIntegerU8 :: LBS.ByteString -> Word8
+readIntegerU8 bs = case I.readDecimal (LBS.toStrict bs) of Just (n, _) -> n
+
+readHexU8 :: LBS.ByteString -> Word8
+readHexU8 bs = case I.readHexadecimal (LBS.toStrict (LBS.drop 2 bs)) of Just (n, _) -> n
 
 readInteger :: LBS.ByteString -> Int64
 readInteger bs = case I.readDecimal (LBS.toStrict bs) of Just (n, _) -> n

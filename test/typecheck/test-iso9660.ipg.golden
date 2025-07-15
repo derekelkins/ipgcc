@@ -4,7 +4,7 @@ function asHex(bs: String): String;
 
 function decodeAscii(bs: String): String;
 
-function decodeAscii2(bs: [Int]): String;
+function decodeAscii2(bs: [U8]): String;
 
 function getPrimaryDescriptor(descriptors: [VolumeDescriptor]): PrimaryVolumeDescriptor;
 
@@ -114,7 +114,7 @@ PrimaryVolumeDescriptor
      { applicationUse = HexBytes@0.value }
      NULBytes@2[HexBytes@0.END, EOI];
 
-rule SupplementaryOrEnhancedVolumeDescriptor: { abstractFileIdentifier: String, applicationIdentifier: String, applicationUse: String, bibliographicFileIdentifier: String, copyrightFileIdentifier: String, dataPreparerIdentifier: String, descriptorType: String, escapeSequences: String, fileStructureVersion: Int, locationOfOptionalTypeLPathTable: Int, locationOfOptionalTypeMPathTable: Int, locationOfTypeLPathTable: Int, locationOfTypeMPathTable: Int, logicalBlockSize: Int, pathTableSize: Int, publisherIdentifier: String, rootDirectoryRecord: /* DirectoryRecord */ DirectoryRecord, systemIdentifier: String, volumeCreationDateAndTime: /* DateAndTime */ DateAndTime, volumeDescriptorVersion: Int, volumeEffectiveDateAndTime: /* DateAndTime */ DateAndTime, volumeExpirationDateAndTime: /* DateAndTime */ DateAndTime, volumeFlags: Int, volumeIdentifier: String, volumeModificationDateAndTime: /* DateAndTime */ DateAndTime, volumeSequenceNumber: Int, volumeSetIdentifier: String, volumeSetSize: Int, volumeSpaceSize: Int };
+rule SupplementaryOrEnhancedVolumeDescriptor: { abstractFileIdentifier: String, applicationIdentifier: String, applicationUse: String, bibliographicFileIdentifier: String, copyrightFileIdentifier: String, dataPreparerIdentifier: String, descriptorType: String, escapeSequences: String, fileStructureVersion: U8, locationOfOptionalTypeLPathTable: Int, locationOfOptionalTypeMPathTable: Int, locationOfTypeLPathTable: Int, locationOfTypeMPathTable: Int, logicalBlockSize: Int, pathTableSize: Int, publisherIdentifier: String, rootDirectoryRecord: /* DirectoryRecord */ DirectoryRecord, systemIdentifier: String, volumeCreationDateAndTime: /* DateAndTime */ DateAndTime, volumeDescriptorVersion: U8, volumeEffectiveDateAndTime: /* DateAndTime */ DateAndTime, volumeExpirationDateAndTime: /* DateAndTime */ DateAndTime, volumeFlags: U8, volumeIdentifier: String, volumeModificationDateAndTime: /* DateAndTime */ DateAndTime, volumeSequenceNumber: Int, volumeSetIdentifier: String, volumeSetSize: Int, volumeSpaceSize: Int };
 
 SupplementaryOrEnhancedVolumeDescriptor
   -> "\x02CD001"[0, 6]
@@ -212,7 +212,7 @@ VolumeDescriptorSetTerminator
      { descriptorType = "Volume Descriptor Set Terminator" }
      NULBytes@0[7, EOI];
 
-rule UnknownVolumeDescriptor: { data: String, descriptorType: String, typeByte: Int, version: Int };
+rule UnknownVolumeDescriptor: { data: String, descriptorType: String, typeByte: U8, version: U8 };
 
 UnknownVolumeDescriptor
   -> { typeByte = .[0] }
@@ -322,7 +322,7 @@ MPathTableRecord
      { directoryIdentifier = String@0.value }
      OddPadByte@0(lengthOfDirectoryIdentifier)[String@0.END, EOI];
 
-rule ExtendedAttributeRecord: { applicationUse: String, escapeSequences: String, fileCreationDateAndTime: /* DateAndTime */ DateAndTime, fileEffectiveDateAndTime: /* DateAndTime */ DateAndTime, fileExpirationDateAndTime: /* DateAndTime */ DateAndTime, fileModificationDateAndTime: /* DateAndTime */ DateAndTime, groupIdentification: Int, lengthOfApplicationUse: Int, lengthOfEscapeSequences: Int, ownerIdentification: Int, permissions: Int, recordAttributes: Int, recordFormat: Int, recordLength: Int, systemIdentifier: String, systemUse: String };
+rule ExtendedAttributeRecord: { applicationUse: String, escapeSequences: String, fileCreationDateAndTime: /* DateAndTime */ DateAndTime, fileEffectiveDateAndTime: /* DateAndTime */ DateAndTime, fileExpirationDateAndTime: /* DateAndTime */ DateAndTime, fileModificationDateAndTime: /* DateAndTime */ DateAndTime, groupIdentification: Int, lengthOfApplicationUse: Int, lengthOfEscapeSequences: U8, ownerIdentification: Int, permissions: Int, recordAttributes: U8, recordFormat: U8, recordLength: Int, systemIdentifier: String, systemUse: String };
 
 ExtendedAttributeRecord
   -> BB_U16@0[0, EOI]
@@ -410,13 +410,13 @@ DateAndTime
      { hundrethsOfSecond = Digits@6.value }
      { gmtOffset = .[Digits@6.END] };
 
-rule Digits: { value: String, values: [Int] };
+rule Digits: { value: String, values: [U8] };
 
 Digits
   -> repeat Digit@0[Digit@0.END, EOI].value starting on [0, EOI]
      { value = decodeAscii2(values) };
 
-rule Digit: { value: Int };
+rule Digit: { value: U8 };
 
 Digit
   -> { value = .[0] }
@@ -432,13 +432,13 @@ rule LE_U16: { b: String, value: Int };
 
 LE_U16
   -> { b = *[0, 2] }
-     { value = b[1] << 8 | b[0] };
+     { value = (b[1] :: Int) << 8 | (b[0] :: Int) };
 
 rule BE_U16: { b: String, value: Int };
 
 BE_U16
   -> { b = *[0, 2] }
-     { value = b[0] << 8 | b[1] };
+     { value = (b[0] :: Int) << 8 | (b[1] :: Int) };
 
 rule BB_U16: { value: Int };
 
@@ -452,13 +452,13 @@ rule LE_U32: { b: String, value: Int };
 
 LE_U32
   -> { b = *[0, 4] }
-     { value = b[3] << 24 | b[2] << 16 | b[1] << 8 | b[0] };
+     { value = (b[3] :: Int) << 24 | (b[2] :: Int) << 16 | (b[1] :: Int) << 8 | (b[0] :: Int) };
 
 rule BE_U32: { b: String, value: Int };
 
 BE_U32
   -> { b = *[0, 4] }
-     { value = b[0] << 24 | b[1] << 16 | b[2] << 8 | b[3] };
+     { value = (b[0] :: Int) << 24 | (b[1] :: Int) << 16 | (b[2] :: Int) << 8 | (b[3] :: Int) };
 
 rule BB_U32: { value: Int };
 

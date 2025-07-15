@@ -310,6 +310,7 @@ eval :: (HasCallStack) => Context a -> Int -> Environment a -> Parameters a -> E
 eval ctxt eoi (env, bs) ps = go
     where go T = BOOL True
           go F = BOOL False
+          go (U8 n) = INT (fromIntegral n)
           go (Int n) = INT n
           go (Float f) = FLOAT f
           go (String s) = STRING s

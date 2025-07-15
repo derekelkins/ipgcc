@@ -6,7 +6,7 @@ syntax keyword IPGKeyword EOI where repeat until START END for to do starting on
 syntax keyword IPGKeyword typedef rule function
 highlight link IPGKeyword Keyword
 
-syntax keyword IPGType Bool Int Float String
+syntax keyword IPGType Bool Int Float String U8
 highlight link IPGType Type
 
 syntax match IPGDelimiter /?\[\|:\|?\|(\|)\|\[\|\]\|,\|;\|{\|}/

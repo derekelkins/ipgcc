@@ -101,7 +101,7 @@ const LOGICAL_SECTOR_SIZE = 2048; // In theory this could be a higher power of 2
 
 function asHex(bs: String): String;
 function decodeAscii(bs: String): String;
-function decodeAscii2(bs: [Int]): String;
+function decodeAscii2(bs: [U8]): String;
 function getPrimaryDescriptor(descriptors: [VolumeDescriptor]): PrimaryVolumeDescriptor;
 function length(xs: ['a]): Int;
 function get(o: {}, f: String): 'a;
@@ -476,16 +476,20 @@ Digit -> { value = . } ?[ value == 0 || value >= 0x30 && value <= 0x39 ];
 rule HexBytes: { value: String };
 HexBytes -> { bytes = * } { value = asHex(bytes) };
 
-LE_U16 -> { b = *[2] } { value = (b[1] << 8) | b[0] }; // 8.2.2
+LE_U16 -> { b = *[2] } { value = (b[1] :: Int << 8) | (b[0] :: Int) }; // 8.2.2
 
-BE_U16 -> { b = *[2] } { value = (b[0] << 8) | b[1] }; // 8.2.3
+BE_U16 -> { b = *[2] } { value = (b[0] :: Int << 8) | (b[1] :: Int) }; // 8.2.3
 
 // Both-byte orders
 BB_U16 -> LE_U16 BE_U16 ?[ LE_U16.value == BE_U16.value ] { value = LE_U16.value }; // 8.2.4
 
-LE_U32 -> { b = *[4] } { value = (b[3] << 24) | (b[2] << 16) | (b[1] << 8) | b[0] }; // 8.3.2
+LE_U32 // 8.3.2
+    -> { b = *[4] }
+       { value = (b[3] :: Int << 24) | (b[2] :: Int << 16) | (b[1] :: Int << 8) | (b[0] :: Int) };
 
-BE_U32 -> { b = *[4] } { value = (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3] }; // 8.3.3
+BE_U32 // 8.3.3
+    -> { b = *[4] }
+       { value = (b[0] :: Int << 24) | (b[1] :: Int << 16) | (b[2] :: Int << 8) | (b[3] :: Int) };
 
 // Both-byte orders
 BB_U32 -> LE_U32 BE_U32 ?[ LE_U32.value == BE_U32.value ] { value = LE_U32.value }; // 8.3.4

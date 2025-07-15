@@ -51,6 +51,7 @@ import Text.IPG.Lexer (
     for     { TokenFor }
     to      { TokenTo }
     do      { TokenDo }
+    u8      { TokenU8 $$ }
     int     { TokenInt $$ }
     double  { TokenDouble $$ }
     string  { TokenString $$ }
@@ -275,6 +276,7 @@ AssignTail :: { AssignTail }
 Exp :: { Exp' }
     : true { T }
     | false { F }
+    | u8 { U8 $1 }
     | int { Int $1 }
     | double { Float $1 }
     | string { String $1 }
@@ -349,6 +351,7 @@ type Ref' = Ref IdType IdType Exp'
 typeFromName :: IdType -> [Type'] -> Type'
 typeFromName name []
     | name == "Bool" = BoolTy
+    | name == "U8" = U8Ty
     | name == "Int" = IntTy
     | name == "Float" = FloatTy
     | name == "String" = StringTy
