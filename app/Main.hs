@@ -11,13 +11,13 @@ import System.IO ( IOMode(..), hClose, hPutStrLn, openFile, stderr, stdout ) -- 
 import qualified Options.Applicative as Opt -- optparse-applicative
 
 import Text.IPG.Interpreter ( NT, Value(..), asJSON, interpret )
-import Text.IPG.Export.JS ( Context(..), defaultContext, toJSWithContext )
+import qualified Text.IPG.Export.JS as JS
+import qualified Text.IPG.Export.Rust as RS
 import Text.IPG.PPrint ( pprint )
 import Text.IPG.Simple ( parse )
 import qualified Text.IPG.TypeCheck as TC
-import Text.IPG.TypeCheck ( typeCheck ) -- TODO: Make Simple wrapper.
 
-data ExportType = JS | CORE deriving ( Eq, Ord, Show, Read )
+data ExportType = JS | RUST | CORE deriving ( Eq, Ord, Show, Read )
 
 data Options = Options {
     inFile :: Maybe String,
@@ -46,7 +46,7 @@ options = Opt.info (Options
     <*> Opt.option Opt.auto (
             Opt.long "export-type"
          <> Opt.short 't'
-         <> Opt.help "Export type. JS or CORE. Default JS."
+         <> Opt.help "Export type. JS, RUST, or CORE. Default JS."
          <> Opt.value JS)
     <*> Opt.switch (
             Opt.long "type-check"
@@ -90,7 +90,7 @@ main = do
                                        TC.tOut = Builder.byteString,
                                        TC.ntOut = Builder.byteString
                                    }
-                        case typeCheck ctxt core' of
+                        case TC.typeCheck ctxt core' of
                             Right envs -> return (TC.annotate envs core')
                             Left err -> do
                                 LBS.hPutStrLn stderr (Builder.toLazyByteString err)
@@ -108,13 +108,21 @@ main = do
                                     (Builder.toLazyByteString (asJSON (BINDINGS bs)))
                       else do
                         LBS.hPutStrLn h preamble
-                        LBS.hPutStrLn h (toJSWithContext
-                            (defaultContext {
-                                debugMode = debugModeFlag opts,
-                                asyncMode = asyncModeFlag opts,
-                                leaveExtraFields = leaveExtraFieldsFlag opts
+                        LBS.hPutStrLn h (JS.toJSWithContext
+                            (JS.defaultContext {
+                                JS.debugMode = debugModeFlag opts,
+                                JS.asyncMode = asyncModeFlag opts,
+                                JS.leaveExtraFields = leaveExtraFieldsFlag opts
                             }) core)
                         LBS.hPutStr h postamble
+                RUST -> do
+                    let ctxt = RS.defaultContext { RS.debugMode = debugModeFlag opts }
+                    case RS.tcThenToRust ctxt core of
+                        Left err -> LBS.hPutStrLn stderr (Builder.toLazyByteString err)
+                        Right rs -> do
+                            LBS.hPutStrLn h preamble
+                            LBS.hPutStrLn h rs
+                            LBS.hPutStr h postamble
     hClose h
 
 externalFuncs :: Map.Map NT ([Value a] -> Value a)

@@ -2,7 +2,7 @@
 module Text.IPG.TypeCheck (
     Context(..), ConstTypes, FunTypes, RuleTypes, TypeDefs, TypeDefs', Bindings, Bindings',
     Environments(typeDefs, constTypes, funTypes, ruleTypes),
-    annotate, isEquatable, isOrderable, joinTy, subTypeOf, (<:), typeCheck,
+    annotate, isEquatable, isOrderable, joinTy, subTypeOf, (<:), typeCheck, getRows,
 ) where
 import qualified Data.ByteString.Lazy as LBS -- bytestring
 import qualified Data.ByteString.Lazy.Char8 as CLBS -- bytestring
@@ -118,6 +118,12 @@ subTypeOf' tyEnv rigid bs0 t1 t2 = go bs0 (derefTy tyEnv t1) (derefTy tyEnv t2)
                 Nothing -> ty
                 Just ty' -> deref bs ty'
           deref _ ty = ty
+
+-- Expand typedefs until we get a row type.
+getRows :: (Ord id) => TypeDefs id -> Ty id -> Maybe (Map.Map id (Ty id))
+getRows tyEnv (TyApp t ts) = getRows tyEnv (tyApp tyEnv t ts)
+getRows _ (RowTy fs) = Just fs
+getRows _ _ = Nothing
 
 groundType :: (Ord v, HasCallStack) => Bindings' v id -> Ty' v id -> Ty' v id
 groundType bs = mapTyVar f

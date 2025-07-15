@@ -86,6 +86,7 @@ library
         Text.IPG.Check,
         Text.IPG.Core,
         Text.IPG.Export.JS,
+        Text.IPG.Export.Rust,
         Text.IPG.Full,
         Text.IPG.GenericExp,
         Text.IPG.Interpreter,
