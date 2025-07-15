@@ -1,0 +1,104 @@
+#![allow(non_snake_case)]
+#![allow(dead_code)]
+#![allow(unreachable_code)]
+#![allow(unused_mut)]
+#![allow(unused_assignments)]
+#![allow(unused_variables)]
+
+#[derive(Debug)]
+enum ChunkType {
+    RGB(u8, u8, u8),
+    RGBA(u8, u8, u8, u8),
+    Index(u8),
+    Diff(u8, u8, u8),
+    Luma(u8, u8, u8),
+    Run(u8),
+}
+
+use ChunkType::*;
+
+fn wrapping_sub(x: u8, y: u8) -> u8 { x.wrapping_sub(y) }
+
+%preamble_end
+
+%declare_type ChunkType %end
+
+function RGB(r: U8, g: U8, b: U8): ChunkType;
+function RGBA(r: U8, g: U8, b: U8, a: U8): ChunkType;
+function Index(index: U8): ChunkType;
+function Diff(dr: U8, dg: U8, db: U8): ChunkType;
+function Luma(diffGreen: U8, drdg: U8, dbdg: U8): ChunkType;
+function Run(run: U8): ChunkType;
+function wrapping_sub(x: U8, y: U8): U8;
+
+// typedef ChunkType = { tag: String };
+
+// rule QOI: { width: Int, height: Int, channels: Int, chunks: [ChunkType] };
+QOI
+    -> QOIHeader
+       { width = QOIHeader.width }
+       { height = QOIHeader.height }
+       { channels = QOIHeader.channels }
+       { colorspace = QOIHeader.colorspace }
+       QOIChunks
+       { chunks = QOIChunks.values };
+
+// rule QOIHeader: { width: Int, height: Int, channels: Int, colorspace: Int };
+QOIHeader
+    -> "qoif"
+        BE_U32 { width = BE_U32.value }
+        BE_U32 { height = BE_U32.value }
+        { channels = . }
+        { colorspace = . };
+
+// rule QOIChunks: { values: [ChunkType] };
+QOIChunks -> repeat QOIChunk.chunk until EndMarker;
+
+// rule QOIChunk: { chunk: ChunkType };
+QOIChunk -> { tagByte = . } Chunk(tagByte) { chunk = Chunk.chunk };
+
+rule Chunk(tagByte: U8): { tag: String, chunk: ChunkType };
+Chunk(tagByte)
+    -> ?[ tagByte == 0xFE ] { tag = "rgb" }
+        { r = . } { g = . } { b = . }
+        { chunk = RGB(r, g, b) }
+     / ?[ tagByte == 0xFF ] { tag = "rgba" }
+        { r = . } { g  = . } { b  = . } { a  = . }
+        { chunk = RGBA(r, g, b, a) }
+     / ?[ (tagByte >> 6) == 0 ] { tag = "index" }
+        { index = tagByte & 0x3Fu8 }
+        { chunk = Index(index) }
+     / ?[ (tagByte >> 6) == 1 ] { tag = "diff" }
+        { dr = wrapping_sub((tagByte >> 4) & 0x03u8, 2u8) }
+        { dg = wrapping_sub((tagByte >> 2) & 0x03u8, 2u8) }
+        { db = wrapping_sub(tagByte & 0x03u8, 2u8) }
+        { chunk = Diff(dr, dg, db) }
+     / ?[ (tagByte >> 6) == 2 ] { tag = "luma" }
+        { diffGreen = wrapping_sub(tagByte & 0x3Fu8, 32u8) }
+        U8
+        { drdg = wrapping_sub(U8.value >> 4, 8u8) }
+        { dbdg = wrapping_sub(U8.value & 0x0Fu8, 8u8) }
+        { chunk = Luma(diffGreen, drdg, dbdg) }
+     / ?[ (tagByte >> 6) == 3 ] { tag = "run" }
+        { run = (tagByte & 0x3Fu8) + 1u8 }
+        { chunk = Run(run) };
+
+// rule EndMarker: {};
+EndMarker -> "\x00\x00\x00\x00\x00\x00\x00\x01";
+
+// rule U8: { value: Int };
+U8 -> { value = . };
+
+// rule BE_U32: { value: Int };
+BE_U32
+    -> { bs = *[4] }
+       { value = (bs[3] :: Int) | (bs[2] :: Int << 8) | (bs[1] :: Int << 16) | (bs[0] :: Int << 24) };
+
+%postamble_begin
+
+use std::fs;
+
+fn main() {
+    let input = fs::read("./qoi_test_images/dice.qoi").unwrap();
+    println!("{:?}", QOI(&input, 0, input.len()));
+}
