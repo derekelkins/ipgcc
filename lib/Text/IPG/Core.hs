@@ -19,19 +19,20 @@ data MetaTag
 
 type Ty id = Ty' id id
 
-data Ty' v id
-    = BoolTy                        -- Bool
-    | IntTy                         -- Int
-    | FloatTy                       -- Float
-    | StringTy                      -- String
-    | RowTy (Map.Map id (Ty' v id)) -- { f_1: ty_1, ..., f_n: ty_n }
-    | ArrayTy (Ty' v id)            -- [ty]
-    | TyApp id [Ty' v id]           -- T(ty_1, ..., ty_n)
-    | ExternalTy id                 -- External
-    | TyVar v                       -- 'a
-  deriving ( Show )
+data Ty' v id x
+    = BoolTy                          -- Bool
+    | IntTy                           -- Int
+    | FloatTy                         -- Float
+    | StringTy                        -- String
+    | RowTy (Map.Map id (Ty' v id x)) -- { f_1: ty_1, ..., f_n: ty_n }
+    | ArrayTy (Ty' v id x)            -- [ty]
+    | TyApp id [Ty' v id x]           -- T(ty_1, ..., ty_n)
+    | ExternalTy id                   -- External
+    | TyVar v                         -- 'a
+    | Note x (Ty' v id x)
+  deriving ( Functor, Show )
 
-bimapTy :: (v -> v') -> (id -> id') -> Ty' v id -> Ty' v' id'
+bimapTy :: (v -> v') -> (id -> id') -> Ty' v id x -> Ty' v' id' x
 bimapTy _ _ BoolTy = BoolTy
 bimapTy _ _ IntTy = IntTy
 bimapTy _ _ FloatTy = FloatTy
@@ -41,14 +42,24 @@ bimapTy f g (ArrayTy ty) = ArrayTy (bimapTy f g ty)
 bimapTy f g (TyApp t ts) = TyApp (g t) (map (bimapTy f g) ts)
 bimapTy _ g (ExternalTy x) = ExternalTy (g x)
 bimapTy f _ (TyVar v) = TyVar (f v)
+bimapTy f g (Note n ty) = Note n (bimapTy f g ty)
 
-externalizeType :: (Ord id) => Set.Set id -> Ty' v id -> Ty' v id
-externalizeType externals ty@(TyApp x [])
+externalizeType :: (Ord id) => Set.Set id -> Ty' v id x -> Ty' v id x'
+externalizeType externals (TyApp x [])
     | x `Set.member` externals = ExternalTy x
-    | otherwise = ty
-externalizeType _ ty = ty
+    | otherwise = TyApp x []
+externalizeType externals (TyApp x ts) = TyApp x (map (externalizeType externals) ts)
+externalizeType _ BoolTy = BoolTy
+externalizeType _ IntTy = IntTy
+externalizeType _ FloatTy = FloatTy
+externalizeType _ StringTy = StringTy
+externalizeType externals (RowTy fs) = RowTy (externalizeType externals <$> fs)
+externalizeType externals (ArrayTy ty) = ArrayTy (externalizeType externals ty)
+externalizeType _ (ExternalTy x) = ExternalTy x
+externalizeType _ (TyVar v) = TyVar v
+externalizeType _ (Note _ _) = error "This case shouldn't happen."
 
-mapTyVar :: (v -> Ty' v' id) -> Ty' v id -> Ty' v' id
+mapTyVar :: (v -> Ty' v' id x) -> Ty' v id x -> Ty' v' id x
 mapTyVar f (TyVar v) = f v
 mapTyVar f (RowTy fs) = RowTy (mapTyVar f <$> fs)
 mapTyVar f (TyApp t xs) = TyApp t (mapTyVar f <$> xs)
@@ -58,24 +69,25 @@ mapTyVar _ IntTy = IntTy
 mapTyVar _ FloatTy = FloatTy
 mapTyVar _ StringTy = StringTy
 mapTyVar _ (ExternalTy x) = ExternalTy x
+mapTyVar f (Note n ty) = Note n (mapTyVar f ty)
 
-newtype Grammar nt t id e = Grammar [Declaration Rule nt t id e]
+newtype Grammar x nt t id e = Grammar [Declaration x Rule nt t id e]
     deriving ( Functor, Show )
 
-data Declaration rule nt t id e
+data Declaration x rule nt t id e
     = RuleDef (rule nt t id e)
-    | ConstDeclaration id (Maybe (Ty id)) e            -- const id: ty = e;
-    | TypeDeclaration id [id] (Ty id)                  -- type Foo(x_1, ..., x_n) = ty;
-    | RuleDeclaration nt [(id, Ty id)] (Maybe (Ty id)) -- rule A(a_1: ty_1, ..., a_m: ty_m): ty;
-    | FunctionDeclaration t [(id, Ty id)] (Ty id)      -- function f(a_1: ty_1, ..., a_m: ty_m): ty;
+    | ConstDeclaration id (Maybe (Ty id x)) e              -- const id: ty = e;
+    | TypeDeclaration id [id] (Ty id x)                    -- type Foo(x_1, ..., x_n) = ty;
+    | RuleDeclaration nt [(id, Ty id x)] (Maybe (Ty id x)) -- rule A(a_1: ty_1, ..., a_m: ty_m): ty;
+    | FunctionDeclaration t [(id, Ty id x)] (Ty id x)      -- function f(a_1: ty_1, ..., a_m: ty_m): ty;
   deriving ( Functor, Show )
 
 externalizeDeclaration
     :: (Functor (rule nt t id), Ord id)
     => Set.Set id
-    -> ((Ty id -> Ty id) -> e -> e)
-    -> Declaration rule nt t id e
-    -> Declaration rule nt t id e
+    -> ((Ty id x -> Ty id x') -> e -> e)
+    -> Declaration x rule nt t id e
+    -> Declaration x' rule nt t id e
 externalizeDeclaration exts mapType =
     foldDeclaration
         (RuleDef . fmap extExp)
@@ -88,12 +100,12 @@ externalizeDeclaration exts mapType =
   where extExp = mapType (externalizeType exts)
 
 partitionDeclarations
-    :: [Declaration rule nt t id e]
+    :: [Declaration x rule nt t id e]
     -> ([rule nt t id e],
-        [(id, Maybe (Ty id), e)],
-        [(id, [id], Ty id)],
-        [(nt, [(id, Ty id)], Maybe (Ty id))],
-        [(t, [(id, Ty id)], Ty id)])
+        [(id, Maybe (Ty id x), e)],
+        [(id, [id], Ty id x)],
+        [(nt, [(id, Ty id x)], Maybe (Ty id x))],
+        [(t, [(id, Ty id x)], Ty id x)])
 partitionDeclarations [] = ([], [], [], [], [])
 partitionDeclarations (RuleDef r:ds) = (r:rs, cs, ts, rds, fs)
     where (rs, cs, ts, rds, fs) = partitionDeclarations ds
@@ -108,11 +120,11 @@ partitionDeclarations (FunctionDeclaration f args ty:ds) = (rs, cs, ts, rds, (f,
 
 foldDeclaration
     :: (rule nt t id e -> a)
-    -> (id -> Maybe (Ty id) -> e -> a)
-    -> (id -> [id] -> Ty id -> a)
-    -> (nt -> [(id, Ty id)] -> Maybe (Ty id) -> a)
-    -> (t -> [(id, Ty id)] -> Ty id -> a)
-    -> Declaration rule nt t id e
+    -> (id -> Maybe (Ty id x) -> e -> a)
+    -> (id -> [id] -> Ty id x -> a)
+    -> (nt -> [(id, Ty id x)] -> Maybe (Ty id x) -> a)
+    -> (t -> [(id, Ty id x)] -> Ty id x -> a)
+    -> Declaration x rule nt t id e
     -> a
 foldDeclaration ruleDef _ _ _ _ (RuleDef r) = ruleDef r
 foldDeclaration _ constDecl _ _ _ (ConstDeclaration x ty e) = constDecl x ty e

@@ -43,7 +43,7 @@ whenDebug (Context { debugMode = False }) _ = ""
 u :: (T, Int) -> Out
 u (nt, n) = Builder.byteString nt <> "_" <> Builder.intDec n
 
-refToJS :: Context -> Env -> Ref T T Expr -> Out
+refToJS :: Context -> Env -> Ref T T (Expr T) -> Out
 refToJS c env (Id x)
     | x == iterationVar c = [i|i_#{x}|]
     | x `Set.member` env  = [i|a_#{x}|]
@@ -65,10 +65,10 @@ refToJS _ _   EOI = "EOI";
 refToJS _ _   (Start nt) = [i|nt_#{u nt}._ipg_start|]
 refToJS _ _   (End nt) = [i|nt_#{u nt}._ipg_end|]
 
-exprToJS :: Context -> Env -> Expr -> Out
+exprToJS :: Context -> Env -> Expr T -> Out
 exprToJS ctxt env e = exprToJS' ctxt env 0 e
 
-exprToJS' :: Context -> Env -> Int -> Expr -> Out
+exprToJS' :: Context -> Env -> Int -> Expr T -> Out
 exprToJS' _ _ _ T = "true"
 exprToJS' _ _ _ F = "false"
 exprToJS' _ _ _ (Int n) = Builder.int64Dec n
@@ -137,7 +137,7 @@ argList = foldMap ((", "<>))
 -- left and right will be the interval *actually* consumed by the previous term if
 -- it is a consuming term, otherwise it will be unchanged from earlier terms.
 -- For Array, currently, we treat the "previous term" as the last iteration.
-termToJS :: Out -> Context -> Env -> Term T T T Expr -> Out
+termToJS :: Out -> Context -> Env -> Term T T T (Expr T) -> Out
 termToJS indent c env z@(NonTerminal nt args l r)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> indent <> [i|left = #{lExp};\n|]
@@ -309,7 +309,7 @@ termToJS indent c env z@(RepeatUntil nt1 args1 l r x l0 r0 nt2 args2)
         await = if asyncMode c then "await " else "" :: T
         xAttr = refToJS c env (Attr nt1 x)
 
-alternativeToJS :: Maybe (T, [T]) -> Out -> Context -> Env -> Alternative T T T Expr -> Out
+alternativeToJS :: Maybe (T, [T]) -> Out -> Context -> Env -> Alternative T T T (Expr T) -> Out
 alternativeToJS instrument indent c env (Alternative ts)
     = indent <> "_ipg_alt: {\n"
    <> indent <> "  let left = EOI; let right = 0; let loopEnd = 0;\n"
@@ -332,10 +332,10 @@ alternativeToJS instrument indent c env (Alternative ts)
                                 [i|    console.error({#{nt}: self#{paramList args}});\n|]
         debuggingPostamble = whenDebug c (indent <> "_ipg_failTreeStack.pop();\n")
 
-constToJS :: Context -> T -> Maybe (Ty T) -> Expr -> Out
+constToJS :: Context -> T -> Maybe (Ty T T) -> Expr T -> Out
 constToJS c n _ e = [i|const #{n} = #{exprToJS c Set.empty e};\n|]
 
-ruleToJS :: Context -> Rule T T T Expr -> Out
+ruleToJS :: Context -> Rule T T T (Expr T) -> Out
 ruleToJS c (Rule mt nt args alts) =
     [__i|
       #{export}#{async}function #{nt}(input, begin = 0, end = input.length#{paramList args}) {
@@ -367,7 +367,7 @@ ruleToJS c (Rule mt nt args alts) =
             _ipg_failTreeStack[_ipg_failTreeStack.length - 1].children.push(_ipg_currentFailTree);
           |]
 
-toJSWithContext :: Context -> Grammar T T T Expr -> LBS.ByteString
+toJSWithContext :: Context -> Grammar T T T T (Expr T) -> LBS.ByteString
 toJSWithContext c (Grammar decls) = Builder.toLazyByteString $
       startsWith
    <> whenDebug c [__i|
@@ -409,5 +409,5 @@ toJSWithContext c (Grammar decls) = Builder.toLazyByteString $
                   return true;
                 }\n|]
 
-toJS :: Grammar T T T Expr -> LBS.ByteString
+toJS :: Grammar T T T T (Expr T) -> LBS.ByteString
 toJS = toJSWithContext defaultContext

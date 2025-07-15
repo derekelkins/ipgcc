@@ -117,7 +117,7 @@ main = do
                         LBS.hPutStr h postamble
                 RUST -> do
                     let ctxt = RS.defaultContext { RS.debugMode = debugModeFlag opts }
-                    case RS.tcThenToRust ctxt core of
+                    case RS.toRustWithContext ctxt core of
                         Left err -> LBS.hPutStrLn stderr (Builder.toLazyByteString err)
                         Right rs -> do
                             LBS.hPutStrLn h preamble

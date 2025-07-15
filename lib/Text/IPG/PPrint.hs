@@ -44,32 +44,32 @@ pprintNT :: (T, Int) -> Out
 pprintNT (nt, -1) = Builder.byteString nt -- This case shouldn't really happen.
 pprintNT (nt, n) = Builder.byteString nt <> "@" <> Builder.intDec n
 
-pprint :: Grammar T T T (Exp T T T) -> Out
+pprint :: Grammar T T T T (Exp T T T T) -> Out
 pprint = pprint' (pprintExpr 0)
 
-pprint' :: (e -> Out) -> Grammar T T T e -> Out
+pprint' :: (e -> Out) -> Grammar T T T T e -> Out
 pprint' ppExp (Grammar decls) = mconcat (intersperse "\n\n" (map (pprintDecl' ppExp) decls))
 
-pprintDecl' :: (e -> Out) -> Declaration Rule T T T e -> Out
+pprintDecl' :: (e -> Out) -> Declaration T Rule T T T e -> Out
 pprintDecl' ppExp (RuleDef r) = pprintRule' ppExp r
 pprintDecl' ppExp (ConstDeclaration n ty e) = pprintConst' ppExp n ty e
 pprintDecl' _ (TypeDeclaration n args ty) = pprintTypeDeclaration n args ty
 pprintDecl' _ (RuleDeclaration n args ty) = pprintRuleDeclaration n args ty
 pprintDecl' _ (FunctionDeclaration n args ty) = pprintFunctionDeclaration n args ty
 
-pprintConst' :: (e -> Out) -> T -> Maybe (Ty T) -> e -> Out
+pprintConst' :: (e -> Out) -> T -> Maybe (Ty T T) -> e -> Out
 pprintConst' ppExp n (Just ty) e =
     "const " <> Builder.byteString n <> ": " <> pprintType ty <> " = " <> ppExp e <> ";"
 pprintConst' ppExp n Nothing e = "const " <> Builder.byteString n <> " = " <> ppExp e <> ";"
 
-pprintTypeDeclaration :: T -> [T] -> Ty T -> Out
+pprintTypeDeclaration :: T -> [T] -> Ty T T -> Out
 pprintTypeDeclaration n [] ty =
     "typedef " <> Builder.byteString n <> " = " <> pprintType ty <> ";"
 pprintTypeDeclaration n args ty =
     "typedef " <> Builder.byteString n <> "(" <> args' <> ") = " <> pprintType ty <> ";"
   where args' = mconcat (intersperse ", " (map Builder.byteString args))
 
-pprintRuleDeclaration :: T -> [(T, Ty T)] -> Maybe (Ty T) -> Out
+pprintRuleDeclaration :: T -> [(T, Ty T T)] -> Maybe (Ty T T) -> Out
 pprintRuleDeclaration n [] Nothing =
     "rule " <> Builder.byteString n <> ";"
 pprintRuleDeclaration n [] (Just ty) =
@@ -83,16 +83,16 @@ pprintRuleDeclaration n args (Just ty) =
   where args' = mconcat (intersperse ", "
                     (map (\(n', ty') -> Builder.byteString n' <> ": " <> pprintType ty') args))
 
-pprintFunctionDeclaration :: T -> [(T, Ty T)] -> Ty T -> Out
+pprintFunctionDeclaration :: T -> [(T, Ty T T)] -> Ty T T -> Out
 pprintFunctionDeclaration n args ty =
     "function " <> Builder.byteString n <> "(" <> args' <> "): " <> pprintType ty <> ";"
   where args' = mconcat (intersperse ", "
                     (map (\(n', ty') -> Builder.byteString n' <> ": " <> pprintType ty') args))
 
-pprintType :: Ty T -> Out
+pprintType :: Ty T T -> Out
 pprintType = pprintType' Builder.byteString
 
-pprintType' :: (id -> Out) -> Ty id -> Out
+pprintType' :: (id -> Out) -> Ty id T -> Out
 pprintType' _ BoolTy = "Bool"
 pprintType' _ IntTy = "Int"
 pprintType' _ FloatTy = "Float"
@@ -109,8 +109,9 @@ pprintType' out (RowTy fields)
 pprintType' out (ArrayTy ty) = "[" <> pprintType' out ty <> "]"
 pprintType' out (ExternalTy n) = out n
 pprintType' out (TyVar n) = out n
+pprintType' out (Note n ty) = "/* " <> Builder.byteString n <> " */ " <> pprintType' out ty
 
-pprintRule :: Rule T T T (Exp T T T) -> Out
+pprintRule :: Rule T T T (Exp T T T T) -> Out
 pprintRule = pprintRule' (pprintExpr 0)
 
 pprintRule' :: (e -> Out) -> Rule T T T e -> Out
@@ -123,14 +124,14 @@ pprintRule' ppExp (Rule mts nt args alts) =
  <> mconcat (intersperse ", " (map Builder.byteString args))
  <> ")\n  -> " <> mconcat (intersperse "\n   / " (map (pprintAlternative' ppExp) alts)) <> ";"
 
-pprintAlternative :: Alternative T T T (Exp T T T) -> Out
+pprintAlternative :: Alternative T T T (Exp T T T T) -> Out
 pprintAlternative = pprintAlternative' (pprintExpr 0)
 
 pprintAlternative' :: (e -> Out) -> Alternative T T T e -> Out
 pprintAlternative' ppExp (Alternative terms) =
     mconcat (intersperse "\n     " (map (pprintTerm' ppExp) terms))
 
-pprintTerm :: Term T T T (Exp T T T) -> Out
+pprintTerm :: Term T T T (Exp T T T T) -> Out
 pprintTerm = pprintTerm' (pprintExpr 0)
 
 pprintArgList :: (e -> Out) -> [e] -> Out
@@ -160,7 +161,7 @@ pprintTerm' ppExp (RepeatUntil nt1 es1 l r x l0 r0 nt2 es2) =
  <> "." <> Builder.byteString x <> " starting on " <> pprintInterval ppExp l0 r0
  <> " until " <> pprintNT nt2 <> pprintArgList ppExp es2
 
-pprintRef :: Ref T T (Exp T T T) -> Out
+pprintRef :: Ref T T (Exp T T T T) -> Out
 pprintRef = pprintRef' (pprintExpr 0)
 
 pprintRef' :: (e -> Out) -> Ref T T e -> Out
@@ -172,7 +173,7 @@ pprintRef' _ EOI = "EOI"
 pprintRef' _ (Start nt) = pprintNT nt <> ".START"
 pprintRef' _ (End nt) = pprintNT nt <> ".END"
 
-pprintExpr :: Int -> Exp T T T -> Out
+pprintExpr :: Int -> Exp T T T T -> Out
 pprintExpr _ T = "true"
 pprintExpr _ F = "false"
 pprintExpr _ (Int n) = Builder.int64Dec n

@@ -12,7 +12,7 @@ function length(xs: ['a]): Int;
 
 function get(o: {}, f: String): 'a;
 
-rule ISO9660: { descriptors: [{ descriptorType: String }], directories: [{ values: [DirectoryRecord] }], directoriesRecursive: { offset: Int, record: DirectoryRecord }, logicalBlockSize: Int, pathTableLocation: Int, pathTableOffset: Int, pathTableSize: Int, paths: [PathTableRecord], primaryDescriptor: PrimaryVolumeDescriptor };
+rule ISO9660: { descriptors: [{ descriptorType: String }], directories: [/* DirectoryRecords */ { values: [/* DirectoryRecord */ DirectoryRecord] }], directoriesRecursive: /* DirectoriesRecursive */ { offset: Int, record: DirectoryRecord }, logicalBlockSize: Int, pathTableLocation: Int, pathTableOffset: Int, pathTableSize: Int, paths: [PathTableRecord], primaryDescriptor: PrimaryVolumeDescriptor };
 
 %export
 ISO9660
@@ -114,7 +114,7 @@ PrimaryVolumeDescriptor
      { applicationUse = HexBytes@0.value }
      NULBytes@2[HexBytes@0.END, EOI];
 
-rule SupplementaryOrEnhancedVolumeDescriptor: { abstractFileIdentifier: String, applicationIdentifier: String, applicationUse: String, bibliographicFileIdentifier: String, copyrightFileIdentifier: String, dataPreparerIdentifier: String, descriptorType: String, escapeSequences: String, fileStructureVersion: Int, locationOfOptionalTypeLPathTable: Int, locationOfOptionalTypeMPathTable: Int, locationOfTypeLPathTable: Int, locationOfTypeMPathTable: Int, logicalBlockSize: Int, pathTableSize: Int, publisherIdentifier: String, rootDirectoryRecord: DirectoryRecord, systemIdentifier: String, volumeCreationDateAndTime: DateAndTime, volumeDescriptorVersion: Int, volumeEffectiveDateAndTime: DateAndTime, volumeExpirationDateAndTime: DateAndTime, volumeFlags: Int, volumeIdentifier: String, volumeModificationDateAndTime: DateAndTime, volumeSequenceNumber: Int, volumeSetIdentifier: String, volumeSetSize: Int, volumeSpaceSize: Int };
+rule SupplementaryOrEnhancedVolumeDescriptor: { abstractFileIdentifier: String, applicationIdentifier: String, applicationUse: String, bibliographicFileIdentifier: String, copyrightFileIdentifier: String, dataPreparerIdentifier: String, descriptorType: String, escapeSequences: String, fileStructureVersion: Int, locationOfOptionalTypeLPathTable: Int, locationOfOptionalTypeMPathTable: Int, locationOfTypeLPathTable: Int, locationOfTypeMPathTable: Int, logicalBlockSize: Int, pathTableSize: Int, publisherIdentifier: String, rootDirectoryRecord: /* DirectoryRecord */ DirectoryRecord, systemIdentifier: String, volumeCreationDateAndTime: /* DateAndTime */ DateAndTime, volumeDescriptorVersion: Int, volumeEffectiveDateAndTime: /* DateAndTime */ DateAndTime, volumeExpirationDateAndTime: /* DateAndTime */ DateAndTime, volumeFlags: Int, volumeIdentifier: String, volumeModificationDateAndTime: /* DateAndTime */ DateAndTime, volumeSequenceNumber: Int, volumeSetIdentifier: String, volumeSetSize: Int, volumeSpaceSize: Int };
 
 SupplementaryOrEnhancedVolumeDescriptor
   -> "\x02CD001"[0, 6]
@@ -233,7 +233,7 @@ DirectoriesRecursive(logicalBlockSize, node)
    / { offset = logicalBlockSize * get(node, "locationOfExtent") }
      { record = node };
 
-rule DirectoryRecords: { values: [DirectoryRecord] };
+rule DirectoryRecords: { values: [/* DirectoryRecord */ DirectoryRecord] };
 
 DirectoryRecords
   -> repeat DirectoryRecord@0[DirectoryRecord@0.END, EOI].this starting on [0, EOI];
@@ -322,7 +322,7 @@ MPathTableRecord
      { directoryIdentifier = String@0.value }
      OddPadByte@0(lengthOfDirectoryIdentifier)[String@0.END, EOI];
 
-rule ExtendedAttributeRecord: { applicationUse: String, escapeSequences: String, fileCreationDateAndTime: DateAndTime, fileEffectiveDateAndTime: DateAndTime, fileExpirationDateAndTime: DateAndTime, fileModificationDateAndTime: DateAndTime, groupIdentification: Int, lengthOfApplicationUse: Int, lengthOfEscapeSequences: Int, ownerIdentification: Int, permissions: Int, recordAttributes: Int, recordFormat: Int, recordLength: Int, systemIdentifier: String, systemUse: String };
+rule ExtendedAttributeRecord: { applicationUse: String, escapeSequences: String, fileCreationDateAndTime: /* DateAndTime */ DateAndTime, fileEffectiveDateAndTime: /* DateAndTime */ DateAndTime, fileExpirationDateAndTime: /* DateAndTime */ DateAndTime, fileModificationDateAndTime: /* DateAndTime */ DateAndTime, groupIdentification: Int, lengthOfApplicationUse: Int, lengthOfEscapeSequences: Int, ownerIdentification: Int, permissions: Int, recordAttributes: Int, recordFormat: Int, recordLength: Int, systemIdentifier: String, systemUse: String };
 
 ExtendedAttributeRecord
   -> BB_U16@0[0, EOI]

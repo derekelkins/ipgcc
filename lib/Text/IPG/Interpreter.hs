@@ -87,14 +87,14 @@ data Context a = Context {
     externalFuncs :: ExternalFuncs a }
 
 type Exp' = Exp NT T Id
-type Grammar' = Grammar NT T Id Exp'
-type Rule' = Rule NT T Id Exp'
-type Alternative' = Alternative NT T Id Exp'
-type Term' = Term NT T Id Exp'
+type Grammar' x = Grammar x NT T Id (Exp' x)
+type Rule' x = Rule NT T Id (Exp' x)
+type Alternative' x = Alternative NT T Id (Exp' x)
+type Term' x = Term NT T Id (Exp' x)
 
 interpret
     :: (HasCallStack)
-    => Grammar'
+    => Grammar' x
     -> ExternalFuncs a
     -> [Value a]
     -> Buffer
@@ -104,7 +104,7 @@ interpret g@(Grammar decls) efs = interpretStartingWith g efs startRule
 
 interpretStartingWith
     :: (HasCallStack)
-    => Grammar'
+    => Grammar' x
     -> ExternalFuncs a
     -> NT
     -> [Value a]
@@ -122,12 +122,12 @@ interpretStartingWith (Grammar decls) efs startRule args =
         eval' = eval ctxt (error "EOI in const") (Map.empty, Map.empty) Map.empty
         (rules, consts, _, _, _) = partitionDeclarations decls
 
-buildInterpFunc :: (HasCallStack) => Context a -> Rule' -> ([Id], InterpFunc a)
+buildInterpFunc :: (HasCallStack) => Context a -> Rule' x -> ([Id], InterpFunc a)
 buildInterpFunc ctxt (Rule _ _ args alts) =
     (args, \env ps buf -> asum (map (\interpFunc -> interpFunc env ps buf) alts'))
   where alts' = map (interpAlt ctxt) alts
 
-interpAlt :: (HasCallStack) => Context a -> Alternative' -> InterpFunc a
+interpAlt :: (HasCallStack) => Context a -> Alternative' x -> InterpFunc a
 interpAlt ctxt (Alternative terms) = \env ps buf -> go env ps buf (BS.length buf) 0 0 terms'
   where terms' = map (interpTerm ctxt) terms
         go env _ _ minStart maxEnd _ [] = Just (env, minStart, maxEnd)
@@ -145,9 +145,9 @@ interpNonTerminal
     :: (HasCallStack)
     => Context a
     -> (NT, Int)
-    -> [Exp']
-    -> Exp'
-    -> Exp'
+    -> [Exp' x]
+    -> Exp' x
+    -> Exp' x
     -> Int
     -> InterpFunc a
 interpNonTerminal ctxt nt args e_l e_r = \_ env@(ntbs, bs) ps buf ->
@@ -174,7 +174,7 @@ interpNonTerminal ctxt nt args e_l e_r = \_ env@(ntbs, bs) ps buf ->
                         in Just ((ntbs'', bs), start, end)
   where (ids, rf) = ruleFuncs ctxt !!! fst nt
 
-interpTerm :: (HasCallStack) => Context a -> Term' -> Int -> InterpFunc a
+interpTerm :: (HasCallStack) => Context a -> Term' x -> Int -> InterpFunc a
 interpTerm ctxt = go
   where go (NonTerminal nt args e_l e_r) = interpNonTerminal ctxt nt args e_l e_r
         go (Terminal "" e_l e_r) = \_ env ps buf ->
@@ -306,7 +306,7 @@ access env nt "this" = BINDINGS (this_ (env !!! nt))
 access env nt "these" = SEQUENCE (map BINDINGS (these_ (env !!! nt)))
 access env nt x = case this_ (env !!! nt) of bs -> bs !!! x
 
-eval :: (HasCallStack) => Context a -> Int -> Environment a -> Parameters a -> Exp' -> Value a
+eval :: (HasCallStack) => Context a -> Int -> Environment a -> Parameters a -> Exp' x -> Value a
 eval ctxt eoi (env, bs) ps = go
     where go T = BOOL True
           go F = BOOL False

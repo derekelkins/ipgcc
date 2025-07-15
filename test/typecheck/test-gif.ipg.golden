@@ -10,7 +10,7 @@ function makeGraphicBlock(extension: Extension, renderingBlock: {}): { type: Str
 
 function makeGraphicControlExtension(disposalMethod: Int, userInputFlag: Bool, transparentColorFlag: Bool, delayTime: Int, transparentColorIndex: Int): Extension;
 
-rule GIF: { blocks: [{ type: String }], logicalScreen: { descriptor: { backgroundColorIndex: Int, colorResolution: Int, globalColorTableSize: Int, hasGlobalColorTable: Bool, height: Int, packedFields: Int, pixelAspectRation: Int, sorted: Int, width: Int }, globalColorTable: [{ b: Int, g: Int, r: Int }] } };
+rule GIF: { blocks: [{ type: String }], logicalScreen: /* LogicalScreen */ { descriptor: /* LogicalScreenDescriptor */ { backgroundColorIndex: Int, colorResolution: Int, globalColorTableSize: Int, hasGlobalColorTable: Bool, height: Int, packedFields: Int, pixelAspectRation: Int, sorted: Int, width: Int }, globalColorTable: [{ b: Int, g: Int, r: Int }] } };
 
 GIF
   -> Header@0[0, EOI]
@@ -24,7 +24,7 @@ rule Header: {};
 Header
   -> "GIF89a"[0, 6];
 
-rule LogicalScreen: { descriptor: { backgroundColorIndex: Int, colorResolution: Int, globalColorTableSize: Int, hasGlobalColorTable: Bool, height: Int, packedFields: Int, pixelAspectRation: Int, sorted: Int, width: Int }, globalColorTable: [{ b: Int, g: Int, r: Int }] };
+rule LogicalScreen: { descriptor: /* LogicalScreenDescriptor */ { backgroundColorIndex: Int, colorResolution: Int, globalColorTableSize: Int, hasGlobalColorTable: Bool, height: Int, packedFields: Int, pixelAspectRation: Int, sorted: Int, width: Int }, globalColorTable: [{ b: Int, g: Int, r: Int }] };
 
 LogicalScreen
   -> LogicalScreenDescriptor@0[0, EOI]
@@ -55,7 +55,7 @@ MaybeColorTable(hasColorTable)
    / ColorTable@0[0, EOI]
      { table = ColorTable@0.table };
 
-rule ColorTable: { table: [{ b: Int, g: Int, r: Int }] };
+rule ColorTable: { table: [/* RGB */ { b: Int, g: Int, r: Int }] };
 
 ColorTable
   -> for i = 0 to EOI / 3 do RGB@0[3 * i, 3 * i + 3]
@@ -107,7 +107,7 @@ GraphicRenderingBlock
    / PlainTextExtension@0[0, EOI]
      { block = PlainTextExtension@0.this };
 
-rule TableBasedImage: { data: { imageData: String, lzwMinimumCodeSize: Int }, descriptor: { imageHeight: Int, imageLeftPosition: Int, imageTopPosition: Int, imageWidth: Int, interlaceFlag: Bool, localColorTableFlag: Bool, localColorTableSize: Int, packedFields: Int, sorted: Bool }, localColorTable: [{ b: Int, g: Int, r: Int }], type: String };
+rule TableBasedImage: { data: /* ImageData */ { imageData: String, lzwMinimumCodeSize: Int }, descriptor: /* ImageDescriptor */ { imageHeight: Int, imageLeftPosition: Int, imageTopPosition: Int, imageWidth: Int, interlaceFlag: Bool, localColorTableFlag: Bool, localColorTableSize: Int, packedFields: Int, sorted: Bool }, localColorTable: [{ b: Int, g: Int, r: Int }], type: String };
 
 TableBasedImage
   -> { type = "tableBasedImage" }

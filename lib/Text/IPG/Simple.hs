@@ -15,9 +15,9 @@ import qualified Text.IPG.Parser as P
 import Text.IPG.TopLevel.FileSplit ( splitFile )
 
 type T = P.IdType
-type Grammar' = Core.Grammar T T T P.Exp'
+type Grammar' x = Core.Grammar x T T T (E.Exp T T T x)
 
-helper :: ExpHelpers P.IdType P.IdType P.IdType P.Exp'
+helper :: ExpHelpers () P.IdType P.IdType P.IdType (E.Exp T T T)
 helper = ExpHelpers {
     len = E.Int . fromIntegral . BS.length,
     add = E.Bin E.Add,
@@ -31,7 +31,7 @@ helper = ExpHelpers {
 parseFile
     :: Bool
     -> FilePath
-    -> IO (Either [String] (LBS.ByteString, Grammar', [T], [T], LBS.ByteString))
+    -> IO (Either [String] (LBS.ByteString, Grammar' x, [T], [T], LBS.ByteString))
 parseFile doValidation f = parse doValidation <$> LBS.readFile f
 
 computeStartLine :: LBS.ByteString -> Int
@@ -41,7 +41,7 @@ computeStartLine s = 3 + fromIntegral (LBS.count '\n' s)
 parse
     :: Bool
     -> LBS.ByteString
-    -> Either [String] (LBS.ByteString, Grammar', [T], [T], LBS.ByteString)
+    -> Either [String] (LBS.ByteString, Grammar' x, [T], [T], LBS.ByteString)
 parse doValidation ipgInput' = do
     let (preamble, ipgInput, postamble) = splitFile ipgInput'
 

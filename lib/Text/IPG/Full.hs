@@ -10,7 +10,7 @@ import qualified Data.Set as Set -- containers
 
 import qualified Text.IPG.Core as Core
 
-newtype Grammar nt t id e = Grammar [Core.Declaration Rule nt t id e]
+newtype Grammar x nt t id e = Grammar [Core.Declaration x Rule nt t id e]
     deriving ( Functor, Show )
 
 -- A(a_1, ..., a_m) -> alt_1 / ... / alt_n;
@@ -70,14 +70,14 @@ data StartingOn e
     | StartingOn2 e e
   deriving ( Functor, Show )
 
-data ExpHelpers nt t id e = ExpHelpers {
-    len :: t -> e,
-    add :: e -> e -> e,
-    num :: Int -> e,
-    ref :: Core.Ref nt id e -> e,
-    mapRef :: (Core.Ref nt id e -> Core.Ref nt id e) -> e -> e,
-    mapType :: (Core.Ty id -> Core.Ty id) -> e -> e,
-    crushRef :: forall m. (Monoid m) => (Core.Ref nt id e -> m) -> e -> m
+data ExpHelpers x nt t id e = ExpHelpers {
+    len :: t -> e x,
+    add :: e x -> e x -> e x,
+    num :: Int -> e x,
+    ref :: Core.Ref nt id (e x) -> e x,
+    mapRef :: forall y. (Core.Ref nt id (e y) -> Core.Ref nt id (e y)) -> e y -> e y,
+    mapType :: forall y y'. (Core.Ty id y -> Core.Ty id y') -> e y -> e y',
+    crushRef :: forall y m. (Monoid m) => (Core.Ref nt id (e y) -> m) -> e y -> m
   }
 
 data Context id = Context {
@@ -86,50 +86,60 @@ data Context id = Context {
   }
 
 toCore
-    :: (Ord id, Ord nt, Show nt)
-    => ExpHelpers nt t id e
+    :: (Ord id, Ord nt, Show nt, Functor e)
+    => ExpHelpers x nt t id e
     -> Context id
-    -> Grammar nt t id e
-    -> Core.Grammar nt t id e
+    -> Grammar x nt t id (e x)
+    -> Core.Grammar x' nt t id (e x')
 toCore h ctxt (Grammar rules) =
     Core.Grammar (map
         (Core.externalizeDeclaration (externalTypes ctxt) (mapType h)
             . toCoreDeclaration h ctxt) rules)
 
+noNotesError :: a
+noNotesError = error "There should be no Note constructors"
+
+noNotes :: Core.Ty' v id x -> Core.Ty' v id x'
+noNotes = fmap noNotesError
+
 toCoreDeclaration 
-    :: (Ord id, Ord nt, Show nt)
-    => ExpHelpers nt t id e
+    :: (Ord id, Ord nt, Show nt, Functor e)
+    => ExpHelpers x nt t id e
     -> Context id
-    -> Core.Declaration Rule nt t id e
-    -> Core.Declaration Core.Rule nt t id e
-toCoreDeclaration _ _ (Core.TypeDeclaration name args ty) = Core.TypeDeclaration name args ty
-toCoreDeclaration _ _ (Core.RuleDeclaration name args ty) = Core.RuleDeclaration name args ty
-toCoreDeclaration _ _ (Core.ConstDeclaration name ty e) = Core.ConstDeclaration name ty e
+    -> Core.Declaration x Rule nt t id (e x)
+    -> Core.Declaration x' Core.Rule nt t id (e x')
+toCoreDeclaration _ _ (Core.TypeDeclaration name args ty) =
+    Core.TypeDeclaration name args (noNotes ty)
+toCoreDeclaration _ _ (Core.RuleDeclaration name args ty) =
+    Core.RuleDeclaration name (map (fmap noNotes) args) (noNotes <$> ty)
+toCoreDeclaration _ _ (Core.ConstDeclaration name ty e) =
+    Core.ConstDeclaration name (noNotes <$> ty) (noNotesError <$> e)
 toCoreDeclaration _ _ (Core.FunctionDeclaration name args ty) =
-    Core.FunctionDeclaration name args ty
+    Core.FunctionDeclaration name (map (fmap noNotes) args) (noNotes ty)
 toCoreDeclaration h ctxt (Core.RuleDef r) = Core.RuleDef (toCoreRule h ctxt r)
 
 toCoreRule
-    :: (Ord id, Ord nt, Show nt)
-    => ExpHelpers nt t id e
+    :: (Ord id, Ord nt, Show nt, Functor e)
+    => ExpHelpers x nt t id e
     -> Context id
-    -> Rule nt t id e
-    -> Core.Rule nt t id e
+    -> Rule nt t id (e x)
+    -> Core.Rule nt t id (e x')
 toCoreRule h ctxt (Rule mt nt args alts) =
     Core.Rule mt nt args (map (toCoreAlternative h ctxt) alts)
 
 toCoreAlternative
-    :: (Ord id, Ord nt, Show nt)
-    => ExpHelpers nt t id e
+    :: (Ord id, Ord nt, Show nt, Functor e)
+    => ExpHelpers x nt t id e
     -> Context id
-    -> Alternative nt t id e
-    -> Core.Alternative nt t id e
+    -> Alternative nt t id (e x)
+    -> Core.Alternative nt t id (e x')
 toCoreAlternative h ctxt (Alternative terms) =
     Core.Alternative (Core.rearrange g (values ctxt)
                         (Core.renumber (mapRef h) (go terms (num h 0) Map.empty [])))
   where go [] _ _ acc = reverse acc
-        go (t:ts) nt seen acc = let (t', nt', seen') = toCoreTerm h nt seen t
-                           in go ts nt' seen' (t':acc)
+        go (t:ts) nt seen acc =
+            let (t', nt', seen') = toCoreTerm h nt seen t
+            in go ts nt' seen' ((fmap noNotesError <$> t'):acc)
         g = crushRef h (Core.crushUses g (Set.singleton . Left) (Set.singleton . Right))
 
 type NM nt = Map.Map nt IntSet.IntSet
@@ -144,11 +154,11 @@ freshen m x@(nt, n) = (Map.insertWith IntSet.union nt (IntSet.singleton n) m, x)
 
 toCoreTerm
     :: (Ord nt)
-    => ExpHelpers nt t id e
-    -> e
+    => ExpHelpers x nt t id e
+    -> e x
     -> NM nt
-    -> Term nt t id e
-    -> (Core.Term nt t id e, e, NM nt)
+    -> Term nt t id (e x)
+    -> (Core.Term nt t id (e x), e x, NM nt)
 toCoreTerm h p seen (NonTerminal0 nt args) =
     (Core.NonTerminal nt' args p (ref h Core.EOI), ref h (Core.End nt'), seen')
   where (seen', nt') = freshen seen nt
@@ -211,7 +221,7 @@ toCoreTerm h p seen (RepeatUntil2 nt1 args1 l r i s nt2 args2) =
         (seen', nt1') = freshen seen nt1
         (seen'', nt2') = freshen seen' nt2
 
-toCoreStartingOn :: ExpHelpers nt t id e -> e -> StartingOn e -> (e, e)
+toCoreStartingOn :: ExpHelpers x nt t id e -> e x -> StartingOn (e x) -> (e x, e x)
 toCoreStartingOn h p StartingOn0 = (p, ref h Core.EOI)
 toCoreStartingOn h p (StartingOn1 l) = (p, add h p l)
 toCoreStartingOn _ _ (StartingOn2 l r) = (l, r)

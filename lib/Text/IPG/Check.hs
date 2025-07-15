@@ -14,8 +14,8 @@ import Text.IPG.Parser ( IdType )
 
 type T = IdType
 type Exp' = Exp T T T
-type Grammar' = Grammar T T T Exp'
-type Term' = Term T T T Exp'
+type Grammar' x = Grammar x T T T (Exp' x)
+type Term' x = Term T T T (Exp' x)
 
 u :: (T, Int) -> String
 u (nt, -1) = [i|#{nt}|] -- Shouldn't happen as output of toCore.
@@ -37,7 +37,7 @@ u (nt, n) = [i|#{nt}@#{show n}|]
 --   - Function calls match arity of function declarations. -- TODO
 --   - All type variables in a parameterized typedef are bound by the typedef. -- TODO
 --   - TODO: Various sanity checks on types
-validate :: Set.Set T -> Grammar' -> Maybe [T]
+validate :: Set.Set T -> Grammar' x -> Maybe [T]
 validate externalRules (Grammar decls) =
     foldMap checkConsts consts <> foldMap check rules <> basicChecks
   where
@@ -90,7 +90,7 @@ validate externalRules (Grammar decls) =
 
     checkConsts (n, _, e) = crushRef checkConstRef e
         where locals = Set.delete n constNames
-              checkConstRef :: Ref T T Exp' -> Maybe [T]
+              checkConstRef :: Ref T T (Exp' x) -> Maybe [T]
               checkConstRef (Id x) | x `Set.member` locals = Nothing
                                    | otherwise = Just [[i|Unknown constant #{x} in const #{n}|]]
               checkConstRef (Attr (nt, _) _) =
@@ -107,7 +107,7 @@ validate externalRules (Grammar decls) =
         foldMap (\(Alternative ts) ->
             checkTerms nt (Set.fromList params) constNames Set.empty ts) alts
 
-    checkTerms :: T -> Set.Set T -> Set.Set T -> Set.Set (T, Int) -> [Term'] -> Maybe [T]
+    checkTerms :: T -> Set.Set T -> Set.Set T -> Set.Set (T, Int) -> [Term' x] -> Maybe [T]
     checkTerms _ _ _ _ [] = Nothing
     checkTerms nt params locals nts (NonTerminal nt'@(a, _) es l r:ts) =
         (case Map.lookup a parameters of
@@ -197,7 +197,7 @@ validate externalRules (Grammar decls) =
         <> checkTerms nt params locals nts' ts
       where params' = Set.insert x params
             nts' = Set.insert nt' nts
-    checkExp :: T -> Set.Set T -> Set.Set T -> Set.Set (T, Int) -> Exp' -> Maybe [T]
+    checkExp :: T -> Set.Set T -> Set.Set T -> Set.Set (T, Int) -> Exp' x -> Maybe [T]
     checkExp nt params locals nts (Bin _ l r) =
         checkExp nt params locals nts l <> checkExp nt params locals nts r
     checkExp nt params locals nts (Un _ l) = checkExp nt params locals nts l

@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings, QuasiQuotes #-}
 module Text.IPG.Export.Rust (
     Context(..), T,
-    defaultContext, toRust, toRustWithContext, tcThenToRust,
+    defaultContext, toRust, toRustWithContext,
 ) where
 import qualified Data.ByteString as BS -- bytestring
 import qualified Data.ByteString.Lazy as LBS -- bytestring
@@ -13,23 +13,25 @@ import qualified Data.Set as Set -- containers
 import Data.String.Interpolate ( i, __i ) -- string-interpolate
 
 import Text.IPG.Core (
-    Ty, Ty'(..), Grammar(..), Rule(..), Alternative(..), Term(..), Ref(..), MetaTag(..),
+    Ty, Ty'(..), Grammar(..), Declaration(..), Rule(..), Alternative(..), Term(..),
+    Ref(..), MetaTag(..),
     partitionDeclarations, )
 import Text.IPG.GenericExp ( UnOp(..), BinOp(..), Exp(..) )
-import Text.IPG.PPrint ( floatToOut, hexyString, outParen, pprintTerm )
+import Text.IPG.PPrint ( floatToOut, hexyString, outParen, pprintTerm, pprint )
 import qualified Text.IPG.TypeCheck as TC
 
 type T = BS.ByteString
 type Out = Builder.Builder
-type Expr = Exp T T T
+type Expr = Exp T T T T
 type Env = Set.Set T
 
 data Context = Context {
     debugMode :: !Bool,
+    dumpCore :: !Bool,
     constants :: Set.Set T,
-    ruleTypes :: TC.RuleTypes T T,
+    ruleTypes :: TC.RuleTypes T T T,
     ruleRows :: Map.Map T (T, [T]), -- (struct name, field names)
-    typeDefs :: TC.TypeDefs T,
+    typeDefs :: TC.TypeDefs T T,
     currentRule :: T,
     iterationVar :: T
   }
@@ -37,6 +39,7 @@ data Context = Context {
 defaultContext :: Context
 defaultContext = Context {
     debugMode = False,
+    dumpCore = True, -- TODO: False,
     constants = Set.empty,
     ruleTypes = Map.empty,
     ruleRows = Map.empty,
@@ -138,7 +141,7 @@ exprToRust' c env p (Annotate e t) = -- TODO: Is this what I want?
     outParen (p > 0) (exprToRust' c env 100 e <> " as " <> typeToRust c t)
 exprToRust' c env _ (Ref r) = refToRust c env r
 
-paramList :: Context -> [(T, Ty T)] -> Out
+paramList :: Context -> [(T, Ty T T)] -> Out
 paramList c = mconcat . map (\(x, ty) -> ", a_" <> Builder.byteString x <> ": " <> typeToRust c ty)
 
 argList :: [Out] -> Out
@@ -334,7 +337,7 @@ alternativeToRust indent c env (Alternative ts)
   where (structName, fields) = ruleRows c Map.! currentRule c
         setField f = indent <> [i|    #{f :: T}: self_#{f},\n|]  
 
-typeDeclToRust :: Context -> (T, [T], Ty T) -> Out
+typeDeclToRust :: Context -> (T, [T], Ty T T) -> Out
 typeDeclToRust c (t, [], RowTy fs) = struct c t fs <> "\n"
 typeDeclToRust c (t, xs, RowTy fs) = struct c [i|#{t}<#{xs'}>|] fs <> "\n"
     where xs' = mconcat (intersperse ", " (map Builder.byteString xs))
@@ -342,11 +345,11 @@ typeDeclToRust c (t, [], ty) = [i| type #{t} = #{typeToRust c ty};\n\n|]
 typeDeclToRust c (t, xs, ty) = [i| type #{t}<#{xs'}> = #{typeToRust c ty};\n\n|]
     where xs' = mconcat (intersperse ", " (map Builder.byteString xs))
 
-constToRust :: Context -> (T, Maybe (Ty T), Expr) -> Out
+constToRust :: Context -> (T, Maybe (Ty T T), Expr) -> Out
 constToRust c (n, Just ty, e) = [i|let #{n}: #{typeToRust c ty} = #{exprToRust c Set.empty e};\n|]
 constToRust c (n, Nothing, e) = [i|let #{n} = #{exprToRust c Set.empty e};\n|]
 
-typeToRust :: Context -> Ty T -> Out
+typeToRust :: Context -> Ty T T -> Out
 typeToRust _ BoolTy = "bool"
 typeToRust _ IntTy = "i64"
 typeToRust _ FloatTy = "f64"
@@ -358,6 +361,8 @@ typeToRust c (TyApp t tys) = -- TODO
     Builder.byteString t <> "<" <> mconcat (intersperse ", " $ map (typeToRust c) tys) <> ">"
 typeToRust _ (ExternalTy t) = Builder.byteString t
 typeToRust _ (TyVar v) = Builder.byteString v
+typeToRust _ (Note n (RowTy _)) = Builder.byteString n -- TODO: This doesn't handle rule return types that have type variables.
+typeToRust c (Note _ ty) = typeToRust c ty
 
 ruleToRust :: Context -> Rule T T T Expr -> Out
 ruleToRust c (Rule mt nt args alts) =
@@ -376,24 +381,25 @@ ruleToRust c (Rule mt nt args alts) =
         c' = c { currentRule = nt }
 
 -- Turn rules with explicit row type results into structs with those rows as fields.
-ruleDeclToRust :: Context -> (T, [(T, Ty T)], Maybe (Ty T)) -> Out
+ruleDeclToRust :: Context -> (T, [(T, Ty T T)], Maybe (Ty T T)) -> Out
 ruleDeclToRust c (nt, _, ty) = toStruct ty
     where toStruct (Just (RowTy fs)) = struct c nt fs <> "\n"
           toStruct (Just _) = ""
           toStruct Nothing = error "Shouldn't happen if the code is annotated first"
 
-struct :: Context -> T -> Map.Map T (Ty T) -> Out
+struct :: Context -> T -> Map.Map T (Ty T T) -> Out
 struct c t fs = [i|\#[derive(Debug)]\nstruct #{t} {\n#{foldMap toField (Map.toList fs)}}\n|]
-  where toField :: (T, Ty T) -> Out
+  where toField :: (T, Ty T T) -> Out
         toField (fieldName, ty') = [i|  #{fieldName}: #{typeToRust c ty'},\n|]
 
-tcThenToRust :: Context -> Grammar T T T Expr -> Either Out LBS.ByteString
-tcThenToRust c core =
-    case TC.typeCheck ctxt core of
+toRustWithContext :: Context -> Grammar T T T T Expr -> Either Out LBS.ByteString
+toRustWithContext c (Grammar decls) =
+    let core = Grammar (foldMap rewrite decls)
+    in case TC.typeCheck ctxt core of
         Right envs ->
             let g = TC.annotate envs core
-            in Right (toRustWithContext c envs g)
-        Left err -> Left err
+            in Right (toRustWithContext' c envs g)
+        Left err -> Left (err <> if dumpCore c then "\n\n" <> pprint core else "")
   where ctxt =
           TC.Context {
               TC.currentRule = "",
@@ -402,9 +408,14 @@ tcThenToRust c core =
               TC.tOut = Builder.byteString,
               TC.ntOut = Builder.byteString
           }
+        rewrite (RuleDeclaration nt _ Nothing) =
+            error [i|Rule declaration for #{nt :: T} without return type|]
+        rewrite (RuleDeclaration nt args (Just ty@(RowTy _))) =
+            [TypeDeclaration nt [] ty, RuleDeclaration nt args (Just (TyApp nt []))]
+        rewrite d = [d]
 
-toRustWithContext :: Context -> TC.Environments T T T -> Grammar T T T Expr -> LBS.ByteString
-toRustWithContext c envs (Grammar decls) = Builder.toLazyByteString $
+toRustWithContext' :: Context -> TC.Environments T T T -> Grammar T T T T Expr -> LBS.ByteString
+toRustWithContext' c envs (Grammar decls) = Builder.toLazyByteString $
        "#![allow(non_snake_case)]\n"
     <> "#![allow(dead_code)]\n"
     <> "#![allow(unused_assignments)]\n"
@@ -429,5 +440,5 @@ toRustWithContext c envs (Grammar decls) = Builder.toLazyByteString $
                 -- TODO: Allow this by letting a user specify what the rows are.
           where n = case ty of TyApp t _ -> t; _ -> nt
 
-toRust :: TC.Environments T T T -> Grammar T T T Expr -> LBS.ByteString
+toRust :: Grammar T T T T Expr -> Either Out LBS.ByteString
 toRust = toRustWithContext defaultContext

@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveFunctor #-}
 module Text.IPG.GenericExp (
     UnOp(..), BinOp(..), Exp(..), crushRef, mapRef, simplify, simplifyExp, trimap, mapType,
 ) where
@@ -31,21 +32,21 @@ data BinOp
     | At
   deriving ( Eq, Ord, Show )
 
-data Exp nt t id
+data Exp nt t id x
     = T
     | F
     | Int Int64
     | Float Double
     | String t
-    | Un UnOp (Exp nt t id)
-    | Bin BinOp (Exp nt t id) (Exp nt t id)
-    | If (Exp nt t id) (Exp nt t id) (Exp nt t id)
-    | Call t [Exp nt t id]
-    | Annotate (Exp nt t id) (Ty id)
-    | Ref (Ref nt id (Exp nt t id))
-  deriving ( Show )
+    | Un UnOp (Exp nt t id x)
+    | Bin BinOp (Exp nt t id x) (Exp nt t id x)
+    | If (Exp nt t id x) (Exp nt t id x) (Exp nt t id x)
+    | Call t [Exp nt t id x]
+    | Annotate (Exp nt t id x) (Ty id x)
+    | Ref (Ref nt id (Exp nt t id x))
+  deriving ( Functor, Show )
 
-trimap :: (nt -> nt') -> (t -> t') -> (id -> id') -> Exp nt t id -> Exp nt' t' id'
+trimap :: (nt -> nt') -> (t -> t') -> (id -> id') -> Exp nt t id x -> Exp nt' t' id' x
 trimap _ _ _ T = T
 trimap _ _ _ F = F
 trimap _ _ _ (Int n) = Int n
@@ -58,15 +59,23 @@ trimap f g h (Call p es) = Call (g p) (map (trimap f g h) es)
 trimap f g h (Annotate e t) = Annotate (trimap f g h e) (bimapTy h h t)
 trimap f g h (Ref r) = Ref (trimapRef f h (trimap f g h) r)
 
-mapType :: (Ty id -> Ty id) -> Exp nt t id -> Exp nt t id
+mapType :: (Ty id x -> Ty id x') -> Exp nt t id x -> Exp nt t id x'
 mapType f (Un op l) = Un op (mapType f l)
 mapType f (Bin op l r) = Bin op (mapType f l) (mapType f r)
 mapType f (If b t e) = If (mapType f b) (mapType f t) (mapType f e)
 mapType f (Call t es) = Call t (map (mapType f) es)
 mapType f (Annotate e t) = Annotate (mapType f e) (f t)
-mapType _ e = e
+mapType _ T = T
+mapType _ F = F
+mapType _ (Int n) = Int n
+mapType _ (Float n) = Float n
+mapType _ (String s) = String s
+mapType f (Ref r) = Ref (fmap (mapType f) r)
 
-mapRef :: (Ref nt id (Exp nt t id) -> Ref nt' id (Exp nt' t id)) -> Exp nt t id -> Exp nt' t id
+mapRef
+    :: (Ref nt id (Exp nt t id x) -> Ref nt' id (Exp nt' t id x))
+    -> Exp nt t id x
+    -> Exp nt' t id x
 mapRef _ T = T
 mapRef _ F = F
 mapRef f (Un op l) = Un op (mapRef f l)
@@ -79,7 +88,7 @@ mapRef _ (Int n) = Int n
 mapRef _ (Float n) = Float n
 mapRef _ (String s) = String s
 
-crushRef :: (Monoid m) => (Ref nt id (Exp nt t id) -> m) -> Exp nt t id -> m
+crushRef :: (Monoid m) => (Ref nt id (Exp nt t id x) -> m) -> Exp nt t id x -> m
 crushRef _ T = mempty
 crushRef _ F = mempty
 crushRef f (Un _ l) = crushRef f l
@@ -89,10 +98,10 @@ crushRef f (Call _ es) = foldMap (crushRef f) es
 crushRef f (Ref r) = f r
 crushRef _ _ = mempty
 
-simplify :: (Ord t) => Grammar nt t id (Exp nt t id) -> Grammar nt t id (Exp nt t id)
+simplify :: (Ord t) => Grammar x nt t id (Exp nt t id x) -> Grammar x nt t id (Exp nt t id x)
 simplify = fmap simplifyExp
 
-simplifyExp :: (Ord t) => Exp nt t id -> Exp nt t id
+simplifyExp :: (Ord t) => Exp nt t id x -> Exp nt t id x
 simplifyExp T = T
 simplifyExp F = F
 simplifyExp (Int n) = Int n

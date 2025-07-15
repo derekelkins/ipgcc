@@ -335,10 +335,10 @@ Args :: { [Exp'] }
 {
 type IdType = BS.ByteString
 type NT = (IdType, Int)
-type Exp' = Exp IdType IdType IdType
-type Type' = Ty IdType
-type Grammar' = Grammar IdType IdType IdType Exp'
-type Declaration' = Declaration Rule IdType IdType IdType Exp'
+type Exp' = Exp IdType IdType IdType ()
+type Type' = Ty IdType ()
+type Grammar' = Grammar () IdType IdType IdType Exp'
+type Declaration' = Declaration () Rule IdType IdType IdType Exp'
 type Rule' = Rule IdType IdType IdType Exp'
 type Const' = (IdType, Exp')
 type Alternative' = Alternative IdType IdType IdType Exp'
