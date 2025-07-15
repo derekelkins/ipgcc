@@ -600,6 +600,6 @@ fn BE_U32(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, BE_U3
 use std::fs;
 
 fn main() {
-    let input = fs::read("./qoi_test_images/dice.qoi").unwrap();
+    let input = fs::read("./test/node/samples/1.qoi").unwrap();
     println!("{:?}", QOI(&input, 0, input.len()));
 }
