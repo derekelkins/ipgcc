@@ -17,7 +17,7 @@ import Text.IPG.Core (
     Ref(..), MetaTag(..),
     partitionDeclarations, )
 import Text.IPG.GenericExp ( UnOp(..), BinOp(..), Exp(..) )
-import Text.IPG.PPrint ( floatToOut, hexyString, outParen, pprintTerm, pprint )
+import Text.IPG.PPrint ( floatToOut, outParen, pprintTerm, pprint )
 import qualified Text.IPG.TypeCheck as TC
 
 type T = BS.ByteString
@@ -25,12 +25,25 @@ type Out = Builder.Builder
 type Expr = Exp T T T T
 type Env = Set.Set T
 
+-- TODO
+-- data RefType = MOVE | REF | REFMUT
+
+-- TODO: Use type Ref(a) = a; and type RefMut(a) = a; to indicate parameters that should
+-- expect a &/&mut. Use function ref(x: 'a): 'a; and function ref_mut(x: 'a): 'a to indicate
+-- expressions to which &/&mut should be applied.
+-- Ref/RefMut in a rule parameter list indicates that parameter should be a &/&mut.
+-- Ref/RefMut in a function parameter list indicates that argument should always be wrapped
+-- with &/&mut when the function is called.
+-- ref/ref_mut give more precision.
+
 data Context = Context {
     debugMode :: !Bool,
+    mutableFields :: !Bool,
     dumpCore :: !Bool,
     constants :: Set.Set T,
     ruleTypes :: TC.RuleTypes T T T,
     ruleRows :: Map.Map T (T, [T]), -- (struct name, field names)
+    -- funArgRefs :: Map.Map T [RefType],
     typeDefs :: TC.TypeDefs T T,
     currentRule :: T,
     iterationVar :: T
@@ -39,6 +52,7 @@ data Context = Context {
 defaultContext :: Context
 defaultContext = Context {
     debugMode = False,
+    mutableFields = True, -- TODO: False,
     dumpCore = True, -- TODO: False,
     constants = Set.empty,
     ruleTypes = Map.empty,
@@ -79,6 +93,9 @@ refToRust _ _   (End nt) = [i|nt_#{u nt}_ipg_end|]
 exprToRust :: Context -> Env -> Expr -> Out
 exprToRust ctxt env e = exprToRust' ctxt env 0 e
 
+explode :: T -> Out
+explode = mconcat . intersperse ", " . map Builder.word8Dec . BS.unpack
+
 -- TODO: Compare the precedences to the Rust precedences.
 -- See https://doc.rust-lang.org/reference/expressions.html
 exprToRust' :: Context -> Env -> Int -> Expr -> Out
@@ -87,7 +104,7 @@ exprToRust' _ _ _ F = "false"
 exprToRust' _ _ _ (U8 n) = Builder.word8Dec n
 exprToRust' _ _ _ (Int n) = Builder.int64Dec n
 exprToRust' _ _ _ (Float n) = floatToOut n
-exprToRust' _ _ _ (String s) = hexyString s <> ".as_bytes().to_vec()"
+exprToRust' _ _ _ (String s) = "vec![" <> explode s <> "]"
 exprToRust' c env p (Bin Add l r) = -- TODO: Handle string case somehow.
     outParen (p > 11) (exprToRust' c env 11 l <> " + " <> exprToRust' c env 12 r)
 exprToRust' c env p (Bin Sub l r) =
@@ -139,6 +156,8 @@ exprToRust' c env p (If b t e) =
         " } else { " <>
             exprToRust' c env 3 e <>
         " }")
+exprToRust' c env _ (Call "ref" [e]) = "&(" <> exprToRust c env e <> ")"
+exprToRust' c env _ (Call "ref_mut" [e]) = "&mut (" <> exprToRust c env e <> ")"
 exprToRust' c env _ (Call t es) =
     Builder.byteString t <> "(" <> mconcat (intersperse ", " $ map (exprToRust' c env 0) es) <> ")"
 exprToRust' c env p (Bin At l r) =
@@ -152,6 +171,10 @@ paramList c = mconcat . map (\(x, ty) -> ", a_" <> Builder.byteString x <> ": " 
 
 argList :: [Out] -> Out
 argList = foldMap ((", "<>))
+
+mut :: Context -> Out
+mut c | mutableFields c = " mut"
+      | otherwise = ""
 
 -- left and right will be the interval *actually* consumed by the previous term if
 -- it is a consuming term, otherwise it will be unchanged from earlier terms.
@@ -188,14 +211,14 @@ termToRust indent c env z@(Terminal t l r)
    <> indent <> [i|left = #{lExp} as usize;\n|]
    <> indent <> [i|right = #{rExp} as usize;\n|]
    <> indent <>   "if right < left || right > EOI { break '_ipg_alt; }\n"
-   <> indent <> [i|if !&input[begin + left .. begin + right].starts_with(#{terminal}.as_bytes()) { break '_ipg_alt; }\n|]
+   <> indent <> [i|if !&input[begin + left .. begin + right].starts_with(&[#{terminal}]) { break '_ipg_alt; }\n|]
    <> indent <>   "self_ipg_start = self_ipg_start.min(left);\n"
    <> indent <> [i|right = left + #{BS.length t};\n|]
    <> indent <>   "self_ipg_end = self_ipg_end.max(right);\n\n"
-  where lExp = exprToRust' c env 14 l; rExp = exprToRust' c env 14 r; terminal = hexyString t
+  where lExp = exprToRust' c env 14 l; rExp = exprToRust' c env 14 r; terminal = explode t
 termToRust indent c env z@(x := e)
     = indent <> [i|// #{pprintTerm z}\n|]
-   <> indent <> [i|let self_#{x} = #{eExp};\n\n|]
+   <> indent <> [i|let#{mut c} self_#{x} = #{eExp};\n\n|]
   where eExp = exprToRust c env e
 termToRust indent c env z@(Guard e)
     = indent <> [i|// #{pprintTerm z}\n|]
@@ -238,7 +261,7 @@ termToRust indent c env z@(Any x l)
    <> indent <> [i|left = #{lExp} as usize;\n|]
    <> indent <>   "right = left + 1;\n"
    <> indent <>   "if right > EOI { break '_ipg_alt; }\n"
-   <> indent <> [i|let self_#{x} = input[begin + left];\n|]
+   <> indent <> [i|let#{mut c} self_#{x} = input[begin + left];\n|]
    <> indent <>   "self_ipg_start = self_ipg_start.min(left);\n"
    <> indent <>   "self_ipg_end = self_ipg_end.max(right);\n\n"
   where lExp = exprToRust' c env 14 l
@@ -247,7 +270,7 @@ termToRust indent c env z@(Slice x l r)
    <> indent <> [i|left = #{lExp} as usize;\n|]
    <> indent <> [i|right = #{rExp} as usize;\n|]
    <> indent <>   "if right < left || right > EOI { break '_ipg_alt; }\n"
-   <> indent <> [i|let self_#{x} = (&input[begin + left .. begin + right]).to_vec();\n|]
+   <> indent <> [i|let#{mut c} self_#{x} = (&input[begin + left .. begin + right]).to_vec();\n|]
    <> indent <>   "if left != right {\n"
    <> indent <>   "  self_ipg_start = self_ipg_start.min(left);\n"
    <> indent <>   "  self_ipg_end = self_ipg_end.max(right);\n"
@@ -346,12 +369,14 @@ alternativeToRust indent c env (Alternative ts)
         setField f = indent <> [i|    #{f :: T}: self_#{f},\n|]
 
 typeDeclToRust :: Context -> (T, [T], Ty T T) -> Out
+typeDeclToRust _ ("Ref", [_], _) = ""
+typeDeclToRust _ ("RefMut", [_], _) = ""
 typeDeclToRust c (t, [], RowTy fs) = struct c t fs <> "\n"
 typeDeclToRust c (t, xs, RowTy fs) = struct c [i|#{t}<#{xs'}>|] fs <> "\n"
-    where xs' = mconcat (intersperse ", " (map Builder.byteString xs))
-typeDeclToRust c (t, [], ty) = [i| type #{t} = #{typeToRust c ty};\n\n|]
-typeDeclToRust c (t, xs, ty) = [i| type #{t}<#{xs'}> = #{typeToRust c ty};\n\n|]
-    where xs' = mconcat (intersperse ", " (map Builder.byteString xs))
+    where xs' = mconcat (intersperse ", " (map (Builder.byteString . BS.drop 1) xs))
+typeDeclToRust c (t, [], ty) = [i|type #{t} = #{typeToRust c ty};\n\n|]
+typeDeclToRust c (t, xs, ty) = [i|type #{t}<#{xs'}> = #{typeToRust c ty};\n\n|]
+    where xs' = mconcat (intersperse ", " (map (Builder.byteString . BS.drop 1) xs))
 
 constToRust :: Context -> (T, Maybe (Ty T T), Expr) -> Out
 constToRust c (n, Just ty, e) = [i|let #{n}: #{typeToRust c ty} = #{exprToRust c Set.empty e};\n|]
@@ -363,13 +388,15 @@ typeToRust _ U8Ty = "u8"
 typeToRust _ IntTy = "i64"
 typeToRust _ FloatTy = "f64"
 typeToRust _ StringTy = "Vec<u8>" -- "String" -- TODO: Change based on whether this is a parameter or not?
-typeToRust _ (RowTy _) = error "Row types need to be named..." -- TODO
+typeToRust _ (RowTy fs) = error [i|Row types need to be named...\n#{show fs}|] -- TODO
 typeToRust c (ArrayTy ty) = "Vec<" <> typeToRust c ty <> ">" -- TODO
+typeToRust c (TyApp "Ref" [ty]) = "&" <> typeToRust c ty
+typeToRust c (TyApp "RefMut" [ty]) = "&mut " <> typeToRust c ty
 typeToRust _ (TyApp t []) = Builder.byteString t
 typeToRust c (TyApp t tys) = -- TODO
     Builder.byteString t <> "<" <> mconcat (intersperse ", " $ map (typeToRust c) tys) <> ">"
 typeToRust _ (ExternalTy t) = Builder.byteString t
-typeToRust _ (TyVar v) = Builder.byteString v
+typeToRust _ (TyVar v) = Builder.byteString (BS.drop 1 v)
 typeToRust _ (Note n (RowTy _)) = Builder.byteString n -- TODO: This doesn't handle rule return types that have type variables.
 typeToRust c (Note _ ty) = typeToRust c ty
 
@@ -436,6 +463,7 @@ toRustWithContext' c envs (Grammar decls) = Builder.toLazyByteString $
                 ruleRows =
                     Map.fromList
                         (map (\(nt, (_, ty)) -> getRows' nt ty) (Map.toList (TC.ruleTypes envs)))
+                -- funArgRefs =
              }
         (ruleDefs, constDecls, typeDecls, ruleDecls, _funDecls) = partitionDeclarations decls
         getRows' nt ty =

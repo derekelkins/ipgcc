@@ -1,77 +1,101 @@
-const PImage = require("pureimage");
-const fs = require("node:fs");
+#![allow(non_snake_case)]
+#![allow(dead_code)]
+#![allow(unreachable_code)]
+#![allow(unused_mut)]
+#![allow(unused_assignments)]
+#![allow(unused_variables)]
 
-function render(width, height, colors, outFilePath) {
-    const img = PImage.make(width, height);
-    let i = 0;
-    for (let y = 0; y < height; ++y) {
-        for (let x = 0; x < width; ++x) {
-            const color = colors[i++];
-            img.setPixelRGBA_i(x, y, color.r, color.g, color.b, color.a);
+use image::{RgbaImage, Rgba, error::ImageResult};
+use std::fs;
+
+fn render(width: u32, height: u32, colors: &[Color], out_path: &str) -> ImageResult<()> {
+    let mut img = RgbaImage::new(width, height);
+    let mut i = 0;
+    for y in 0 .. height {
+        for x in 0 .. width {
+            let color = &colors[i];
+            img.put_pixel(x, y, Rgba([color.r, color.g, color.b, color.a]));
+            i += 1;
         }
     }
-    PImage.encodePNGToStream(img, fs.createWriteStream(outFilePath));
+    img.save(out_path)
 }
 
-function initState() {
-    const black = { r: 0, g: 0, b: 0, a: 255 };
-    const transparent = { r: 0, g: 0, b: 0, a: 0 };
-    const history = new Array(64);
-    history.fill(transparent);
-    return { prevColor: black, history, colors: [] };
+#[derive(Clone, Copy, Debug)]
+struct Color { r: u8, g: u8, b: u8, a: u8 }
+
+#[derive(Debug)]
+struct State {
+    prev_color: Color,
+    history: [Color; 64],
+    output: Vec<Color>,
 }
 
-function concat(runs) {
-    return runs.flat();
+impl State {
+    fn push(&mut self, color: Color) { self.output.push(color) }
 }
 
-function hash(color) {
-    return (color.r * 3 + color.g * 5 + color.b * 7 + color.a * 11) % 64;
-}
-
-function RGB(state, r, g, b) {
-    RGBA(state, r, g, b, state.prevColor.a);
-}
-
-function RGBA(state, r, g, b, a) {
-    const color = { r, g, b, a };
-    state.prevColor = color;
-    state.history[hash(color)] = color;
-    state.colors.push(color);
-}
-
-function Index(state, index) {
-    const color = state.history[index];
-    state.prevColor = color;
-    state.colors.push(color);
-}
-
-function Diff(state, dr, dg, db) {
-    RGB(
-        state,
-        (state.prevColor.r + dr) & 0xFF,
-        (state.prevColor.g + dg) & 0xFF,
-        (state.prevColor.b + db) & 0xFF
-    );
-}
-
-function Luma(state, diffGreen, drdg, dbdg) {
-    RGB(
-        state,
-        (state.prevColor.r + drdg + diffGreen) & 0xFF,
-        (state.prevColor.g + diffGreen) & 0xFF,
-        (state.prevColor.b + dbdg + diffGreen) & 0xFF
-    );
-}
-
-function Run(state, runLength) {
-    for (let i = 0; i < runLength; ++i) {
-        state.colors.push(state.prevColor);
+fn initState(width: i64, height: i64) -> State {
+    let black = Color { r: 0, g: 0, b: 0, a: 255 };
+    let transparent = Color { r: 0, g: 0, b: 0, a: 0 };
+    State {
+        prev_color: black,
+        history: [transparent; 64],
+        output: Vec::with_capacity((width * height) as usize),
     }
 }
 
-function wrapping_sub(x, y) { return x - y; }
-function ref_mut(x) { return x; }
+fn hash(color: &Color) -> u8 {
+    color.r.wrapping_mul(3)
+    .wrapping_add(color.g.wrapping_mul(5))
+    .wrapping_add(color.b.wrapping_mul(7))
+    .wrapping_add(color.a.wrapping_mul(11)) % 64
+}
+
+fn RGB(state: &mut State, r: u8, g: u8, b: u8) {
+    RGBA(state, r, g, b, state.prev_color.a)
+}
+
+fn RGBA(state: &mut State, r: u8, g: u8, b: u8, a: u8) {
+    let color = Color { r, g, b, a };
+    state.prev_color = color;
+    state.history[hash(&color) as usize] = color;
+    state.push(color);
+}
+
+fn Index(state: &mut State, index: u8) {
+    let color = state.history[index as usize];
+    state.prev_color = color;
+    state.push(color);
+}
+
+fn Diff(state: &mut State, dr: u8, dg: u8, db: u8) {
+    RGB(
+        state,
+        state.prev_color.r.wrapping_add(dr),
+        state.prev_color.g.wrapping_add(dg),
+        state.prev_color.b.wrapping_add(db),
+    )
+}
+
+fn Luma(state: &mut State, diffGreen: u8, drdg: u8, dbdg: u8) {
+    RGB(
+        state,
+        state.prev_color.r.wrapping_add(drdg).wrapping_add(diffGreen),
+        state.prev_color.g.wrapping_add(diffGreen),
+        state.prev_color.b.wrapping_add(dbdg).wrapping_add(diffGreen),
+    )
+}
+
+fn Run(state: &mut State, runLength: u8) {
+    for _ in 0 .. runLength {
+        state.push(state.prev_color);
+    }
+}
+
+fn wrapping_sub(x: u8, y: u8) -> u8 { x.wrapping_sub(y) }
+
+type ChunkType = ();
 
 %preamble_end
 
@@ -149,5 +173,8 @@ BE_U32
 
 %postamble_begin
 
-const qoi = QOI(fs.readFileSync("./test/node/samples/1.qoi"));
-render(qoi.width, qoi.height, qoi.state.colors, "./dice.png"); 
+fn main() {
+    let input = fs::read("./test/node/samples/1.qoi").unwrap();
+    let (_, _, qoi) = QOI(&input, 0, input.len()).unwrap();
+    let _ = render(qoi.width as u32, qoi.height as u32, &qoi.state.output, "./dice.png").unwrap();
+}

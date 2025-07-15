@@ -18,7 +18,7 @@ function initState() {
     const transparent = { r: 0, g: 0, b: 0, a: 0 };
     const history = new Array(64);
     history.fill(transparent);
-    return { prevColor: black, history };
+    return { prevColor: black, history, colors: [] };
 }
 
 function concat(runs) {
@@ -29,25 +29,25 @@ function hash(color) {
     return (color.r * 3 + color.g * 5 + color.b * 7 + color.a * 11) % 64;
 }
 
-function rgbCase(state, r, g, b) {
-    return rgbaCase(state, r, g, b, state.prevColor.a);
+function RGB(state, r, g, b) {
+    RGBA(state, r, g, b, state.prevColor.a);
 }
 
-function rgbaCase(state, r, g, b, a) {
+function RGBA(state, r, g, b, a) {
     const color = { r, g, b, a };
     state.prevColor = color;
     state.history[hash(color)] = color;
-    return [color];
+    state.colors.push(color);
 }
 
-function indexCase(state, index) {
+function Index(state, index) {
     const color = state.history[index];
     state.prevColor = color;
-    return [color];
+    state.colors.push(color);
 }
 
-function diffCase(state, dr, dg, db) {
-    return rgbCase(
+function Diff(state, dr, dg, db) {
+    RGB(
         state,
         (state.prevColor.r + dr) & 0xFF,
         (state.prevColor.g + dg) & 0xFF,
@@ -55,8 +55,8 @@ function diffCase(state, dr, dg, db) {
     );
 }
 
-function lumaCase(state, diffGreen, drdg, dbdg) {
-    return rgbCase(
+function Luma(state, diffGreen, drdg, dbdg) {
+    RGB(
         state,
         (state.prevColor.r + drdg + diffGreen) & 0xFF,
         (state.prevColor.g + diffGreen) & 0xFF,
@@ -64,11 +64,14 @@ function lumaCase(state, diffGreen, drdg, dbdg) {
     );
 }
 
-function runCase(state, runLength) {
-    const run = new Array(runLength);
-    run.fill(state.prevColor);
-    return run;
+function Run(state, runLength) {
+    for (let i = 0; i < runLength; ++i) {
+        state.colors.push(state.prevColor);
+    }
 }
+
+function wrapping_sub(x, y) { return x - y; }
+function ref_mut(x) { return x; }
 function _ipg_startsWith(s, l, r, prefix) {
   if (r - l < prefix.length) return false;
   if (typeof s === 'string') return s.startsWith(prefix, l);
@@ -124,12 +127,15 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     // { colorspace = QOIHeader@0.colorspace }
     self.colorspace = nt_QOIHeader_0.colorspace;
 
-    // QOIChunks@0(initState())[QOIHeader@0.END, EOI]
+    // { state = initState(width, height) }
+    self.state = initState(self.width, self.height);
+
+    // QOIChunks@0(ref_mut(state))[QOIHeader@0.END, EOI]
     left = nt_QOIHeader_0._ipg_end;
-    _ipg_failedTerm = { term: "QOIChunks@0(initState())[QOIHeader@0.END, EOI]", left, right };
+    _ipg_failedTerm = { term: "QOIChunks@0(ref_mut(state))[QOIHeader@0.END, EOI]", left, right };
     right = EOI;
     if (left < 0 || right < left || right > EOI) break _ipg_alt;
-    nt_QOIChunks_0 = QOIChunks(input, begin + left, begin + right, initState());
+    nt_QOIChunks_0 = QOIChunks(input, begin + left, begin + right, ref_mut(self.state));
     if (nt_QOIChunks_0 === null) break _ipg_alt;
     if (nt_QOIChunks_0._ipg_end !== 0) {
       self._ipg_start = Math.min(self._ipg_start, left + nt_QOIChunks_0._ipg_start);
@@ -139,9 +145,6 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     nt_QOIChunks_0._ipg_start += left;
     left = nt_QOIChunks_0._ipg_start;
     right = nt_QOIChunks_0._ipg_end;
-
-    // { colors = concat(QOIChunks@0.values) }
-    self.colors = concat(nt_QOIChunks_0.values);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -406,8 +409,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
 
-    // { run = rgbCase(state, r, g, b) }
-    self.run = rgbCase(a_state, self.r, self.g, self.b);
+    // { run = RGB(state, r, g, b) }
+    self.run = RGB(a_state, self.r, self.g, self.b);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -459,8 +462,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     self._ipg_start = Math.min(self._ipg_start, left);
     self._ipg_end = Math.max(self._ipg_end, right);
 
-    // { run = rgbaCase(state, r, g, b, a) }
-    self.run = rgbaCase(a_state, self.r, self.g, self.b, self.a);
+    // { run = RGBA(state, r, g, b, a) }
+    self.run = RGBA(a_state, self.r, self.g, self.b, self.a);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -479,8 +482,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     // { index = tagByte & 63 }
     self.index = a_tagByte & 63;
 
-    // { run = indexCase(state, index) }
-    self.run = indexCase(a_state, self.index);
+    // { run = Index(state, index) }
+    self.run = Index(a_state, self.index);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -496,17 +499,17 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     // { tag = "diff" }
     self.tag = "diff";
 
-    // { dr = (tagByte >> 4 & 3) - 2 }
-    self.dr = (a_tagByte >> 4 & 3) - 2;
+    // { dr = wrapping_sub(tagByte >> 4 & 3, 2) }
+    self.dr = wrapping_sub(a_tagByte >> 4 & 3, 2);
 
-    // { dg = (tagByte >> 2 & 3) - 2 }
-    self.dg = (a_tagByte >> 2 & 3) - 2;
+    // { dg = wrapping_sub(tagByte >> 2 & 3, 2) }
+    self.dg = wrapping_sub(a_tagByte >> 2 & 3, 2);
 
-    // { db = (tagByte & 3) - 2 }
-    self.db = (a_tagByte & 3) - 2;
+    // { db = wrapping_sub(tagByte & 3, 2) }
+    self.db = wrapping_sub(a_tagByte & 3, 2);
 
-    // { run = diffCase(state, dr, dg, db) }
-    self.run = diffCase(a_state, self.dr, self.dg, self.db);
+    // { run = Diff(state, dr, dg, db) }
+    self.run = Diff(a_state, self.dr, self.dg, self.db);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -523,8 +526,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     // { tag = "luma" }
     self.tag = "luma";
 
-    // { diffGreen = (tagByte & 63) - 32 }
-    self.diffGreen = (a_tagByte & 63) - 32;
+    // { diffGreen = wrapping_sub(tagByte & 63, 32) }
+    self.diffGreen = wrapping_sub(a_tagByte & 63, 32);
 
     // U8@0[0, EOI]
     left = 0;
@@ -542,14 +545,14 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     left = nt_U8_0._ipg_start;
     right = nt_U8_0._ipg_end;
 
-    // { drdg = (U8@0.value >> 4) - 8 }
-    self.drdg = (nt_U8_0.value >> 4) - 8;
+    // { drdg = wrapping_sub(U8@0.value >> 4, 8) }
+    self.drdg = wrapping_sub(nt_U8_0.value >> 4, 8);
 
-    // { dbdg = (U8@0.value & 15) - 8 }
-    self.dbdg = (nt_U8_0.value & 15) - 8;
+    // { dbdg = wrapping_sub(U8@0.value & 15, 8) }
+    self.dbdg = wrapping_sub(nt_U8_0.value & 15, 8);
 
-    // { run = lumaCase(state, diffGreen, drdg, dbdg) }
-    self.run = lumaCase(a_state, self.diffGreen, self.drdg, self.dbdg);
+    // { run = Luma(state, diffGreen, drdg, dbdg) }
+    self.run = Luma(a_state, self.diffGreen, self.drdg, self.dbdg);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -568,8 +571,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     // { runLength = (tagByte & 63) + 1 }
     self.runLength = (a_tagByte & 63) + 1;
 
-    // { run = runCase(state, runLength) }
-    self.run = runCase(a_state, self.runLength);
+    // { run = Run(state, runLength) }
+    self.run = Run(a_state, self.runLength);
 
   _ipg_failTreeStack.pop();
     return self;
@@ -676,7 +679,7 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
       self._ipg_end = Math.max(self._ipg_end, right);
     }
 
-    // { value = bs[3] | bs[2] << 8 | bs[1] << 16 | bs[0] << 24 }
+    // { value = (bs[3] :: Int) | (bs[2] :: Int) << 8 | (bs[1] :: Int) << 16 | (bs[0] :: Int) << 24 }
     self.value = self.bs[3] | self.bs[2] << 8 | self.bs[1] << 16 | self.bs[0] << 24;
 
   _ipg_failTreeStack.pop();
@@ -689,5 +692,5 @@ _ipg_failTreeStack[_ipg_failTreeStack.length - 1].children.push(_ipg_currentFail
   return null;
 }
 
-const qoiData = QOI(fs.readFileSync("./qoi_test_images/dice.qoi"));
-render(qoiData.width, qoiData.height, qoiData.colors, "./dice.png"); 
+const qoi = QOI(fs.readFileSync("./test/node/samples/1.qoi"));
+render(qoi.width, qoi.height, qoi.state.colors, "./dice.png"); 
