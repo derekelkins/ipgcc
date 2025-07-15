@@ -55,6 +55,8 @@ defaultContext = Context {
 u :: (T, Int) -> Out
 u (nt, n) = Builder.byteString nt <> "_" <> Builder.intDec n
 
+-- TODO: Add more primitive types (e.g. u8/u16/u32/u64/i8/i16/i32/i64/f32) to IPG itself?
+
 -- TODO: Evaluate the need for the clones. Worst-case scenario, the user can use a clone
 -- function when necessary.
 refToRust :: Context -> Env -> Ref T T Expr -> Out
@@ -67,8 +69,9 @@ refToRust _ _   (Attr nt "this") = [i|nt_#{u nt}|] -- TODO: .clone()|]
 refToRust _ _   (Attr nt "these") = [i|seq_#{u nt}|] -- TODO: .clone()|]
 refToRust _ _   (Attr nt f) = [i|nt_#{u nt}.#{f}|]
 refToRust c env (Index nt e "this") =
-    [i|seq_#{u nt}[#{exprToRust c env e} - seq_#{u nt}_start].clone()|]
-refToRust c env (Index nt e f) = [i|seq_#{u nt}[#{exprToRust c env e} - seq_#{u nt}_start].#{f}|]
+    [i|seq_#{u nt}[(#{exprToRust c env e} - seq_#{u nt}_start) as usize].clone()|]
+refToRust c env (Index nt e f) =
+    [i|seq_#{u nt}[(#{exprToRust c env e} - seq_#{u nt}_start) as usize].#{f}|]
 refToRust _ _   EOI = "EOI";
 refToRust _ _   (Start nt) = [i|nt_#{u nt}_ipg_start|]
 refToRust _ _   (End nt) = [i|nt_#{u nt}_ipg_end|]
@@ -76,6 +79,7 @@ refToRust _ _   (End nt) = [i|nt_#{u nt}_ipg_end|]
 exprToRust :: Context -> Env -> Expr -> Out
 exprToRust ctxt env e = exprToRust' ctxt env 0 e
 
+-- TODO: Compare the precedences to the Rust precedences.
 exprToRust' :: Context -> Env -> Int -> Expr -> Out
 exprToRust' _ _ _ T = "true"
 exprToRust' _ _ _ F = "false"
@@ -138,7 +142,7 @@ exprToRust' c env _ (Call t es) =
 exprToRust' c env p (Bin At l r) =
     outParen (p > 17) (exprToRust' c env 17 l <> "[" <> exprToRust' c env 0 r <> "]")
 exprToRust' c env p (Annotate e t) = -- TODO: Is this what I want?
-    outParen (p > 0) (exprToRust' c env 100 e <> " as " <> typeToRust c t)
+    outParen (p > 0) (exprToRust' c env 14 e <> " as " <> typeToRust c t)
 exprToRust' c env _ (Ref r) = refToRust c env r
 
 paramList :: Context -> [(T, Ty T T)] -> Out
@@ -153,8 +157,8 @@ argList = foldMap ((", "<>))
 termToRust :: Out -> Context -> Env -> Term T T T Expr -> Out
 termToRust indent c env z@(NonTerminal nt args l r)
     = indent <> [i|// #{pprintTerm z}\n|]
-   <> indent <> [i|left = #{lExp};\n|]
-   <> indent <> [i|right = #{rExp};\n|]
+   <> indent <> [i|left = #{lExp} as usize;\n|]
+   <> indent <> [i|right = #{rExp} as usize;\n|]
    <> indent <>   "if right < left || right > EOI { break '_ipg_alt; }\n"
    <> indent <> [i|let nt_#{u nt}_m = #{fst nt}(input, begin + left, begin + right#{argList es});\n|]
    <> indent <> [i|let (mut nt_#{u nt}_ipg_start, mut nt_#{u nt}_ipg_end, nt_#{u nt}) = match nt_#{u nt}_m {\n|]
@@ -169,23 +173,24 @@ termToRust indent c env z@(NonTerminal nt args l r)
    <> indent <> [i|nt_#{u nt}_ipg_start += left;\n|]
    <> indent <> [i|left = nt_#{u nt}_ipg_start;\n|]
    <> indent <> [i|right = nt_#{u nt}_ipg_end;\n\n|]
-  where lExp = exprToRust c env l; rExp = exprToRust c env r; es = map (exprToRust c env) args
+  where lExp = exprToRust' c env 14 l; rExp = exprToRust' c env 14 r
+        es = map (exprToRust c env) args
 termToRust indent c env z@(Terminal "" l r)
     = indent <> [i|// #{pprintTerm z}\n|]
-   <> indent <> [i|left = #{lExp};\n|]
-   <> indent <> [i|right = #{rExp};\n|]
+   <> indent <> [i|left = #{lExp} as usize;\n|]
+   <> indent <> [i|right = #{rExp} as usize;\n|]
    <> indent <>   "if right < left || right > EOI { break '_ipg_alt; }\n\n"
-  where lExp = exprToRust c env l; rExp = exprToRust c env r
+  where lExp = exprToRust' c env 14 l; rExp = exprToRust' c env 14 r
 termToRust indent c env z@(Terminal t l r)
     = indent <> [i|// #{pprintTerm z}\n|]
-   <> indent <> [i|left = #{lExp};\n|]
-   <> indent <> [i|right = #{rExp};\n|]
+   <> indent <> [i|left = #{lExp} as usize;\n|]
+   <> indent <> [i|right = #{rExp} as usize;\n|]
    <> indent <>   "if right < left || right > EOI { break '_ipg_alt; }\n"
    <> indent <> [i|if !&input[begin + left .. begin + right].starts_with(#{terminal}.as_bytes()) { break '_ipg_alt; }\n|]
    <> indent <>   "self_ipg_start = self_ipg_start.min(left);\n"
    <> indent <> [i|right = left + #{BS.length t};\n|]
    <> indent <>   "self_ipg_end = self_ipg_end.max(right);\n\n"
-  where lExp = exprToRust c env l; rExp = exprToRust c env r; terminal = hexyString t
+  where lExp = exprToRust' c env 14 l; rExp = exprToRust' c env 14 r; terminal = hexyString t
 termToRust indent c env z@(x := e)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> indent <> [i|let self_#{x} = #{eExp};\n\n|]
@@ -198,12 +203,12 @@ termToRust indent c env z@(Array x start end nt args l r)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> indent <> [i|let mut nt_#{u nt}_ipg_start = left;\n|] -- Special case
    <> indent <> [i|let mut nt_#{u nt}_ipg_end = right;\n|] -- Special case
-   <> indent <> [i|let seq_#{u nt}_start = #{startExp};\n|]
-   <> indent <> [i|let loopEnd = #{endExp};\n|]
-   <> indent <> [i|let mut seq_#{u nt} = Vec::with_capacity(if seq_#{u nt}_start >= loopEnd { 0 } else { loopEnd - seq_#{u nt}_start });\n|]
+   <> indent <> [i|let seq_#{u nt}_start = #{startExp} as usize;\n|]
+   <> indent <> [i|let loopEnd = #{endExp} as usize;\n|]
+   <> indent <> [i|let mut seq_#{u nt} = Vec::with_capacity(loopEnd.saturating_sub(seq_#{u nt}_start));\n|]
    <> indent <> [i|for i_#{x} in seq_#{u nt}_start..loopEnd {\n|]
-   <> indent <> [i|  let left = #{lExp};\n|]
-   <> indent <> [i|  let right = #{rExp};\n|]
+   <> indent <> [i|  let left = #{lExp} as usize;\n|]
+   <> indent <> [i|  let right = #{rExp} as usize;\n|]
    <> indent <>   "  if right < left || right > EOI { break '_ipg_alt; }\n"
    <> indent <> [i|  let tmp_m = #{fst nt}(input, begin + left, begin + right#{argList es});\n|]
    <> indent <> [i|  let (mut tmp_ipg_start, mut tmp_ipg_end, tmp) = match tmp_m {\n|]
@@ -222,34 +227,35 @@ termToRust indent c env z@(Array x start end nt args l r)
    <> indent <>   "}\n"
    <> indent <> [i|left = nt_#{u nt}_ipg_start;\n|]
    <> indent <> [i|right = nt_#{u nt}_ipg_end;\n\n|]
-  where startExp = exprToRust c env start; endExp = exprToRust' c env 10 end;
-        lExp = exprToRust c' env l; rExp = exprToRust c' env r; es = map (exprToRust c' env) args
+  where startExp = exprToRust' c env 14 start; endExp = exprToRust' c env 14 end
+        lExp = exprToRust' c' env 14 l; rExp = exprToRust' c' env 14 r
+        es = map (exprToRust c' env) args
         c' = c { iterationVar = x }
 termToRust indent c env z@(Any x l)
     = indent <> [i|// #{pprintTerm z}\n|]
-   <> indent <> [i|left = #{lExp};\n|]
+   <> indent <> [i|left = #{lExp} as usize;\n|]
    <> indent <>   "right = left + 1;\n"
    <> indent <>   "if right > EOI { break '_ipg_alt; }\n"
-   <> indent <> [i|let self_#{x} = input[begin + left];\n|]
+   <> indent <> [i|let self_#{x} = input[begin + left] as i64;\n|]
    <> indent <>   "self_ipg_start = self_ipg_start.min(left);\n"
    <> indent <>   "self_ipg_end = self_ipg_end.max(right);\n\n"
-  where lExp = exprToRust c env l
+  where lExp = exprToRust' c env 14 l
 termToRust indent c env z@(Slice x l r)
     = indent <> [i|// #{pprintTerm z}\n|]
-   <> indent <> [i|left = #{lExp};\n|]
-   <> indent <> [i|right = #{rExp};\n|]
+   <> indent <> [i|left = #{lExp} as usize;\n|]
+   <> indent <> [i|right = #{rExp} as usize;\n|]
    <> indent <>   "if right < left || right > EOI { break '_ipg_alt; }\n"
-   <> indent <> [i|let self_#{x} = &input[begin + left .. begin + right].to_vec();\n|]
+   <> indent <> [i|let self_#{x} = (&input[begin + left .. begin + right]).to_vec();\n|]
    <> indent <>   "if left != right {\n"
    <> indent <>   "  self_ipg_start = self_ipg_start.min(left);\n"
    <> indent <>   "  self_ipg_end = self_ipg_end.max(right);\n"
    <> indent <>   "}\n\n"
-  where lExp = exprToRust c env l; rExp = exprToRust c env r
+  where lExp = exprToRust' c env 14 l; rExp = exprToRust' c env 14 r
 termToRust indent c env z@(Repeat nt args l r x l0 r0) -- TODO: Need to expand the scope of nt_#{u nt}*
     = indent <> [i|// #{pprintTerm z}\n|]
    <> indent <>   "let mut self_values = Vec::new();\n"
-   <> indent <> [i|left = #{l0Exp};\n|]
-   <> indent <> [i|right = #{r0Exp};\n|]
+   <> indent <> [i|left = #{l0Exp} as usize;\n|]
+   <> indent <> [i|right = #{r0Exp} as usize;\n|]
    <> indent <> [i|let nt_#{u nt}_m = #{fst nt}(input, begin + left, begin + right#{argList es});\n|]
    <> indent <> [i|match nt_#{u nt}_m {\n|]
    <> indent <> [i|  None => {}\n|]
@@ -259,8 +265,8 @@ termToRust indent c env z@(Repeat nt args l r x l0 r0) -- TODO: Need to expand t
    <> indent <> [i|    self_ipg_end = self_ipg_end.max(left + nt_#{u nt}_ipg_end);\n|]
    <> indent <> [i|    nt_#{u nt}_ipg_end += left;\n|]
    <> indent <> [i|    nt_#{u nt}_ipg_start += left;\n|]
-   <> indent <> [i|    left = #{lExp};\n|]
-   <> indent <> [i|    right = #{rExp};\n|]
+   <> indent <> [i|    left = #{lExp} as usize;\n|]
+   <> indent <> [i|    right = #{rExp} as usize;\n|]
    <> indent <> [i|    self_values.push(#{xAttr});\n\n|]
                      
    <> indent <>   "    while left <= right && right <= EOI {\n"
@@ -275,19 +281,19 @@ termToRust indent c env z@(Repeat nt args l r x l0 r0) -- TODO: Need to expand t
    <> indent <> [i|      nt_#{u nt}_ipg_end += left;\n|]
    <> indent <> [i|      nt_#{u nt}_ipg_start += left;\n|]
    <> indent <> [i|      self_values.push(#{xAttr});\n|]
-   <> indent <> [i|      left = #{lExp};\n|]
-   <> indent <> [i|      right = #{rExp};\n|]
+   <> indent <> [i|      left = #{lExp} as usize;\n|]
+   <> indent <> [i|      right = #{rExp} as usize;\n|]
    <> indent <>   "    }\n"
    <> indent <>   "  }\n"
    <> indent <>   "};\n\n"
   where es = map (exprToRust c env) args
-        lExp = exprToRust c env l; rExp = exprToRust c env r
-        l0Exp = exprToRust c env l0; r0Exp = exprToRust c env r0
+        lExp = exprToRust' c env 14 l; rExp = exprToRust' c env 14 r
+        l0Exp = exprToRust' c env 14 l0; r0Exp = exprToRust' c env 14 r0
         xAttr = refToRust c env (Attr nt x)
 termToRust indent c env z@(RepeatUntil nt1 args1 l r x l0 r0 nt2 args2) -- TODO: Need to expand the scope of nt_#{u nt1}*/nt_#{u nt2}*
     = indent <> [i|// #{pprintTerm z}\n|]
-   <> indent <> [i|left = #{l0Exp};\n|]
-   <> indent <> [i|right = #{r0Exp};\n|]
+   <> indent <> [i|left = #{l0Exp} as usize;\n|]
+   <> indent <> [i|right = #{r0Exp} as usize;\n|]
    <> indent <>   "let mut self_values = Vec::new();\n"
    <> indent <>   "loop {\n"
    <> indent <>   "  if right < left || right > EOI { break '_ipg_alt; }\n"
@@ -316,19 +322,19 @@ termToRust indent c env z@(RepeatUntil nt1 args1 l r x l0 r0 nt2 args2) -- TODO:
    <> indent <> [i|  nt_#{u nt1}_ipg_end += left;\n|]
    <> indent <> [i|  nt_#{u nt1}_ipg_start += left;\n|]
    <> indent <> [i|  self_values.push(#{xAttr});\n|]
-   <> indent <> [i|  left = #{lExp};\n|]
-   <> indent <> [i|  right = #{rExp};\n|]
+   <> indent <> [i|  left = #{lExp} as usize;\n|]
+   <> indent <> [i|  right = #{rExp} as usize;\n|]
    <> indent <>   "}\n\n"
   where es1 = map (exprToRust c env) args1; es2 = map (exprToRust c env) args2
-        lExp = exprToRust c env l; rExp = exprToRust c env r
-        l0Exp = exprToRust c env l0; r0Exp = exprToRust c env r0
+        lExp = exprToRust' c env 14 l; rExp = exprToRust' c env 14 r
+        l0Exp = exprToRust' c env 14 l0; r0Exp = exprToRust' c env 14 r0
         xAttr = refToRust c env (Attr nt1 x)
 
 alternativeToRust :: Out -> Context -> Env -> Alternative T T T Expr -> Out
 alternativeToRust indent c env (Alternative ts)
     = indent <>   "'_ipg_alt: {\n"
-   <> indent <>   "  let mut left = EOI; let mut right = 0;\n"
-   <> indent <>   "  let mut self_ipg_start = EOI; let mut self_ipg_end = 0;\n\n"
+   <> indent <>   "  let mut left: usize = EOI; let mut right: usize = 0;\n"
+   <> indent <>   "  let mut self_ipg_start: usize = EOI; let mut self_ipg_end: usize = 0;\n\n"
    <>                foldMap (termToRust ("  " <> indent) c env) ts
    <> indent <> [i|  return Some((self_ipg_start, self_ipg_end, #{structName} {\n|]
    <>                  foldMap setField fields
@@ -368,7 +374,7 @@ ruleToRust :: Context -> Rule T T T Expr -> Out
 ruleToRust c (Rule mt nt args alts) =
     [__i|
       #{export}fn #{nt}(input: &[u8], begin: usize, end: usize#{paramList c' tyArgs}) -> Option<(usize, usize, #{rt})> {
-        let EOI = end - begin;
+        let EOI: usize = end - begin;
       #{foldMap (alternativeToRust "  " c' env) alts}
         return None;
       }\n\n
