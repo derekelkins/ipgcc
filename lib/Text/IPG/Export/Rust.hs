@@ -417,8 +417,8 @@ toRustWithContext c (Grammar decls) =
               TC.tOut = Builder.byteString,
               TC.ntOut = Builder.byteString
           }
-        rewrite (RuleDeclaration nt _ Nothing) =
-            error [i|Rule declaration for #{nt :: T} without return type|]
+        -- rewrite (RuleDeclaration nt _ Nothing) =
+        --     error [i|Rule declaration for #{nt :: T} without return type|]
         rewrite (RuleDeclaration nt args (Just ty@(RowTy _))) =
             [TypeDeclaration nt [] ty, RuleDeclaration nt args (Just (TyApp nt []))]
         rewrite d = [d]
