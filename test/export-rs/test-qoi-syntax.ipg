@@ -31,9 +31,6 @@ function Luma(diffGreen: U8, drdg: U8, dbdg: U8): ChunkType;
 function Run(run: U8): ChunkType;
 function wrapping_sub(x: U8, y: U8): U8;
 
-// typedef ChunkType = { tag: String };
-
-// rule QOI: { width: Int, height: Int, channels: Int, chunks: [ChunkType] };
 QOI
     -> QOIHeader
        { width = QOIHeader.width }
@@ -43,7 +40,6 @@ QOI
        QOIChunks
        { chunks = QOIChunks.values };
 
-// rule QOIHeader: { width: Int, height: Int, channels: Int, colorspace: Int };
 QOIHeader
     -> "qoif"
         BE_U32 { width = BE_U32.value }
@@ -51,10 +47,8 @@ QOIHeader
         { channels = . }
         { colorspace = . };
 
-// rule QOIChunks: { values: [ChunkType] };
 QOIChunks -> repeat QOIChunk.chunk until EndMarker;
 
-// rule QOIChunk: { chunk: ChunkType };
 QOIChunk -> { tagByte = . } Chunk(tagByte) { chunk = Chunk.chunk };
 
 rule Chunk(tagByte: U8): { tag: String, chunk: ChunkType };
@@ -83,13 +77,10 @@ Chunk(tagByte)
         { run = (tagByte & 0x3Fu8) + 1u8 }
         { chunk = Run(run) };
 
-// rule EndMarker: {};
 EndMarker -> "\x00\x00\x00\x00\x00\x00\x00\x01";
 
-// rule U8: { value: Int };
 U8 -> { value = . };
 
-// rule BE_U32: { value: Int };
 BE_U32
     -> { bs = *[4] }
        { value = (bs[3] :: Int) | (bs[2] :: Int << 8) | (bs[1] :: Int << 16) | (bs[0] :: Int << 24) };
@@ -99,6 +90,6 @@ BE_U32
 use std::fs;
 
 fn main() {
-    let input = fs::read("./qoi_test_images/dice.qoi").unwrap();
+    let input = fs::read("./test/node/samples/1.qoi").unwrap();
     println!("{:?}", QOI(&input, 0, input.len()));
 }

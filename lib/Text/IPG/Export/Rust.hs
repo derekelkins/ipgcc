@@ -270,7 +270,7 @@ termToRust indent c env z@(Repeat nt args l r x l0 r0) -- TODO: Need to expand t
    <> indent <> [i|    left = #{lExp} as usize;\n|]
    <> indent <> [i|    right = #{rExp} as usize;\n|]
    <> indent <> [i|    self_values.push(#{xAttr});\n\n|]
-                     
+
    <> indent <>   "    while left <= right && right <= EOI {\n"
    <> indent <> [i|      let nt_#{u nt}_m = #{fst nt}(input, begin + left, begin + right#{argList es});\n|]
    <> indent <> [i|      let (mut nt_#{u nt}_ipg_start, mut nt_#{u nt}_ipg_end, nt_#{u nt}) = match nt_#{u nt}_m {\n|]
@@ -343,7 +343,7 @@ alternativeToRust indent c env (Alternative ts)
    <> indent <>   "  }));\n"
    <> indent <>   "}\n"
   where (structName, fields) = ruleRows c Map.! currentRule c
-        setField f = indent <> [i|    #{f :: T}: self_#{f},\n|]  
+        setField f = indent <> [i|    #{f :: T}: self_#{f},\n|]
 
 typeDeclToRust :: Context -> (T, [T], Ty T T) -> Out
 typeDeclToRust c (t, [], RowTy fs) = struct c t fs <> "\n"
@@ -441,7 +441,7 @@ toRustWithContext' c envs (Grammar decls) = Builder.toLazyByteString $
         getRows' nt ty =
             case TC.getRows (TC.typeDefs envs) ty of
                 Just rows -> (nt, (n, Map.keys rows))
-                Nothing -> error [i|Rule #{nt :: T} doesn't has a non-row-type result|]
+                Nothing -> error [i|Rule #{nt :: T} has a non-row-type result|]
                 -- TODO: Allow this by letting a user specify what the rows are.
           where n = case ty of TyApp t _ -> t; _ -> nt
 
