@@ -69,4 +69,6 @@ highlight link IPGComment Comment
 syntax region IPGMultilineComment start="\v/\*" end="\v\*/" contains=IPGMultilineComment,IPGTodo
 highlight link IPGMultilineComment Comment
 
+set commentstring=//\ %s
+
 let b:current_syntax = "ipg"

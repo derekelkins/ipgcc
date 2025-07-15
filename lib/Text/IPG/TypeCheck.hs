@@ -478,8 +478,6 @@ typeSynthTerm ctxt envs rows (RepeatUntil a1@(nt1, _) es1 l r x l0 r0 a2@(nt2, _
                                               Map.fromList [(a2, ty2'), (a1, ty1')])
   where x' = Builder.toLazyByteString (out ctxt x)
 
--- TODO: Probably need to handle self-references. Not sure how. Maybe just fall back to
--- ruleTypes instead of localRuleTypes?
 typeCheckRuleInvoke
     :: (Show id, Ord id, Ord nt, Ord t, HasCallStack)
     => Context nt t id
@@ -575,10 +573,10 @@ typeSynthExp' ctxt envs (Bin op e1 e2) =
         Right ty1 ->
             case typeSynthExp ctxt envs e2 of
                 Left err -> Left err
-                Right ty2 -> 
+                Right ty2 ->
                     case typeSynthBinOp ctxt envs op ty1 ty2 of
                         Left err ->
-                            Left (err 
+                            Left (err
                               <> "\nTypes were: " <> ppType ctxt ty1
                               <> "\nand: " <> ppType ctxt ty2)
                         r -> r
@@ -614,13 +612,19 @@ typeSynthExp' ctxt envs (Ref (Attr a@(nt, _) x))
     | x' == "this" =
         case Map.lookup a (localRuleTypes envs) of
             Just ty -> Right (Note nt ty)
-            Nothing -> Left ("Unknown local rule binding " <> aOut (ntOut ctxt) a)
+            Nothing -> -- TODO: I don't think this fallback approach works in general.
+                case Map.lookup nt (ruleTypes envs) of
+                    Just (_, ty) -> Right (Note nt ty)
+                    Nothing -> Left ("Unknown local rule binding " <> aOut (ntOut ctxt) a)
     | x' == "these" =
         case Map.lookup a (localRuleTypes envs) of
             Just ty -> Right (ArrayTy (Note nt ty))
-            Nothing -> Left ("Unknown local rule binding " <> aOut (ntOut ctxt) a)
+            Nothing -> -- TODO: I don't think this fallback approach works in general.
+                case Map.lookup nt (ruleTypes envs) of
+                    Just (_, ty) -> Right (Note nt ty)
+                    Nothing -> Left ("Unknown local rule binding " <> aOut (ntOut ctxt) a)
   where x' = Builder.toLazyByteString (out ctxt x)
-typeSynthExp' ctxt envs (Ref (Attr a x)) =
+typeSynthExp' ctxt envs (Ref (Attr a@(nt, _) x)) =
     case derefTy (typeDefs envs) <$> Map.lookup a (localRuleTypes envs) of
         Just ~ty'@(RowTy fs) ->
             case Map.lookup x fs of
@@ -628,7 +632,14 @@ typeSynthExp' ctxt envs (Ref (Attr a x)) =
                 Nothing -> Left ("Field " <> out ctxt x <> " not a field on type "
                                  <> ppType ctxt ty')
         -- Just _ -> error "Rule with return type that isn't a row type."
-        Nothing -> Left ("Unknown local rule binding " <> aOut (ntOut ctxt) a)
+        Nothing -> -- TODO: I don't think this fallback approach works in general.
+            case fmap (derefTy (typeDefs envs)) <$> Map.lookup nt (ruleTypes envs) of
+                Just (_, ~ty'@(RowTy fs)) ->
+                    case Map.lookup x fs of
+                        Just ty -> Right ty
+                        Nothing -> Left ("Field " <> out ctxt x <> " not a field on type "
+                                         <> ppType ctxt ty')
+                Nothing -> Left ("Unknown local rule binding " <> aOut (ntOut ctxt) a)
 typeSynthExp' ctxt envs (Ref (Index a@(nt, _) e x))
     | x' == "this" =
         case typeCheckExp ctxt envs e IntTy of
@@ -637,9 +648,12 @@ typeSynthExp' ctxt envs (Ref (Index a@(nt, _) e x))
                 case Map.lookup a (localRuleTypes envs) of
                     Just ty -> Right (Note nt ty)
                     -- Just _ -> error "Rule with return type that isn't a row type."
-                    Nothing -> Left ("Unknown local rule binding " <> aOut (ntOut ctxt) a)
+                    Nothing -> -- TODO: I don't think this fallback approach works in general.
+                        case Map.lookup nt (ruleTypes envs) of
+                            Just (_, ty) -> Right (Note nt ty)
+                            Nothing -> Left ("Unknown local rule binding " <> aOut (ntOut ctxt) a)
   where x' = Builder.toLazyByteString (out ctxt x)
-typeSynthExp' ctxt envs (Ref (Index a e x)) =
+typeSynthExp' ctxt envs (Ref (Index a@(nt, _) e x)) =
     case typeCheckExp ctxt envs e IntTy of
         Just err -> Left err
         Nothing ->
@@ -650,7 +664,14 @@ typeSynthExp' ctxt envs (Ref (Index a e x)) =
                         Nothing -> Left ("Field " <> out ctxt x <> " not a field on type "
                                          <> ppType ctxt ty')
                 -- Just _ -> error "Rule with return type that isn't a row type."
-                Nothing -> Left ("Unknown local rule binding " <> aOut (ntOut ctxt) a)
+                Nothing -> -- TODO: I don't think this fallback approach works in general.
+                    case fmap (derefTy (typeDefs envs)) <$> Map.lookup nt (ruleTypes envs) of
+                        Just (_, ~ty'@(RowTy fs)) ->
+                            case Map.lookup x fs of
+                                Just ty -> Right ty
+                                Nothing -> Left ("Field " <> out ctxt x <> " not a field on type "
+                                                 <> ppType ctxt ty')
+                        Nothing -> Left ("Unknown local rule binding " <> aOut (ntOut ctxt) a)
 
 -- TODO: These probably need type variable bindings inputs.
 unCheck
