@@ -271,7 +271,7 @@ termToRust indent c env z@(Repeat nt args l r x l0 r0) -- TODO: Need to expand t
                      
    <> indent <>   "    while left <= right && right <= EOI {\n"
    <> indent <> [i|      let nt_#{u nt}_m = #{fst nt}(input, begin + left, begin + right#{argList es});\n|]
-   <> indent <> [i|      let (mut nt_#{u nt}_ipg_start, mut nt_#{u nt}_ipg_end, nt_#{u nt}_m) = match nt_#{u nt} {\n|]
+   <> indent <> [i|      let (mut nt_#{u nt}_ipg_start, mut nt_#{u nt}_ipg_end, nt_#{u nt}) = match nt_#{u nt}_m {\n|]
    <> indent <> [i|        None => { break; }\n|]
    <> indent <> [i|        Some(p) => p,\n|]
    <> indent <> [i|      };\n|]
@@ -424,6 +424,7 @@ toRustWithContext' :: Context -> TC.Environments T T T -> Grammar T T T T Expr -
 toRustWithContext' c envs (Grammar decls) = Builder.toLazyByteString $
        "#![allow(non_snake_case)]\n"
     <> "#![allow(dead_code)]\n"
+    <> "#![allow(unreachable_code)]\n"
     <> "#![allow(unused_assignments)]\n"
     <> "#![allow(unused_variables)]\n\n"
     <> foldMap (typeDeclToRust c') typeDecls
