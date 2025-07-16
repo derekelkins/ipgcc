@@ -27,7 +27,7 @@ export doDebugging useAsync f = do
 exportRs :: FilePath -> IO LBS.ByteString
 exportRs f = do
     results <- parseFile True f
-    let ctxt = RS.defaultContext
+    let ctxt = RS.defaultContext { RS.mutableFields = True }
     case results of
         Left err -> return $ LBS.pack (show err)
         Right (preamble, g, _, _, postamble) ->

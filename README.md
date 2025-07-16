@@ -582,6 +582,27 @@ Here are the requirements on the input when it is not a string.
   must obey the same requirements as here (or be a string). (The `slice` function
   is only used for `{ id = *[l, r] }`, so it can be omitted if you don't use that.)
 
+## Rust Output
+
+TODO: Document this.
+
+Two type aliases and two functions are treated specially by this back-end.
+Namely:
+
+```ipg
+typedef Ref('a) = 'a;
+typedef RefMut('a) = 'a;
+function ref(x: 'a): 'a;
+function ref_mut(x: 'a): 'a;
+```
+
+The type aliases will be replaced with `&` and `&mut` respectively in types.
+Similarly `ref` and `ref_mut` will produce a `&` or `&mut` borrow in expressions.
+
+These declarations are *NOT* automatically added. If you need them, you'll have to
+add this code to your IPG file. (This is so other back-ends don't also need to
+treat these specially.)
+
 ## Examples
 
 See the `test/*/` directories for some non-trivial example grammars. The examples

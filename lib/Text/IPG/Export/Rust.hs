@@ -52,8 +52,8 @@ data Context = Context {
 defaultContext :: Context
 defaultContext = Context {
     debugMode = False,
-    mutableFields = True, -- TODO: False,
-    dumpCore = True, -- TODO: False,
+    mutableFields = False,
+    dumpCore = False,
     constants = Set.empty,
     ruleTypes = Map.empty,
     ruleRows = Map.empty,
