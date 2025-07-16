@@ -276,15 +276,19 @@ termToRust indent c env z@(Slice x l r)
    <> indent <>   "  self_ipg_end = self_ipg_end.max(right);\n"
    <> indent <>   "}\n\n"
   where lExp = exprToRust' c env 14 l; rExp = exprToRust' c env 14 r
-termToRust indent c env z@(Repeat nt args l r x l0 r0) -- TODO: Need to expand the scope of nt_#{u nt}*
+termToRust indent c env z@(Repeat nt args l r x l0 r0)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> indent <>   "let mut self_values = Vec::new();\n"
    <> indent <> [i|left = #{l0Exp} as usize;\n|]
    <> indent <> [i|right = #{r0Exp} as usize;\n|]
    <> indent <> [i|let nt_#{u nt}_m = #{fst nt}(input, begin + left, begin + right#{argList es});\n|]
+   <> indent <> [i|let mut nt_#{u nt}_ipg_start = right;\n|]
+   <> indent <> [i|let mut nt_#{u nt}_ipg_end = left;\n|]
    <> indent <> [i|match nt_#{u nt}_m {\n|]
    <> indent <> [i|  None => {}\n|]
-   <> indent <> [i|  Some((mut nt_#{u nt}_ipg_start, mut nt_#{u nt}_ipg_end, nt_#{u nt})) => {\n|]
+   <> indent <> [i|  Some((nt_#{u nt}_ipg_start_, nt_#{u nt}_ipg_end_, nt_#{u nt})) => {\n|]
+   <> indent <> [i|    nt_#{u nt}_ipg_start = nt_#{u nt}_ipg_start_;\n|]
+   <> indent <> [i|    nt_#{u nt}_ipg_end = nt_#{u nt}_ipg_end_;\n|]
    <> indent <> [i|    if nt_#{u nt}_ipg_end == 0 { panic!("repeat of non-consuming rule: #{fst nt}"); }\n|]
    <> indent <> [i|    self_ipg_start = self_ipg_start.min(left + nt_#{u nt}_ipg_start);\n|]
    <> indent <> [i|    self_ipg_end = self_ipg_end.max(left + nt_#{u nt}_ipg_end);\n|]
@@ -296,10 +300,12 @@ termToRust indent c env z@(Repeat nt args l r x l0 r0) -- TODO: Need to expand t
 
    <> indent <>   "    while left <= right && right <= EOI {\n"
    <> indent <> [i|      let nt_#{u nt}_m = #{fst nt}(input, begin + left, begin + right#{argList es});\n|]
-   <> indent <> [i|      let (mut nt_#{u nt}_ipg_start, mut nt_#{u nt}_ipg_end, nt_#{u nt}) = match nt_#{u nt}_m {\n|]
+   <> indent <> [i|      let (nt_#{u nt}_ipg_start_, nt_#{u nt}_ipg_end_, nt_#{u nt}) = match nt_#{u nt}_m {\n|]
    <> indent <> [i|        None => { break; }\n|]
    <> indent <> [i|        Some(p) => p,\n|]
    <> indent <> [i|      };\n|]
+   <> indent <> [i|      nt_#{u nt}_ipg_start = nt_#{u nt}_ipg_start_;\n|]
+   <> indent <> [i|      nt_#{u nt}_ipg_end = nt_#{u nt}_ipg_end_;\n|]
    <> indent <> [i|      if nt_#{u nt}_ipg_end == 0 { panic!("repeat of non-consuming rule: #{fst nt}"); }\n|]
    <> indent <> [i|      self_ipg_start = self_ipg_start.min(left + nt_#{u nt}_ipg_start);\n|]
    <> indent <> [i|      self_ipg_end = self_ipg_end.max(left + nt_#{u nt}_ipg_end);\n|]
@@ -315,17 +321,21 @@ termToRust indent c env z@(Repeat nt args l r x l0 r0) -- TODO: Need to expand t
         lExp = exprToRust' c env 14 l; rExp = exprToRust' c env 14 r
         l0Exp = exprToRust' c env 14 l0; r0Exp = exprToRust' c env 14 r0
         xAttr = refToRust c env (Attr nt x)
-termToRust indent c env z@(RepeatUntil nt1 args1 l r x l0 r0 nt2 args2) -- TODO: Need to expand the scope of nt_#{u nt1}*/nt_#{u nt2}*
+termToRust indent c env z@(RepeatUntil nt1 args1 l r x l0 r0 nt2 args2)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> indent <> [i|left = #{l0Exp} as usize;\n|]
    <> indent <> [i|right = #{r0Exp} as usize;\n|]
    <> indent <>   "let mut self_values = Vec::new();\n"
+   <> indent <> [i|let mut nt_#{u nt2}_ipg_start = right;\n|]
+   <> indent <> [i|let mut nt_#{u nt2}_ipg_end = left;\n|]
    <> indent <>   "loop {\n"
    <> indent <>   "  if right < left || right > EOI { break '_ipg_alt; }\n"
    <> indent <> [i|  let nt_#{u nt2}_m = #{fst nt2}(input, begin + left, begin + right#{argList es2});\n|]
    <> indent <> [i|  match nt_#{u nt2}_m {\n|]
    <> indent <> [i|    None => {}\n|]
-   <> indent <> [i|    Some((mut nt_#{u nt2}_ipg_start, mut nt_#{u nt2}_ipg_end, nt_#{u nt2})) => {\n|]
+   <> indent <> [i|    Some((nt_#{u nt2}_ipg_start_, nt_#{u nt2}_ipg_end_, nt_#{u nt2})) => {\n|]
+   <> indent <> [i|      nt_#{u nt2}_ipg_start = nt_#{u nt2}_ipg_start_;\n|]
+   <> indent <> [i|      nt_#{u nt2}_ipg_end = nt_#{u nt2}_ipg_end_;\n|]
    <> indent <> [i|      if nt_#{u nt2}_ipg_end != 0 {\n|]
    <> indent <> [i|        self_ipg_start = self_ipg_start.min(left + nt_#{u nt2}_ipg_start);\n|]
    <> indent <> [i|        self_ipg_end = self_ipg_end.max(left + nt_#{u nt2}_ipg_end);\n|]

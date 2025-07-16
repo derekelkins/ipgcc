@@ -1288,6 +1288,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
         left = nt_Str_0._ipg_end;
         right = EOI;
       }
+    } else {
+      nt_Str_0 = { _ipg_end: left, _ipg_start: right };
     }
 
     // { section = values }
@@ -1585,6 +1587,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
         left = nt_NoteSecEntry_0._ipg_end;
         right = EOI;
       }
+    } else {
+      nt_NoteSecEntry_0 = { _ipg_end: left, _ipg_start: right };
     }
 
     // { section = values }

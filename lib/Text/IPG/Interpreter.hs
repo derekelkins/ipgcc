@@ -8,6 +8,7 @@ module Text.IPG.Interpreter (
 import Control.Applicative ( asum ) -- base
 import Data.Bits ( complement, shift, xor, (.&.), (.|.) ) -- base
 import qualified Data.ByteString as BS -- bytestring
+import qualified Data.ByteString.Char8 as CBS -- bytestring
 import qualified Data.ByteString.Builder as Builder -- bytestring
 import Data.Int ( Int64 ) -- base
 import Data.List ( (!?), intersperse ) -- base
@@ -134,6 +135,8 @@ interpAlt ctxt (Alternative terms) = \env ps buf -> go env ps buf (BS.length buf
         go env ps buf minStart maxEnd prev (f:fs) =
             case f prev env ps buf of
                 Nothing -> Nothing
+                Just (env', _, 0) ->
+                    go env' ps buf minStart maxEnd prev fs
                 Just (env', start, end) ->
                     go env' ps buf (min start minStart) (max end maxEnd) end fs
 
@@ -260,6 +263,8 @@ interpTerm ctxt = go
                             Just ((ntbs, Map.insert "values" (SEQUENCE (reverse acc)) bs),
                                   minStart,
                                   maxEnd)
+                        Just (_, _, 0) ->
+                            error ("non-consuming repeat of " <> CBS.unpack (fst nt))
                         Just (env'@(ntbs', _), start', end') ->
                             loop (access ntbs' nt x:acc)
                                  (min start' minStart)
@@ -272,6 +277,8 @@ interpTerm ctxt = go
                 body = interpNonTerminal ctxt nt es l r
         go (RepeatUntil nt1 es1 l r x l0 r0 nt2 es2) = \start env ps buf ->
             case condition0 start env ps buf of
+                Just ((ntbs', bs'), _, 0) ->
+                    Just ((ntbs', Map.insert "values" (SEQUENCE []) bs'), BS.length buf, 0)
                 Just ((ntbs', bs'), start', end') ->
                     Just ((ntbs', Map.insert "values" (SEQUENCE []) bs'), start', end')
                 Nothing ->
@@ -281,6 +288,10 @@ interpTerm ctxt = go
                                 loop [access ntbs' nt1 x] start' end' end' env' ps buf
           where loop acc minStart maxEnd prev env ps buf =
                     case condition prev env ps buf of
+                        Just ((ntbs', bs'), _, 0) ->
+                            Just ((ntbs', Map.insert "values" (SEQUENCE (reverse acc)) bs'),
+                                  minStart,
+                                  maxEnd)
                         Just ((ntbs', bs'), start', end') ->
                             Just ((ntbs', Map.insert "values" (SEQUENCE (reverse acc)) bs'),
                                   min start' minStart,
@@ -288,6 +299,8 @@ interpTerm ctxt = go
                         Nothing ->
                             case body prev env ps buf of
                                 Nothing -> Nothing
+                                Just (_, _, 0) ->
+                                    error ("non-consuming repeat-until of " <> CBS.unpack (fst nt1))
                                 Just (env'@(ntbs', _), start', end') ->
                                     loop (access ntbs' nt1 x:acc)
                                          (min start' minStart)

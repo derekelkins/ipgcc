@@ -308,12 +308,16 @@ fn QOIChunks(input: &[u8], begin: usize, end: usize, a_state: &mut State) -> Opt
     left = 0 as usize;
     right = EOI as usize;
     let mut self_values = Vec::new();
+    let mut nt_EndMarker_0_ipg_start = right;
+    let mut nt_EndMarker_0_ipg_end = left;
     loop {
       if right < left || right > EOI { break '_ipg_alt; }
       let nt_EndMarker_0_m = EndMarker(input, begin + left, begin + right);
       match nt_EndMarker_0_m {
         None => {}
-        Some((mut nt_EndMarker_0_ipg_start, mut nt_EndMarker_0_ipg_end, nt_EndMarker_0)) => {
+        Some((nt_EndMarker_0_ipg_start_, nt_EndMarker_0_ipg_end_, nt_EndMarker_0)) => {
+          nt_EndMarker_0_ipg_start = nt_EndMarker_0_ipg_start_;
+          nt_EndMarker_0_ipg_end = nt_EndMarker_0_ipg_end_;
           if nt_EndMarker_0_ipg_end != 0 {
             self_ipg_start = self_ipg_start.min(left + nt_EndMarker_0_ipg_start);
             self_ipg_end = self_ipg_end.max(left + nt_EndMarker_0_ipg_end);

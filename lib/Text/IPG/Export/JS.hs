@@ -268,6 +268,8 @@ termToJS indent c env z@(Repeat nt args l r x l0 r0)
    <> indent <> [i|    left = #{lExp};\n|]
    <> indent <> [i|    right = #{rExp};\n|]
    <> indent <>   "  }\n"
+   <> indent <>   "} else {\n"
+   <> indent <> [i|  nt_#{u nt} = { _ipg_end: left, _ipg_start: right };\n|] -- Not backwards
    <> indent <>   "}\n\n"
   where es = map (exprToJS c env) args
         lExp = exprToJS c env l; rExp = exprToJS c env r

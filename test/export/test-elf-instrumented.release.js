@@ -1093,6 +1093,8 @@ function StrSec(input, begin = 0, end = input.length) {
         left = nt_Str_0._ipg_end;
         right = EOI;
       }
+    } else {
+      nt_Str_0 = { _ipg_end: left, _ipg_start: right };
     }
 
     // { section = values }
@@ -1337,6 +1339,8 @@ function NoteSec(input, begin = 0, end = input.length) {
         left = nt_NoteSecEntry_0._ipg_end;
         right = EOI;
       }
+    } else {
+      nt_NoteSecEntry_0 = { _ipg_end: left, _ipg_start: right };
     }
 
     // { section = values }

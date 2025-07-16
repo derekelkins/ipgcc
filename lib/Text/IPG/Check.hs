@@ -29,13 +29,14 @@ u (nt, n) = [i|#{nt}@#{show n}|]
 --   - _ipg_startsWith is not used as a rule name (maybe check this in Export.JS)
 --   - START, END, this, these should not occur in the LHS of assignments
 --      (TODO: Be more discerning about `these`.)
+--   - TODO: In repeat A.x; or repeat A.x until B; *no* attributes are guaranteed on A (other than START / END)
 --   - Rules invoked with the proper arities
 --   - No two rules have the same head non-terminal.
 --   - consts don't use EOI
 --   - consts don't refer to rules
---   - Rule type is a row type -- TODO
---   - Function calls match arity of function declarations. -- TODO
---   - All type variables in a parameterized typedef are bound by the typedef. -- TODO
+--   - TODO: Rule type is a row type
+--   - TODO: Function calls match arity of function declarations.
+--   - TODO: All type variables in a parameterized typedef are bound by the typedef.
 --   - TODO: Various sanity checks on types
 validate :: Set.Set T -> Grammar' x -> Maybe [T]
 validate externalRules (Grammar decls) =

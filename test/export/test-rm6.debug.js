@@ -287,6 +287,8 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
         left = nt_FullBlock_0._ipg_end;
         right = EOI;
       }
+    } else {
+      nt_FullBlock_0 = { _ipg_end: left, _ipg_start: right };
     }
 
   _ipg_failTreeStack.pop();

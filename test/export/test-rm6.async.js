@@ -252,6 +252,8 @@ async function Blocks(input, begin = 0, end = input.length) {
         left = nt_FullBlock_0._ipg_end;
         right = EOI;
       }
+    } else {
+      nt_FullBlock_0 = { _ipg_end: left, _ipg_start: right };
     }
 
     return self;
