@@ -8,71 +8,111 @@
 
 type AString = String;
 
-fn decodeAscii(bytes: Vec<u8>) -> String { String::from_utf8(bytes).unwrap() }
-fn decodeAscii2(bytes: Vec<u8>) -> String { String::from_utf8(bytes).unwrap() }
+fn decodeAscii(bytes: Vec<u8>) -> String {
+    if bytes.len() == 1 {
+        match bytes[0] {
+            0 => return ".".to_string(),
+            1 => return "..".to_string(),
+            _ => {}
+        }
+    }
+    String::from_utf8(bytes).unwrap().trim_end().to_string()
+}
+fn decodeUtf16(bytes: Vec<u8>) -> String {
+    if bytes.len() == 1 {
+        match bytes[0] {
+            0 => return ".".to_string(),
+            1 => return "..".to_string(),
+            _ => {}
+        }
+    }
+    let words: Vec<u16> = bytes
+        .as_slice()
+        .as_chunks::<2>().0
+        .into_iter()
+        .map(|&[hi, lo]| ((hi as u16) << 8) | (lo as u16))
+        .collect();
+    String::from_utf16(&words).unwrap().trim_end().to_string()
+}
+fn decodeAscii2(bytes: Vec<u8>) -> String { decodeAscii(bytes) }
 fn length<a>(xs: &[a]) -> usize { xs.len() }
-fn asHex(bs: Vec<u8>) -> String { format!("{:02X?}", bs) }
+fn asHex(bs: Vec<u8>) -> String {
+    bs.into_iter().map(|b| format!("{:02X?}", b)).collect::<String>()
+}
 
-// TODO: The variants should really be records rather than tuples, but I don't feel like
-// making the adapter functions.
+#[derive(Clone, Debug)]
+struct PrimaryVolumeDescriptor {
+    systemIdentifier: String,
+    volumeIdentifier: String,
+    volumeSpaceSize:  i64,
+    volumeSetSize:  i64,
+    volumeSequenceNumber:  i64,
+    logicalBlockSize:  i64,
+    pathTableSize:  i64,
+    locationOfTypeLPathTable:  i64,
+    locationOfOptionalTypeLPathTable:  i64,
+    locationOfTypeMPathTable:  i64,
+    locationOfOptionalTypeMPathTable:  i64,
+    rootDirectoryRecord: DirectoryRecord,
+    volumeSetIdentifier: String,
+    publisherIdentifier: String,
+    dataPreparerIdentifier: String,
+    applicationIdentifier: String,
+    copyrightFileIdentifier: String,
+    abstractFileIdentifier: String,
+    bibliographicFileIdentifier: String,
+    volumeCreationDateAndTime: DateAndTime,
+    volumeModificationDateAndTime: DateAndTime,
+    volumeExpirationDateAndTime: DateAndTime,
+    volumeEffectiveDateAndTime: DateAndTime,
+    applicationUse: String
+}
+
 #[derive(Clone, Debug)]
 enum TaggedVolumeDescriptor {
-    Primary(
-        /* systemIdentifier: */ String,
-        /* volumeIdentifier: */ String,
-        /* volumeSpaceSize: */  i64,
-        /* volumeSetSize: */  i64,
-        /* volumeSequenceNumber: */  i64,
-        /* logicalBlockSize: */  i64,
-        /* pathTableSize: */  i64,
-        /* locationOfTypeLPathTable: */  i64,
-        /* locationOfOptionalTypeLPathTable: */  i64,
-        /* locationOfTypeMPathTable: */  i64,
-        /* locationOfOptionalTypeMPathTable: */  i64,
-        /* rootDirectoryRecord: */ DirectoryRecord,
-        /* volumeSetIdentifier: */ String,
-        /* publisherIdentifier: */ String,
-        /* dataPreparerIdentifier: */ String,
-        /* applicationIdentifier: */ String,
-        /* copyrightFileIdentifier: */ String,
-        /* abstractFileIdentifier: */ String,
-        /* bibliographicFileIdentifier: */ String,
-        /* volumeCreationDateAndTime: */ DateAndTime,
-        /* volumeModificationDateAndTime: */ DateAndTime,
-        /* volumeExpirationDateAndTime: */ DateAndTime,
-        /* volumeEffectiveDateAndTime: */ DateAndTime,
-        /* applicationUse: */ String),
-    Supplementary(
-        /* volumeDescriptorVersion: */ u8,
-        /* volumeFlags: */ u8,
-        /* systemIdentifier: */ String,
-        /* volumeIdentifier: */ String,
-        /* volumeSpaceSize: */ i64,
-        /* escapeSequences: */ String,
-        /* volumeSetSize: */ i64,
-        /* volumeSequenceNumber: */ i64,
-        /* logicalBlockSize: */ i64,
-        /* pathTableSize: */ i64,
-        /* locationOfTypeLPathTable: */ i64,
-        /* locationOfOptionalTypeLPathTable: */ i64,
-        /* locationOfTypeMPathTable: */ i64,
-        /* locationOfOptionalTypeMPathTable: */ i64,
-        /* rootDirectoryRecord: */ DirectoryRecord,
-        /* volumeSetIdentifier: */ String,
-        /* publisherIdentifier: */ String,
-        /* dataPreparerIdentifier: */ String,
-        /* applicationIdentifier: */ String,
-        /* copyrightFileIdentifier: */ String,
-        /* abstractFileIdentifier: */ String,
-        /* bibliographicFileIdentifier: */ String,
-        /* volumeCreationDateAndTime: */ DateAndTime,
-        /* volumeModificationDateAndTime: */ DateAndTime,
-        /* volumeExpirationDateAndTime: */ DateAndTime,
-        /* volumeEffectiveDateAndTime: */ DateAndTime,
-        /* fileStructureVersion: */ u8,
-        /* applicationUse: */ String),
-    VolumePartition(String, String, i64, i64, String),
-    Boot(String, String, String),
+    Primary(PrimaryVolumeDescriptor),
+    Supplementary {
+        volumeDescriptorVersion: u8,
+        volumeFlags: u8,
+        systemIdentifier: String,
+        volumeIdentifier: String,
+        volumeSpaceSize: i64,
+        escapeSequences: String,
+        volumeSetSize: i64,
+        volumeSequenceNumber: i64,
+        logicalBlockSize: i64,
+        pathTableSize: i64,
+        locationOfTypeLPathTable: i64,
+        locationOfOptionalTypeLPathTable: i64,
+        locationOfTypeMPathTable: i64,
+        locationOfOptionalTypeMPathTable: i64,
+        rootDirectoryRecord: DirectoryRecord,
+        volumeSetIdentifier: String,
+        publisherIdentifier: String,
+        dataPreparerIdentifier: String,
+        applicationIdentifier: String,
+        copyrightFileIdentifier: String,
+        abstractFileIdentifier: String,
+        bibliographicFileIdentifier: String,
+        volumeCreationDateAndTime: DateAndTime,
+        volumeModificationDateAndTime: DateAndTime,
+        volumeExpirationDateAndTime: DateAndTime,
+        volumeEffectiveDateAndTime: DateAndTime,
+        fileStructureVersion: u8,
+        applicationUse: String
+    },
+    VolumePartition {
+        systemIdentifier: String,
+        volumePartitionIdentifier: String,
+        volumePartitionLocation: i64,
+        volumePartitionSize: i64,
+        systemUse: String
+    },
+    Boot {
+        bootSystemIdentifier: String,
+        bootIdentifier: String,
+        systemUse: String
+    },
     Terminator(),
     Unknown(Vec<u8>),
 }
@@ -89,158 +129,181 @@ fn projectRoot(drs: Vec<DirectoriesRecursive>) -> Vec<DirectoryTree> {
     drs.into_iter().map(|dr| dr.root).collect()
 }
 
-fn getPrimaryDescriptor(descriptors: &[TaggedVolumeDescriptor]) -> TaggedVolumeDescriptor {
+fn getPrimaryDescriptor(descriptors: &[TaggedVolumeDescriptor]) -> PrimaryVolumeDescriptor {
     for descriptor in descriptors.iter() {
         match descriptor {
-            pvd @ Primary(_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _)
-            => {
-                return pvd.clone();
-            }
+            Primary(pvd) => { return pvd.clone(); }
             _ => {}
         }
     }
     panic!("Couldn't find a primary descriptor")
 }
 
-fn logicalBlockSize(descriptor: &TaggedVolumeDescriptor) -> i64 {
-    match descriptor {
-        Primary(
-            _,
-            _,
-            _,
-            _,
-            _,
-            logicalBlockSizeField,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-        ) => *logicalBlockSizeField,
-        _ => { panic!("Expected Primary") }
-    }
+fn logicalBlockSize(descriptor: &PrimaryVolumeDescriptor) -> i64 { descriptor.logicalBlockSize }
+fn rootDirectoryRecord(descriptor: &PrimaryVolumeDescriptor) -> DirectoryRecord {
+    descriptor.rootDirectoryRecord.clone()
 }
-fn rootDirectoryRecord(descriptor: &TaggedVolumeDescriptor) -> DirectoryRecord {
-    match descriptor {
-        Primary(
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            rootDirectoryRecordField,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-        ) => rootDirectoryRecordField.clone(),
-        _ => { panic!("Expected Primary") }
-    }
+fn locationOfTypeLPathTable(descriptor: &PrimaryVolumeDescriptor) -> i64 {
+    descriptor.locationOfTypeLPathTable
 }
-fn locationOfTypeLPathTable(descriptor: &TaggedVolumeDescriptor) -> i64 {
-    match descriptor {
-        Primary(
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            locationOfTypeLPathTableField,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-        ) => *locationOfTypeLPathTableField,
-        _ => { panic!("Expected Primary") }
-    }
-}
-fn pathTableSize(descriptor: &TaggedVolumeDescriptor) -> i64 {
-    match descriptor {
-        Primary(
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            pathTableSizeField,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-        ) => *pathTableSizeField,
-        _ => { panic!("Expected Primary") }
-    }
-}
+fn pathTableSize(descriptor: &PrimaryVolumeDescriptor) -> i64 { descriptor.pathTableSize }
 fn isDirectory(record: &DirectoryRecord) -> bool { record.isDirectory }
 fn locationOfExtent(record: &DirectoryRecord) -> i64 { record.locationOfExtent }
 fn dataLength(record: &DirectoryRecord) -> i64 { record.dataLength }
 fn locationOfExtentPT(record: &PathTableRecord) -> i64 { record.locationOfExtent }
 fn clone<a: Clone>(x: &a) -> a { x.clone() }
 
+fn makePrimaryVolumeDescriptor(
+    systemIdentifier: String,
+    volumeIdentifier: String,
+    volumeSpaceSize:  i64,
+    volumeSetSize:  i64,
+    volumeSequenceNumber:  i64,
+    logicalBlockSize:  i64,
+    pathTableSize:  i64,
+    locationOfTypeLPathTable:  i64,
+    locationOfOptionalTypeLPathTable:  i64,
+    locationOfTypeMPathTable:  i64,
+    locationOfOptionalTypeMPathTable:  i64,
+    rootDirectoryRecord: DirectoryRecord,
+    volumeSetIdentifier: String,
+    publisherIdentifier: String,
+    dataPreparerIdentifier: String,
+    applicationIdentifier: String,
+    copyrightFileIdentifier: String,
+    abstractFileIdentifier: String,
+    bibliographicFileIdentifier: String,
+    volumeCreationDateAndTime: DateAndTime,
+    volumeModificationDateAndTime: DateAndTime,
+    volumeExpirationDateAndTime: DateAndTime,
+    volumeEffectiveDateAndTime: DateAndTime,
+    applicationUse: String
+) -> TaggedVolumeDescriptor {
+    Primary(PrimaryVolumeDescriptor {
+        systemIdentifier,
+        volumeIdentifier,
+        volumeSpaceSize,
+        volumeSetSize,
+        volumeSequenceNumber,
+        logicalBlockSize,
+        pathTableSize,
+        locationOfTypeLPathTable,
+        locationOfOptionalTypeLPathTable,
+        locationOfTypeMPathTable,
+        locationOfOptionalTypeMPathTable,
+        rootDirectoryRecord,
+        volumeSetIdentifier,
+        publisherIdentifier,
+        dataPreparerIdentifier,
+        applicationIdentifier,
+        copyrightFileIdentifier,
+        abstractFileIdentifier,
+        bibliographicFileIdentifier,
+        volumeCreationDateAndTime,
+        volumeModificationDateAndTime,
+        volumeExpirationDateAndTime,
+        volumeEffectiveDateAndTime,
+        applicationUse,
+    })
+}
+
+fn makeSupplementary(
+    volumeDescriptorVersion: u8,
+    volumeFlags: u8,
+    systemIdentifier: String,
+    volumeIdentifier: String,
+    volumeSpaceSize: i64,
+    escapeSequences: String,
+    volumeSetSize: i64,
+    volumeSequenceNumber: i64,
+    logicalBlockSize: i64,
+    pathTableSize: i64,
+    locationOfTypeLPathTable: i64,
+    locationOfOptionalTypeLPathTable: i64,
+    locationOfTypeMPathTable: i64,
+    locationOfOptionalTypeMPathTable: i64,
+    rootDirectoryRecord: DirectoryRecord,
+    volumeSetIdentifier: String,
+    publisherIdentifier: String,
+    dataPreparerIdentifier: String,
+    applicationIdentifier: String,
+    copyrightFileIdentifier: String,
+    abstractFileIdentifier: String,
+    bibliographicFileIdentifier: String,
+    volumeCreationDateAndTime: DateAndTime,
+    volumeModificationDateAndTime: DateAndTime,
+    volumeExpirationDateAndTime: DateAndTime,
+    volumeEffectiveDateAndTime: DateAndTime,
+    fileStructureVersion: u8,
+    applicationUse: String
+) -> TaggedVolumeDescriptor {
+    Supplementary {
+        volumeDescriptorVersion,
+        volumeFlags,
+        systemIdentifier,
+        volumeIdentifier,
+        volumeSpaceSize,
+        escapeSequences,
+        volumeSetSize,
+        volumeSequenceNumber,
+        logicalBlockSize,
+        pathTableSize,
+        locationOfTypeLPathTable,
+        locationOfOptionalTypeLPathTable,
+        locationOfTypeMPathTable,
+        locationOfOptionalTypeMPathTable,
+        rootDirectoryRecord,
+        volumeSetIdentifier,
+        publisherIdentifier,
+        dataPreparerIdentifier,
+        applicationIdentifier,
+        copyrightFileIdentifier,
+        abstractFileIdentifier,
+        bibliographicFileIdentifier,
+        volumeCreationDateAndTime,
+        volumeModificationDateAndTime,
+        volumeExpirationDateAndTime,
+        volumeEffectiveDateAndTime,
+        fileStructureVersion,
+        applicationUse,
+    }
+}
+fn makeVolumePartition(
+    systemIdentifier: String,
+    volumePartitionIdentifier: String,
+    volumePartitionLocation: i64,
+    volumePartitionSize: i64,
+    systemUse: String
+) -> TaggedVolumeDescriptor {
+    VolumePartition {
+        systemIdentifier,
+        volumePartitionIdentifier,
+        volumePartitionLocation,
+        volumePartitionSize,
+        systemUse,
+    }
+}
+fn makeBoot(
+    bootSystemIdentifier: String,
+    bootIdentifier: String,
+    systemUse: String
+) -> TaggedVolumeDescriptor {
+    Boot {
+        bootSystemIdentifier,
+        bootIdentifier,
+        systemUse,
+    }
+}
+
 %preamble_end
 
-%declare_type AString TaggedVolumeDescriptor DirectoryTree %end
+%declare_type AString PrimaryVolumeDescriptor TaggedVolumeDescriptor DirectoryTree %end
 
 function DirectoryBranch(
     offset: Int, record: DirectoryRecord, children: [DirectoryTree]
 ): DirectoryTree;
 function FileLeaf(offset: Int, record: DirectoryRecord): DirectoryTree;
-function Primary(
+function makePrimaryVolumeDescriptor(
     systemIdentifier: AString,
     volumeIdentifier: AString,
     volumeSpaceSize:  Int,
@@ -266,7 +329,7 @@ function Primary(
     volumeEffectiveDateAndTime: DateAndTime,
     applicationUse: AString
 ): TaggedVolumeDescriptor;
-function Supplementary(
+function makeSupplementary(
     volumeDescriptorVersion: U8,
     volumeFlags: U8,
     systemIdentifier: AString,
@@ -296,13 +359,13 @@ function Supplementary(
     fileStructureVersion: U8,
     applicationUse: AString
 ): TaggedVolumeDescriptor;
-function VolumePartition(
+function makeVolumePartition(
     systemIdentifier: AString,
     volumePartitionIdentifier: AString,
     volumePartitionLocation: Int,
     volumePartitionSize: Int,
     systemUse: AString): TaggedVolumeDescriptor;
-function Boot(
+function makeBoot(
     bootSystemIdentifier: AString,
     bootIdentifier: AString,
     systemUse: AString
@@ -311,18 +374,19 @@ function Terminator(): TaggedVolumeDescriptor;
 function Unknown(bytes: String): TaggedVolumeDescriptor;
 function decodeAscii(bytes: String): AString;
 function decodeAscii2(bytes: [U8]): AString;
+function decodeUtf16(bytes: String): AString;
 function length(xs: ['a]): Int;
 function asHex(bs: String): AString;
 function projectRoot(drs: [DirectoriesRecursive]): [DirectoryTree];
-function logicalBlockSize(descriptor: TaggedVolumeDescriptor): Int;
-function rootDirectoryRecord(descriptor: TaggedVolumeDescriptor): DirectoryRecord;
-function locationOfTypeLPathTable(descriptor: TaggedVolumeDescriptor): Int;
-function pathTableSize(descriptor: TaggedVolumeDescriptor): Int;
+function logicalBlockSize(descriptor: PrimaryVolumeDescriptor): Int;
+function rootDirectoryRecord(descriptor: PrimaryVolumeDescriptor): DirectoryRecord;
+function locationOfTypeLPathTable(descriptor: PrimaryVolumeDescriptor): Int;
+function pathTableSize(descriptor: PrimaryVolumeDescriptor): Int;
 function isDirectory(record: DirectoryRecord): Bool;
 function locationOfExtent(record: DirectoryRecord): Int;
 function dataLength(record: DirectoryRecord): Int;
 function locationOfExtentPT(record: PathTableRecord): Int;
-function getPrimaryDescriptor(descriptors: [TaggedVolumeDescriptor]): TaggedVolumeDescriptor;
+function getPrimaryDescriptor(descriptors: [TaggedVolumeDescriptor]): PrimaryVolumeDescriptor;
 function clone(x: 'a): 'a;
 
 function ref(x: 'a): 'a;
@@ -357,11 +421,12 @@ ISO9660
        { pathTableLocation = locationOfTypeLPathTable(ref(primaryDescriptor)) }
        { pathTableSize = pathTableSize(ref(primaryDescriptor)) }
        { pathTableOffset = logicalBlockSize * pathTableLocation }
-       LPathTableRecords[pathTableOffset, pathTableOffset + pathTableSize]
+       LPathTableRecords(false)[pathTableOffset, pathTableOffset + pathTableSize]
        { paths = LPathTableRecords.values }
        for i = 0 to length(ref(paths)) do
-         DirectoryRecords[logicalBlockSize*locationOfExtentPT(ref(paths[i])),
-                          logicalBlockSize*locationOfExtentPT(ref(paths[i])) + LOGICAL_SECTOR_SIZE]
+         DirectoryRecords(false)
+            [logicalBlockSize*locationOfExtentPT(ref(paths[i])),
+             logicalBlockSize*locationOfExtentPT(ref(paths[i])) + LOGICAL_SECTOR_SIZE]
        { directories = DirectoryRecords.these };
 
 // Volume descriptors are stored at the start of each logical sector.
@@ -402,7 +467,7 @@ PrimaryVolumeDescriptor
        LE_U32[4] { locationOfOptionalTypeLPathTable = LE_U32.value } // These are Logical Block Numbers.
        BE_U32[4] { locationOfTypeMPathTable = BE_U32.value } // Path table using BE numbers
        BE_U32[4] { locationOfOptionalTypeMPathTable = BE_U32.value }
-       DirectoryRecord[34] { rootDirectoryRecord = DirectoryRecord.this }
+       DirectoryRecord(false)[34] { rootDirectoryRecord = DirectoryRecord.this }
        DChars[190, 318] { volumeSetIdentifier = DChars.value }
        AChars[128] { publisherIdentifier = AChars.value }
        AChars[128] { dataPreparerIdentifier = AChars.value }
@@ -418,7 +483,7 @@ PrimaryVolumeDescriptor
        "\x00" // reserved
        HexBytes[512] { applicationUse = HexBytes.value }
        NULBytes // reserved
-       { descriptor = Primary(
+       { descriptor = makePrimaryVolumeDescriptor(
             systemIdentifier,
             volumeIdentifier,
             volumeSpaceSize,
@@ -463,8 +528,8 @@ SupplementaryOrEnhancedVolumeDescriptor
        // { descriptorType = volumeDescriptorVersion == 1 ? "Supplementary Volume Descriptor"
        //                                                 : "Enhanced Volume Descriptor" }
        { volumeFlags = . } // See 9.5.4
-       AsciiString[32] { systemIdentifier = AsciiString.value } // a1-characters for Supplementary
-       AsciiString[32] { volumeIdentifier = AsciiString.value } // d1-characters for Supplementary
+       A1Chars[32] { systemIdentifier = A1Chars.value } // a1-characters for Supplementary
+       D1Chars[32] { volumeIdentifier = D1Chars.value } // d1-characters for Supplementary
        NULBytes[8] // unused
        BB_U32 { volumeSpaceSize = BB_U32.value }
        HexBytes[32] { escapeSequences = HexBytes.value } // See Annex C.3.
@@ -476,14 +541,14 @@ SupplementaryOrEnhancedVolumeDescriptor
        LE_U32[4] { locationOfOptionalTypeLPathTable = LE_U32.value }
        BE_U32[4] { locationOfTypeMPathTable = BE_U32.value } // Path table using BE numbers
        BE_U32[4] { locationOfOptionalTypeMPathTable = BE_U32.value }
-       DirectoryRecord[34] { rootDirectoryRecord = DirectoryRecord.this }
-       AsciiString[190, 318] { volumeSetIdentifier = AsciiString.value } // d1-characters for Supplementary
-       AsciiString[128] { publisherIdentifier = AsciiString.value } // a1-characters for Supplementary
-       AsciiString[128] { dataPreparerIdentifier = AsciiString.value } // a1-characters for Supplementary
-       AsciiString[128] { applicationIdentifier = AsciiString.value } // a1-characters for Supplementary
-       AsciiString[37] { copyrightFileIdentifier = AsciiString.value } // d1-characters, SEPARATOR 1, SEPARATOR 2 for Supplementary
-       AsciiString[37] { abstractFileIdentifier = AsciiString.value } // d1-characters, SEPARATOR 1, SEPARATOR 2 for Supplementary
-       AsciiString[37] { bibliographicFileIdentifier = AsciiString.value } // d1-characters, SEPARATOR 1, SEPARATOR 2 for Supplementary
+       DirectoryRecord(true)[34] { rootDirectoryRecord = DirectoryRecord.this }
+       D1Chars[190, 318] { volumeSetIdentifier = D1Chars.value } // d1-characters for Supplementary
+       A1Chars[128] { publisherIdentifier = A1Chars.value } // a1-characters for Supplementary
+       A1Chars[128] { dataPreparerIdentifier = A1Chars.value } // a1-characters for Supplementary
+       A1Chars[128] { applicationIdentifier = A1Chars.value } // a1-characters for Supplementary
+       D1Chars[37] { copyrightFileIdentifier = D1Chars.value } // d1-characters, SEPARATOR 1, SEPARATOR 2 for Supplementary
+       D1Chars[37] { abstractFileIdentifier = D1Chars.value } // d1-characters, SEPARATOR 1, SEPARATOR 2 for Supplementary
+       D1Chars[37] { bibliographicFileIdentifier = D1Chars.value } // d1-characters, SEPARATOR 1, SEPARATOR 2 for Supplementary
        DateAndTime[17] { volumeCreationDateAndTime = DateAndTime.this }
        DateAndTime[17] { volumeModificationDateAndTime = DateAndTime.this }
        DateAndTime[17] { volumeExpirationDateAndTime = DateAndTime.this }
@@ -492,7 +557,7 @@ SupplementaryOrEnhancedVolumeDescriptor
        "\x00" // reserved
        HexBytes[512] { applicationUse = HexBytes.value }
        NULBytes // reserved
-       { descriptor = Supplementary(
+       { descriptor = makeSupplementary(
            volumeDescriptorVersion,
            volumeFlags,
            systemIdentifier,
@@ -531,7 +596,7 @@ VolumePartitionDescriptor
        BB_U32 { volumePartitionLocation = BB_U32.value } // Logical blocks
        BB_U32 { volumePartitionSize = BB_U32.value } // Number of Logical blocks
        HexBytes { systemUse = HexBytes.value }
-       { descriptor = VolumePartition(
+       { descriptor = makeVolumePartition(
             systemIdentifier,
             volumePartitionIdentifier,
             volumePartitionLocation,
@@ -545,7 +610,7 @@ BootRecord
        AChars[32] { bootSystemIdentifier = AChars.value }
        AChars[32] { bootIdentifier = AChars.value }
        HexBytes { systemUse = HexBytes.value }
-       { descriptor = Boot(bootSystemIdentifier, bootIdentifier, systemUse) };
+       { descriptor = makeBoot(bootSystemIdentifier, bootIdentifier, systemUse) };
 
 // 9.3
 rule VolumeDescriptorSetTerminator: VolumeDescriptor;
@@ -563,7 +628,7 @@ rule DirectoriesRecursive(logicalBlockSize: Int, node: DirectoryRecord): { root:
 DirectoriesRecursive(logicalBlockSize, node)
     -> ?[ isDirectory(ref(node)) ]
        { offset = logicalBlockSize * locationOfExtent(ref(node)) }
-       DirectoryRecords[offset, offset + dataLength(ref(node))]
+       DirectoryRecords(false)[offset, offset + dataLength(ref(node))]
        for i = 2 to length(ref(DirectoryRecords.values)) do // First two records are '.' and '..'.
          DirectoriesRecursive(logicalBlockSize, clone(ref(DirectoryRecords.values[i])))[0, EOI]
        { children = projectRoot(DirectoriesRecursive.these) }
@@ -571,7 +636,8 @@ DirectoriesRecursive(logicalBlockSize, node)
      / { offset = logicalBlockSize * locationOfExtent(ref(node)) }
        { root = FileLeaf(offset, node) };
 
-DirectoryRecords -> repeat DirectoryRecord.this;
+rule DirectoryRecords(enhanced: Bool);
+DirectoryRecords(enhanced) -> repeat DirectoryRecord(enhanced).this;
 
 typedef DirectoryRecord = {
     length: U8,
@@ -594,8 +660,8 @@ typedef DirectoryRecord = {
 };
 
 // 10.1
-rule DirectoryRecord: DirectoryRecord;
-DirectoryRecord
+rule DirectoryRecord(enhanced: Bool): DirectoryRecord;
+DirectoryRecord(enhanced)
     -> { length = . } ?[ length > 0 ]
        { extendedAttributeRecordLength = . }
        BB_U32 { locationOfExtent = BB_U32.value } // Logical Block number
@@ -616,7 +682,7 @@ DirectoryRecord
        // Presumably depending on what points to this directory record and whether this is a file
        // or directory as indicated by the fileFlags.
        // \x00 is '.' and \x01 is '..'
-       AsciiString[lengthOfFileIdentifier] { fileIdentifier = AsciiString.value }
+       DorD1Chars(enhanced)[lengthOfFileIdentifier] { fileIdentifier = DorD1Chars.value }
        EvenPadByte(lengthOfFileIdentifier)
        HexBytes[EvenPadByte.END, length] { systemUse = HexBytes.value };
 
@@ -642,34 +708,37 @@ typedef PathTableRecord = {
     directoryIdentifier: AString
 };
 
-LPathTableRecords -> repeat LPathTableRecord.this;
+rule LPathTableRecords(enhanced: Bool);
+LPathTableRecords(enhanced) -> repeat LPathTableRecord(enhanced).this;
 
 // 10.4
-rule LPathTableRecord: PathTableRecord;
-LPathTableRecord
+rule LPathTableRecord(enhanced: Bool): PathTableRecord;
+LPathTableRecord(enhanced)
     -> { lengthOfDirectoryIdentifier = . }
        { extendedAttributeRecordLength = . }
        LE_U32 { locationOfExtent = LE_U32.value } // Logical block number
        LE_U16 { parentDirectoryNumber = LE_U16.value }
-       AsciiString[lengthOfDirectoryIdentifier] // d-characters, or d1-characters
-       { directoryIdentifier = AsciiString.value }
+       DorD1Chars(enhanced)[lengthOfDirectoryIdentifier]
+       { directoryIdentifier = DorD1Chars.value }
        OddPadByte(lengthOfDirectoryIdentifier);
 
-MPathTableRecords -> repeat MPathTableRecord.this;
+rule MPathTableRecords(enhanced: Bool);
+MPathTableRecords(enhanced) -> repeat MPathTableRecord(enhanced).this;
 
 // 10.4
-rule MPathTableRecord: PathTableRecord;
-MPathTableRecord
+rule MPathTableRecord(enhanced: Bool): PathTableRecord;
+MPathTableRecord(enhanced)
     -> { lengthOfDirectoryIdentifier = . }
        { extendedAttributeRecordLength = . }
        BE_U32 { locationOfExtent = BE_U32.value } // Logical block number
        BE_U16 { parentDirectoryNumber = BE_U16.value }
-       AsciiString[lengthOfDirectoryIdentifier] // d-characters, or d1-characters
-       { directoryIdentifier = AsciiString.value }
+       DorD1Chars(enhanced)[lengthOfDirectoryIdentifier]
+       { directoryIdentifier = DorD1Chars.value }
        OddPadByte(lengthOfDirectoryIdentifier);
 
 // 10.5
-ExtendedAttributeRecord
+rule ExtendedAttributeRecord(enhanced: Bool);
+ExtendedAttributeRecord(enhanced)
     -> BB_U16 { ownerIdentification = BB_U16.value }
        BB_U16 { groupIdentification = BB_U16.value }
        BE_U16 { permissions = BE_U16.value } // 16-bit field See Table 13 in 10.5.4.
@@ -680,7 +749,7 @@ ExtendedAttributeRecord
        { recordFormat = . } // See 10.5.9
        { recordAttributes = . } // See 10.5.10
        BB_U16 { recordLength = BB_U16.value }
-       AsciiString[32] { systemIdentifier = AsciiString.value } // a-characters, or a1-characters
+       AorA1Chars(enhanced)[32] { systemIdentifier = AorA1Chars.value }
        HexBytes[64] { systemUse = HexBytes.value }
        "\x01" // { extendedAttributeRecordVersion = .[180] }
        { lengthOfEscapeSequences = . }
@@ -695,8 +764,19 @@ EvenPadByte(n) -> ?[ n % 2 == 0 ] "\x00" / ""; // 10.1.13
 rule OddPadByte(n: U8);
 OddPadByte(n) -> ?[ n % 2 == 1 ] "\x00" / ""; // 10.4.7
 
-rule AsciiString: { value: AString };
-AsciiString -> { bytes = * } { value = decodeAscii(bytes) };
+rule A1Chars: { value: AString };
+A1Chars -> { bytes = * } { value = decodeUtf16(bytes) };
+
+rule D1Chars: { value: AString };
+D1Chars -> { bytes = * } { value = decodeUtf16(bytes) };
+
+rule DorD1Chars(isEnhanced: Bool): { value: AString };
+DorD1Chars(isEnhanced)
+    -> { bytes = * } { value = isEnhanced ? decodeUtf16(bytes) : decodeAscii(bytes) };
+
+rule AorA1Chars(isEnhanced: Bool): { value: AString };
+AorA1Chars(isEnhanced)
+    -> { bytes = * } { value = isEnhanced ? decodeUtf16(bytes) : decodeAscii(bytes) };
 
 // See 8.4.1 and Annex A.
 // SEPARATOR 1 is 0x2E ('.'), SEPARATOR 2 (';') is 0x3B and FILLER is 0x20 (' ')

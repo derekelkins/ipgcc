@@ -8,71 +8,111 @@
 
 type AString = String;
 
-fn decodeAscii(bytes: Vec<u8>) -> String { String::from_utf8(bytes).unwrap() }
-fn decodeAscii2(bytes: Vec<u8>) -> String { String::from_utf8(bytes).unwrap() }
+fn decodeAscii(bytes: Vec<u8>) -> String {
+    if bytes.len() == 1 {
+        match bytes[0] {
+            0 => return ".".to_string(),
+            1 => return "..".to_string(),
+            _ => {}
+        }
+    }
+    String::from_utf8(bytes).unwrap().trim_end().to_string()
+}
+fn decodeUtf16(bytes: Vec<u8>) -> String {
+    if bytes.len() == 1 {
+        match bytes[0] {
+            0 => return ".".to_string(),
+            1 => return "..".to_string(),
+            _ => {}
+        }
+    }
+    let words: Vec<u16> = bytes
+        .as_slice()
+        .as_chunks::<2>().0
+        .into_iter()
+        .map(|&[hi, lo]| ((hi as u16) << 8) | (lo as u16))
+        .collect();
+    String::from_utf16(&words).unwrap().trim_end().to_string()
+}
+fn decodeAscii2(bytes: Vec<u8>) -> String { decodeAscii(bytes) }
 fn length<a>(xs: &[a]) -> usize { xs.len() }
-fn asHex(bs: Vec<u8>) -> String { format!("{:02X?}", bs) }
+fn asHex(bs: Vec<u8>) -> String {
+    bs.into_iter().map(|b| format!("{:02X?}", b)).collect::<String>()
+}
 
-// TODO: The variants should really be records rather than tuples, but I don't feel like
-// making the adapter functions.
+#[derive(Clone, Debug)]
+struct PrimaryVolumeDescriptor {
+    systemIdentifier: String,
+    volumeIdentifier: String,
+    volumeSpaceSize:  i64,
+    volumeSetSize:  i64,
+    volumeSequenceNumber:  i64,
+    logicalBlockSize:  i64,
+    pathTableSize:  i64,
+    locationOfTypeLPathTable:  i64,
+    locationOfOptionalTypeLPathTable:  i64,
+    locationOfTypeMPathTable:  i64,
+    locationOfOptionalTypeMPathTable:  i64,
+    rootDirectoryRecord: DirectoryRecord,
+    volumeSetIdentifier: String,
+    publisherIdentifier: String,
+    dataPreparerIdentifier: String,
+    applicationIdentifier: String,
+    copyrightFileIdentifier: String,
+    abstractFileIdentifier: String,
+    bibliographicFileIdentifier: String,
+    volumeCreationDateAndTime: DateAndTime,
+    volumeModificationDateAndTime: DateAndTime,
+    volumeExpirationDateAndTime: DateAndTime,
+    volumeEffectiveDateAndTime: DateAndTime,
+    applicationUse: String
+}
+
 #[derive(Clone, Debug)]
 enum TaggedVolumeDescriptor {
-    Primary(
-        /* systemIdentifier: */ String,
-        /* volumeIdentifier: */ String,
-        /* volumeSpaceSize: */  i64,
-        /* volumeSetSize: */  i64,
-        /* volumeSequenceNumber: */  i64,
-        /* logicalBlockSize: */  i64,
-        /* pathTableSize: */  i64,
-        /* locationOfTypeLPathTable: */  i64,
-        /* locationOfOptionalTypeLPathTable: */  i64,
-        /* locationOfTypeMPathTable: */  i64,
-        /* locationOfOptionalTypeMPathTable: */  i64,
-        /* rootDirectoryRecord: */ DirectoryRecord,
-        /* volumeSetIdentifier: */ String,
-        /* publisherIdentifier: */ String,
-        /* dataPreparerIdentifier: */ String,
-        /* applicationIdentifier: */ String,
-        /* copyrightFileIdentifier: */ String,
-        /* abstractFileIdentifier: */ String,
-        /* bibliographicFileIdentifier: */ String,
-        /* volumeCreationDateAndTime: */ DateAndTime,
-        /* volumeModificationDateAndTime: */ DateAndTime,
-        /* volumeExpirationDateAndTime: */ DateAndTime,
-        /* volumeEffectiveDateAndTime: */ DateAndTime,
-        /* applicationUse: */ String),
-    Supplementary(
-        /* volumeDescriptorVersion: */ u8,
-        /* volumeFlags: */ u8,
-        /* systemIdentifier: */ String,
-        /* volumeIdentifier: */ String,
-        /* volumeSpaceSize: */ i64,
-        /* escapeSequences: */ String,
-        /* volumeSetSize: */ i64,
-        /* volumeSequenceNumber: */ i64,
-        /* logicalBlockSize: */ i64,
-        /* pathTableSize: */ i64,
-        /* locationOfTypeLPathTable: */ i64,
-        /* locationOfOptionalTypeLPathTable: */ i64,
-        /* locationOfTypeMPathTable: */ i64,
-        /* locationOfOptionalTypeMPathTable: */ i64,
-        /* rootDirectoryRecord: */ DirectoryRecord,
-        /* volumeSetIdentifier: */ String,
-        /* publisherIdentifier: */ String,
-        /* dataPreparerIdentifier: */ String,
-        /* applicationIdentifier: */ String,
-        /* copyrightFileIdentifier: */ String,
-        /* abstractFileIdentifier: */ String,
-        /* bibliographicFileIdentifier: */ String,
-        /* volumeCreationDateAndTime: */ DateAndTime,
-        /* volumeModificationDateAndTime: */ DateAndTime,
-        /* volumeExpirationDateAndTime: */ DateAndTime,
-        /* volumeEffectiveDateAndTime: */ DateAndTime,
-        /* fileStructureVersion: */ u8,
-        /* applicationUse: */ String),
-    VolumePartition(String, String, i64, i64, String),
-    Boot(String, String, String),
+    Primary(PrimaryVolumeDescriptor),
+    Supplementary {
+        volumeDescriptorVersion: u8,
+        volumeFlags: u8,
+        systemIdentifier: String,
+        volumeIdentifier: String,
+        volumeSpaceSize: i64,
+        escapeSequences: String,
+        volumeSetSize: i64,
+        volumeSequenceNumber: i64,
+        logicalBlockSize: i64,
+        pathTableSize: i64,
+        locationOfTypeLPathTable: i64,
+        locationOfOptionalTypeLPathTable: i64,
+        locationOfTypeMPathTable: i64,
+        locationOfOptionalTypeMPathTable: i64,
+        rootDirectoryRecord: DirectoryRecord,
+        volumeSetIdentifier: String,
+        publisherIdentifier: String,
+        dataPreparerIdentifier: String,
+        applicationIdentifier: String,
+        copyrightFileIdentifier: String,
+        abstractFileIdentifier: String,
+        bibliographicFileIdentifier: String,
+        volumeCreationDateAndTime: DateAndTime,
+        volumeModificationDateAndTime: DateAndTime,
+        volumeExpirationDateAndTime: DateAndTime,
+        volumeEffectiveDateAndTime: DateAndTime,
+        fileStructureVersion: u8,
+        applicationUse: String
+    },
+    VolumePartition {
+        systemIdentifier: String,
+        volumePartitionIdentifier: String,
+        volumePartitionLocation: i64,
+        volumePartitionSize: i64,
+        systemUse: String
+    },
+    Boot {
+        bootSystemIdentifier: String,
+        bootIdentifier: String,
+        systemUse: String
+    },
     Terminator(),
     Unknown(Vec<u8>),
 }
@@ -89,148 +129,171 @@ fn projectRoot(drs: Vec<DirectoriesRecursive>) -> Vec<DirectoryTree> {
     drs.into_iter().map(|dr| dr.root).collect()
 }
 
-fn getPrimaryDescriptor(descriptors: &[TaggedVolumeDescriptor]) -> TaggedVolumeDescriptor {
+fn getPrimaryDescriptor(descriptors: &[TaggedVolumeDescriptor]) -> PrimaryVolumeDescriptor {
     for descriptor in descriptors.iter() {
         match descriptor {
-            pvd @ Primary(_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _)
-            => {
-                return pvd.clone();
-            }
+            Primary(pvd) => { return pvd.clone(); }
             _ => {}
         }
     }
     panic!("Couldn't find a primary descriptor")
 }
 
-fn logicalBlockSize(descriptor: &TaggedVolumeDescriptor) -> i64 {
-    match descriptor {
-        Primary(
-            _,
-            _,
-            _,
-            _,
-            _,
-            logicalBlockSizeField,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-        ) => *logicalBlockSizeField,
-        _ => { panic!("Expected Primary") }
-    }
+fn logicalBlockSize(descriptor: &PrimaryVolumeDescriptor) -> i64 { descriptor.logicalBlockSize }
+fn rootDirectoryRecord(descriptor: &PrimaryVolumeDescriptor) -> DirectoryRecord {
+    descriptor.rootDirectoryRecord.clone()
 }
-fn rootDirectoryRecord(descriptor: &TaggedVolumeDescriptor) -> DirectoryRecord {
-    match descriptor {
-        Primary(
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            rootDirectoryRecordField,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-        ) => rootDirectoryRecordField.clone(),
-        _ => { panic!("Expected Primary") }
-    }
+fn locationOfTypeLPathTable(descriptor: &PrimaryVolumeDescriptor) -> i64 {
+    descriptor.locationOfTypeLPathTable
 }
-fn locationOfTypeLPathTable(descriptor: &TaggedVolumeDescriptor) -> i64 {
-    match descriptor {
-        Primary(
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            locationOfTypeLPathTableField,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-        ) => *locationOfTypeLPathTableField,
-        _ => { panic!("Expected Primary") }
-    }
-}
-fn pathTableSize(descriptor: &TaggedVolumeDescriptor) -> i64 {
-    match descriptor {
-        Primary(
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            pathTableSizeField,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-        ) => *pathTableSizeField,
-        _ => { panic!("Expected Primary") }
-    }
-}
+fn pathTableSize(descriptor: &PrimaryVolumeDescriptor) -> i64 { descriptor.pathTableSize }
 fn isDirectory(record: &DirectoryRecord) -> bool { record.isDirectory }
 fn locationOfExtent(record: &DirectoryRecord) -> i64 { record.locationOfExtent }
 fn dataLength(record: &DirectoryRecord) -> i64 { record.dataLength }
 fn locationOfExtentPT(record: &PathTableRecord) -> i64 { record.locationOfExtent }
 fn clone<a: Clone>(x: &a) -> a { x.clone() }
+
+fn makePrimaryVolumeDescriptor(
+    systemIdentifier: String,
+    volumeIdentifier: String,
+    volumeSpaceSize:  i64,
+    volumeSetSize:  i64,
+    volumeSequenceNumber:  i64,
+    logicalBlockSize:  i64,
+    pathTableSize:  i64,
+    locationOfTypeLPathTable:  i64,
+    locationOfOptionalTypeLPathTable:  i64,
+    locationOfTypeMPathTable:  i64,
+    locationOfOptionalTypeMPathTable:  i64,
+    rootDirectoryRecord: DirectoryRecord,
+    volumeSetIdentifier: String,
+    publisherIdentifier: String,
+    dataPreparerIdentifier: String,
+    applicationIdentifier: String,
+    copyrightFileIdentifier: String,
+    abstractFileIdentifier: String,
+    bibliographicFileIdentifier: String,
+    volumeCreationDateAndTime: DateAndTime,
+    volumeModificationDateAndTime: DateAndTime,
+    volumeExpirationDateAndTime: DateAndTime,
+    volumeEffectiveDateAndTime: DateAndTime,
+    applicationUse: String
+) -> TaggedVolumeDescriptor {
+    Primary(PrimaryVolumeDescriptor {
+        systemIdentifier,
+        volumeIdentifier,
+        volumeSpaceSize,
+        volumeSetSize,
+        volumeSequenceNumber,
+        logicalBlockSize,
+        pathTableSize,
+        locationOfTypeLPathTable,
+        locationOfOptionalTypeLPathTable,
+        locationOfTypeMPathTable,
+        locationOfOptionalTypeMPathTable,
+        rootDirectoryRecord,
+        volumeSetIdentifier,
+        publisherIdentifier,
+        dataPreparerIdentifier,
+        applicationIdentifier,
+        copyrightFileIdentifier,
+        abstractFileIdentifier,
+        bibliographicFileIdentifier,
+        volumeCreationDateAndTime,
+        volumeModificationDateAndTime,
+        volumeExpirationDateAndTime,
+        volumeEffectiveDateAndTime,
+        applicationUse,
+    })
+}
+
+fn makeSupplementary(
+    volumeDescriptorVersion: u8,
+    volumeFlags: u8,
+    systemIdentifier: String,
+    volumeIdentifier: String,
+    volumeSpaceSize: i64,
+    escapeSequences: String,
+    volumeSetSize: i64,
+    volumeSequenceNumber: i64,
+    logicalBlockSize: i64,
+    pathTableSize: i64,
+    locationOfTypeLPathTable: i64,
+    locationOfOptionalTypeLPathTable: i64,
+    locationOfTypeMPathTable: i64,
+    locationOfOptionalTypeMPathTable: i64,
+    rootDirectoryRecord: DirectoryRecord,
+    volumeSetIdentifier: String,
+    publisherIdentifier: String,
+    dataPreparerIdentifier: String,
+    applicationIdentifier: String,
+    copyrightFileIdentifier: String,
+    abstractFileIdentifier: String,
+    bibliographicFileIdentifier: String,
+    volumeCreationDateAndTime: DateAndTime,
+    volumeModificationDateAndTime: DateAndTime,
+    volumeExpirationDateAndTime: DateAndTime,
+    volumeEffectiveDateAndTime: DateAndTime,
+    fileStructureVersion: u8,
+    applicationUse: String
+) -> TaggedVolumeDescriptor {
+    Supplementary {
+        volumeDescriptorVersion,
+        volumeFlags,
+        systemIdentifier,
+        volumeIdentifier,
+        volumeSpaceSize,
+        escapeSequences,
+        volumeSetSize,
+        volumeSequenceNumber,
+        logicalBlockSize,
+        pathTableSize,
+        locationOfTypeLPathTable,
+        locationOfOptionalTypeLPathTable,
+        locationOfTypeMPathTable,
+        locationOfOptionalTypeMPathTable,
+        rootDirectoryRecord,
+        volumeSetIdentifier,
+        publisherIdentifier,
+        dataPreparerIdentifier,
+        applicationIdentifier,
+        copyrightFileIdentifier,
+        abstractFileIdentifier,
+        bibliographicFileIdentifier,
+        volumeCreationDateAndTime,
+        volumeModificationDateAndTime,
+        volumeExpirationDateAndTime,
+        volumeEffectiveDateAndTime,
+        fileStructureVersion,
+        applicationUse,
+    }
+}
+fn makeVolumePartition(
+    systemIdentifier: String,
+    volumePartitionIdentifier: String,
+    volumePartitionLocation: i64,
+    volumePartitionSize: i64,
+    systemUse: String
+) -> TaggedVolumeDescriptor {
+    VolumePartition {
+        systemIdentifier,
+        volumePartitionIdentifier,
+        volumePartitionLocation,
+        volumePartitionSize,
+        systemUse,
+    }
+}
+fn makeBoot(
+    bootSystemIdentifier: String,
+    bootIdentifier: String,
+    systemUse: String
+) -> TaggedVolumeDescriptor {
+    Boot {
+        bootSystemIdentifier,
+        bootIdentifier,
+        systemUse,
+    }
+}
 #[derive(Clone, Debug)]
 struct VolumeDescriptor {
   descriptor: TaggedVolumeDescriptor,
@@ -283,7 +346,22 @@ struct PathTableRecord {
 }
 
 #[derive(Clone, Debug)]
-struct AsciiString {
+struct A1Chars {
+  value: AString,
+}
+
+#[derive(Clone, Debug)]
+struct D1Chars {
+  value: AString,
+}
+
+#[derive(Clone, Debug)]
+struct DorD1Chars {
+  value: AString,
+}
+
+#[derive(Clone, Debug)]
+struct AorA1Chars {
   value: AString,
 }
 
@@ -354,7 +432,7 @@ struct ISO9660 {
   pathTableOffset: i64,
   pathTableSize: i64,
   paths: Vec<PathTableRecord>,
-  primaryDescriptor: TaggedVolumeDescriptor,
+  primaryDescriptor: PrimaryVolumeDescriptor,
 }
 
 #[derive(Clone, Debug)]
@@ -492,11 +570,11 @@ fn ISO9660(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, ISO9
     // { pathTableOffset = logicalBlockSize * pathTableLocation }
     let mut self_pathTableOffset = self_logicalBlockSize * self_pathTableLocation;
 
-    // LPathTableRecords@0[pathTableOffset, pathTableOffset + pathTableSize]
+    // LPathTableRecords@0(false)[pathTableOffset, pathTableOffset + pathTableSize]
     left = self_pathTableOffset as usize;
     right = (self_pathTableOffset + self_pathTableSize) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
-    let nt_LPathTableRecords_0_m = LPathTableRecords(input, begin + left, begin + right);
+    let nt_LPathTableRecords_0_m = LPathTableRecords(input, begin + left, begin + right, false);
     let (mut nt_LPathTableRecords_0_ipg_start, mut nt_LPathTableRecords_0_ipg_end, nt_LPathTableRecords_0) = match nt_LPathTableRecords_0_m {
       None => { break '_ipg_alt; }
       Some(p) => p,
@@ -513,7 +591,7 @@ fn ISO9660(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, ISO9
     // { paths = LPathTableRecords@0.values }
     let mut self_paths = nt_LPathTableRecords_0.values;
 
-    // for i = 0 to length(ref(paths)) do DirectoryRecords@0[logicalBlockSize * locationOfExtentPT(ref(paths[i])), logicalBlockSize * locationOfExtentPT(ref(paths[i])) + LOGICAL_SECTOR_SIZE]
+    // for i = 0 to length(ref(paths)) do DirectoryRecords@0(false)[logicalBlockSize * locationOfExtentPT(ref(paths[i])), logicalBlockSize * locationOfExtentPT(ref(paths[i])) + LOGICAL_SECTOR_SIZE]
     let mut nt_DirectoryRecords_0_ipg_start = left;
     let mut nt_DirectoryRecords_0_ipg_end = right;
     let seq_DirectoryRecords_0_start = 0 as usize;
@@ -523,7 +601,7 @@ fn ISO9660(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, ISO9
       let left = (self_logicalBlockSize * locationOfExtentPT(&(self_paths[i_i]))) as usize;
       let right = (self_logicalBlockSize * locationOfExtentPT(&(self_paths[i_i])) + LOGICAL_SECTOR_SIZE) as usize;
       if right < left || right > EOI { break '_ipg_alt; }
-      let tmp_m = DirectoryRecords(input, begin + left, begin + right);
+      let tmp_m = DirectoryRecords(input, begin + left, begin + right, false);
       let (mut tmp_ipg_start, mut tmp_ipg_end, tmp) = match tmp_m {
         None => { break '_ipg_alt; }
         Some(p) => p,
@@ -1075,11 +1153,11 @@ fn PrimaryVolumeDescriptor(input: &[u8], begin: usize, end: usize) -> Option<(us
     // { locationOfOptionalTypeMPathTable = BE_U32@1.value }
     let mut self_locationOfOptionalTypeMPathTable = nt_BE_U32_1.value;
 
-    // DirectoryRecord@0[BE_U32@1.END, BE_U32@1.END + 34]
+    // DirectoryRecord@0(false)[BE_U32@1.END, BE_U32@1.END + 34]
     left = nt_BE_U32_1_ipg_end as usize;
     right = (nt_BE_U32_1_ipg_end + 34 as usize) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
-    let nt_DirectoryRecord_0_m = DirectoryRecord(input, begin + left, begin + right);
+    let nt_DirectoryRecord_0_m = DirectoryRecord(input, begin + left, begin + right, false);
     let (mut nt_DirectoryRecord_0_ipg_start, mut nt_DirectoryRecord_0_ipg_end, nt_DirectoryRecord_0) = match nt_DirectoryRecord_0_m {
       None => { break '_ipg_alt; }
       Some(p) => p,
@@ -1384,8 +1462,8 @@ fn PrimaryVolumeDescriptor(input: &[u8], begin: usize, end: usize) -> Option<(us
     left = nt_NULBytes_2_ipg_start;
     right = nt_NULBytes_2_ipg_end;
 
-    // { descriptor = Primary(systemIdentifier, volumeIdentifier, volumeSpaceSize, volumeSetSize, volumeSequenceNumber, logicalBlockSize, pathTableSize, locationOfTypeLPathTable, locationOfOptionalTypeLPathTable, locationOfTypeMPathTable, locationOfOptionalTypeMPathTable, rootDirectoryRecord, volumeSetIdentifier, publisherIdentifier, dataPreparerIdentifier, applicationIdentifier, copyrightFileIdentifier, abstractFileIdentifier, bibliographicFileIdentifier, volumeCreationDateAndTime, volumeModificationDateAndTime, volumeExpirationDateAndTime, volumeEffectiveDateAndTime, applicationUse) }
-    let mut self_descriptor = Primary(self_systemIdentifier, self_volumeIdentifier, self_volumeSpaceSize, self_volumeSetSize, self_volumeSequenceNumber, self_logicalBlockSize, self_pathTableSize, self_locationOfTypeLPathTable, self_locationOfOptionalTypeLPathTable, self_locationOfTypeMPathTable, self_locationOfOptionalTypeMPathTable, self_rootDirectoryRecord, self_volumeSetIdentifier, self_publisherIdentifier, self_dataPreparerIdentifier, self_applicationIdentifier, self_copyrightFileIdentifier, self_abstractFileIdentifier, self_bibliographicFileIdentifier, self_volumeCreationDateAndTime, self_volumeModificationDateAndTime, self_volumeExpirationDateAndTime, self_volumeEffectiveDateAndTime, self_applicationUse);
+    // { descriptor = makePrimaryVolumeDescriptor(systemIdentifier, volumeIdentifier, volumeSpaceSize, volumeSetSize, volumeSequenceNumber, logicalBlockSize, pathTableSize, locationOfTypeLPathTable, locationOfOptionalTypeLPathTable, locationOfTypeMPathTable, locationOfOptionalTypeMPathTable, rootDirectoryRecord, volumeSetIdentifier, publisherIdentifier, dataPreparerIdentifier, applicationIdentifier, copyrightFileIdentifier, abstractFileIdentifier, bibliographicFileIdentifier, volumeCreationDateAndTime, volumeModificationDateAndTime, volumeExpirationDateAndTime, volumeEffectiveDateAndTime, applicationUse) }
+    let mut self_descriptor = makePrimaryVolumeDescriptor(self_systemIdentifier, self_volumeIdentifier, self_volumeSpaceSize, self_volumeSetSize, self_volumeSequenceNumber, self_logicalBlockSize, self_pathTableSize, self_locationOfTypeLPathTable, self_locationOfOptionalTypeLPathTable, self_locationOfTypeMPathTable, self_locationOfOptionalTypeMPathTable, self_rootDirectoryRecord, self_volumeSetIdentifier, self_publisherIdentifier, self_dataPreparerIdentifier, self_applicationIdentifier, self_copyrightFileIdentifier, self_abstractFileIdentifier, self_bibliographicFileIdentifier, self_volumeCreationDateAndTime, self_volumeModificationDateAndTime, self_volumeExpirationDateAndTime, self_volumeEffectiveDateAndTime, self_applicationUse);
 
     return Some((self_ipg_start, self_ipg_end, VolumeDescriptor {
       descriptor: self_descriptor,
@@ -1429,51 +1507,51 @@ fn SupplementaryOrEnhancedVolumeDescriptor(input: &[u8], begin: usize, end: usiz
     self_ipg_start = self_ipg_start.min(left);
     self_ipg_end = self_ipg_end.max(right);
 
-    // AsciiString@0[8, 40]
+    // A1Chars@0[8, 40]
     left = 8 as usize;
     right = 40 as usize;
     if right < left || right > EOI { break '_ipg_alt; }
-    let nt_AsciiString_0_m = AsciiString(input, begin + left, begin + right);
-    let (mut nt_AsciiString_0_ipg_start, mut nt_AsciiString_0_ipg_end, nt_AsciiString_0) = match nt_AsciiString_0_m {
+    let nt_A1Chars_0_m = A1Chars(input, begin + left, begin + right);
+    let (mut nt_A1Chars_0_ipg_start, mut nt_A1Chars_0_ipg_end, nt_A1Chars_0) = match nt_A1Chars_0_m {
       None => { break '_ipg_alt; }
       Some(p) => p,
     };
-    if nt_AsciiString_0_ipg_end != 0 {
-      self_ipg_start = self_ipg_start.min(left + nt_AsciiString_0_ipg_start);
-      self_ipg_end = self_ipg_end.max(left + nt_AsciiString_0_ipg_end);
+    if nt_A1Chars_0_ipg_end != 0 {
+      self_ipg_start = self_ipg_start.min(left + nt_A1Chars_0_ipg_start);
+      self_ipg_end = self_ipg_end.max(left + nt_A1Chars_0_ipg_end);
     }
-    nt_AsciiString_0_ipg_end += left;
-    nt_AsciiString_0_ipg_start += left;
-    left = nt_AsciiString_0_ipg_start;
-    right = nt_AsciiString_0_ipg_end;
+    nt_A1Chars_0_ipg_end += left;
+    nt_A1Chars_0_ipg_start += left;
+    left = nt_A1Chars_0_ipg_start;
+    right = nt_A1Chars_0_ipg_end;
 
-    // { systemIdentifier = AsciiString@0.value }
-    let mut self_systemIdentifier = nt_AsciiString_0.value;
+    // { systemIdentifier = A1Chars@0.value }
+    let mut self_systemIdentifier = nt_A1Chars_0.value;
 
-    // AsciiString@1[AsciiString@0.END, AsciiString@0.END + 32]
-    left = nt_AsciiString_0_ipg_end as usize;
-    right = (nt_AsciiString_0_ipg_end + 32 as usize) as usize;
+    // D1Chars@0[A1Chars@0.END, A1Chars@0.END + 32]
+    left = nt_A1Chars_0_ipg_end as usize;
+    right = (nt_A1Chars_0_ipg_end + 32 as usize) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
-    let nt_AsciiString_1_m = AsciiString(input, begin + left, begin + right);
-    let (mut nt_AsciiString_1_ipg_start, mut nt_AsciiString_1_ipg_end, nt_AsciiString_1) = match nt_AsciiString_1_m {
+    let nt_D1Chars_0_m = D1Chars(input, begin + left, begin + right);
+    let (mut nt_D1Chars_0_ipg_start, mut nt_D1Chars_0_ipg_end, nt_D1Chars_0) = match nt_D1Chars_0_m {
       None => { break '_ipg_alt; }
       Some(p) => p,
     };
-    if nt_AsciiString_1_ipg_end != 0 {
-      self_ipg_start = self_ipg_start.min(left + nt_AsciiString_1_ipg_start);
-      self_ipg_end = self_ipg_end.max(left + nt_AsciiString_1_ipg_end);
+    if nt_D1Chars_0_ipg_end != 0 {
+      self_ipg_start = self_ipg_start.min(left + nt_D1Chars_0_ipg_start);
+      self_ipg_end = self_ipg_end.max(left + nt_D1Chars_0_ipg_end);
     }
-    nt_AsciiString_1_ipg_end += left;
-    nt_AsciiString_1_ipg_start += left;
-    left = nt_AsciiString_1_ipg_start;
-    right = nt_AsciiString_1_ipg_end;
+    nt_D1Chars_0_ipg_end += left;
+    nt_D1Chars_0_ipg_start += left;
+    left = nt_D1Chars_0_ipg_start;
+    right = nt_D1Chars_0_ipg_end;
 
-    // { volumeIdentifier = AsciiString@1.value }
-    let mut self_volumeIdentifier = nt_AsciiString_1.value;
+    // { volumeIdentifier = D1Chars@0.value }
+    let mut self_volumeIdentifier = nt_D1Chars_0.value;
 
-    // NULBytes@0[AsciiString@1.END, AsciiString@1.END + 8]
-    left = nt_AsciiString_1_ipg_end as usize;
-    right = (nt_AsciiString_1_ipg_end + 8 as usize) as usize;
+    // NULBytes@0[D1Chars@0.END, D1Chars@0.END + 8]
+    left = nt_D1Chars_0_ipg_end as usize;
+    right = (nt_D1Chars_0_ipg_end + 8 as usize) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
     let nt_NULBytes_0_m = NULBytes(input, begin + left, begin + right);
     let (mut nt_NULBytes_0_ipg_start, mut nt_NULBytes_0_ipg_end, nt_NULBytes_0) = match nt_NULBytes_0_m {
@@ -1699,11 +1777,11 @@ fn SupplementaryOrEnhancedVolumeDescriptor(input: &[u8], begin: usize, end: usiz
     // { locationOfOptionalTypeMPathTable = BE_U32@1.value }
     let mut self_locationOfOptionalTypeMPathTable = nt_BE_U32_1.value;
 
-    // DirectoryRecord@0[BE_U32@1.END, BE_U32@1.END + 34]
+    // DirectoryRecord@0(true)[BE_U32@1.END, BE_U32@1.END + 34]
     left = nt_BE_U32_1_ipg_end as usize;
     right = (nt_BE_U32_1_ipg_end + 34 as usize) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
-    let nt_DirectoryRecord_0_m = DirectoryRecord(input, begin + left, begin + right);
+    let nt_DirectoryRecord_0_m = DirectoryRecord(input, begin + left, begin + right, true);
     let (mut nt_DirectoryRecord_0_ipg_start, mut nt_DirectoryRecord_0_ipg_end, nt_DirectoryRecord_0) = match nt_DirectoryRecord_0_m {
       None => { break '_ipg_alt; }
       Some(p) => p,
@@ -1720,156 +1798,156 @@ fn SupplementaryOrEnhancedVolumeDescriptor(input: &[u8], begin: usize, end: usiz
     // { rootDirectoryRecord = DirectoryRecord@0.this }
     let mut self_rootDirectoryRecord = nt_DirectoryRecord_0;
 
-    // AsciiString@2[190, 318]
+    // D1Chars@1[190, 318]
     left = 190 as usize;
     right = 318 as usize;
     if right < left || right > EOI { break '_ipg_alt; }
-    let nt_AsciiString_2_m = AsciiString(input, begin + left, begin + right);
-    let (mut nt_AsciiString_2_ipg_start, mut nt_AsciiString_2_ipg_end, nt_AsciiString_2) = match nt_AsciiString_2_m {
+    let nt_D1Chars_1_m = D1Chars(input, begin + left, begin + right);
+    let (mut nt_D1Chars_1_ipg_start, mut nt_D1Chars_1_ipg_end, nt_D1Chars_1) = match nt_D1Chars_1_m {
       None => { break '_ipg_alt; }
       Some(p) => p,
     };
-    if nt_AsciiString_2_ipg_end != 0 {
-      self_ipg_start = self_ipg_start.min(left + nt_AsciiString_2_ipg_start);
-      self_ipg_end = self_ipg_end.max(left + nt_AsciiString_2_ipg_end);
+    if nt_D1Chars_1_ipg_end != 0 {
+      self_ipg_start = self_ipg_start.min(left + nt_D1Chars_1_ipg_start);
+      self_ipg_end = self_ipg_end.max(left + nt_D1Chars_1_ipg_end);
     }
-    nt_AsciiString_2_ipg_end += left;
-    nt_AsciiString_2_ipg_start += left;
-    left = nt_AsciiString_2_ipg_start;
-    right = nt_AsciiString_2_ipg_end;
+    nt_D1Chars_1_ipg_end += left;
+    nt_D1Chars_1_ipg_start += left;
+    left = nt_D1Chars_1_ipg_start;
+    right = nt_D1Chars_1_ipg_end;
 
-    // { volumeSetIdentifier = AsciiString@2.value }
-    let mut self_volumeSetIdentifier = nt_AsciiString_2.value;
+    // { volumeSetIdentifier = D1Chars@1.value }
+    let mut self_volumeSetIdentifier = nt_D1Chars_1.value;
 
-    // AsciiString@3[AsciiString@2.END, AsciiString@2.END + 128]
-    left = nt_AsciiString_2_ipg_end as usize;
-    right = (nt_AsciiString_2_ipg_end + 128 as usize) as usize;
+    // A1Chars@1[D1Chars@1.END, D1Chars@1.END + 128]
+    left = nt_D1Chars_1_ipg_end as usize;
+    right = (nt_D1Chars_1_ipg_end + 128 as usize) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
-    let nt_AsciiString_3_m = AsciiString(input, begin + left, begin + right);
-    let (mut nt_AsciiString_3_ipg_start, mut nt_AsciiString_3_ipg_end, nt_AsciiString_3) = match nt_AsciiString_3_m {
+    let nt_A1Chars_1_m = A1Chars(input, begin + left, begin + right);
+    let (mut nt_A1Chars_1_ipg_start, mut nt_A1Chars_1_ipg_end, nt_A1Chars_1) = match nt_A1Chars_1_m {
       None => { break '_ipg_alt; }
       Some(p) => p,
     };
-    if nt_AsciiString_3_ipg_end != 0 {
-      self_ipg_start = self_ipg_start.min(left + nt_AsciiString_3_ipg_start);
-      self_ipg_end = self_ipg_end.max(left + nt_AsciiString_3_ipg_end);
+    if nt_A1Chars_1_ipg_end != 0 {
+      self_ipg_start = self_ipg_start.min(left + nt_A1Chars_1_ipg_start);
+      self_ipg_end = self_ipg_end.max(left + nt_A1Chars_1_ipg_end);
     }
-    nt_AsciiString_3_ipg_end += left;
-    nt_AsciiString_3_ipg_start += left;
-    left = nt_AsciiString_3_ipg_start;
-    right = nt_AsciiString_3_ipg_end;
+    nt_A1Chars_1_ipg_end += left;
+    nt_A1Chars_1_ipg_start += left;
+    left = nt_A1Chars_1_ipg_start;
+    right = nt_A1Chars_1_ipg_end;
 
-    // { publisherIdentifier = AsciiString@3.value }
-    let mut self_publisherIdentifier = nt_AsciiString_3.value;
+    // { publisherIdentifier = A1Chars@1.value }
+    let mut self_publisherIdentifier = nt_A1Chars_1.value;
 
-    // AsciiString@4[AsciiString@3.END, AsciiString@3.END + 128]
-    left = nt_AsciiString_3_ipg_end as usize;
-    right = (nt_AsciiString_3_ipg_end + 128 as usize) as usize;
+    // A1Chars@2[A1Chars@1.END, A1Chars@1.END + 128]
+    left = nt_A1Chars_1_ipg_end as usize;
+    right = (nt_A1Chars_1_ipg_end + 128 as usize) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
-    let nt_AsciiString_4_m = AsciiString(input, begin + left, begin + right);
-    let (mut nt_AsciiString_4_ipg_start, mut nt_AsciiString_4_ipg_end, nt_AsciiString_4) = match nt_AsciiString_4_m {
+    let nt_A1Chars_2_m = A1Chars(input, begin + left, begin + right);
+    let (mut nt_A1Chars_2_ipg_start, mut nt_A1Chars_2_ipg_end, nt_A1Chars_2) = match nt_A1Chars_2_m {
       None => { break '_ipg_alt; }
       Some(p) => p,
     };
-    if nt_AsciiString_4_ipg_end != 0 {
-      self_ipg_start = self_ipg_start.min(left + nt_AsciiString_4_ipg_start);
-      self_ipg_end = self_ipg_end.max(left + nt_AsciiString_4_ipg_end);
+    if nt_A1Chars_2_ipg_end != 0 {
+      self_ipg_start = self_ipg_start.min(left + nt_A1Chars_2_ipg_start);
+      self_ipg_end = self_ipg_end.max(left + nt_A1Chars_2_ipg_end);
     }
-    nt_AsciiString_4_ipg_end += left;
-    nt_AsciiString_4_ipg_start += left;
-    left = nt_AsciiString_4_ipg_start;
-    right = nt_AsciiString_4_ipg_end;
+    nt_A1Chars_2_ipg_end += left;
+    nt_A1Chars_2_ipg_start += left;
+    left = nt_A1Chars_2_ipg_start;
+    right = nt_A1Chars_2_ipg_end;
 
-    // { dataPreparerIdentifier = AsciiString@4.value }
-    let mut self_dataPreparerIdentifier = nt_AsciiString_4.value;
+    // { dataPreparerIdentifier = A1Chars@2.value }
+    let mut self_dataPreparerIdentifier = nt_A1Chars_2.value;
 
-    // AsciiString@5[AsciiString@4.END, AsciiString@4.END + 128]
-    left = nt_AsciiString_4_ipg_end as usize;
-    right = (nt_AsciiString_4_ipg_end + 128 as usize) as usize;
+    // A1Chars@3[A1Chars@2.END, A1Chars@2.END + 128]
+    left = nt_A1Chars_2_ipg_end as usize;
+    right = (nt_A1Chars_2_ipg_end + 128 as usize) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
-    let nt_AsciiString_5_m = AsciiString(input, begin + left, begin + right);
-    let (mut nt_AsciiString_5_ipg_start, mut nt_AsciiString_5_ipg_end, nt_AsciiString_5) = match nt_AsciiString_5_m {
+    let nt_A1Chars_3_m = A1Chars(input, begin + left, begin + right);
+    let (mut nt_A1Chars_3_ipg_start, mut nt_A1Chars_3_ipg_end, nt_A1Chars_3) = match nt_A1Chars_3_m {
       None => { break '_ipg_alt; }
       Some(p) => p,
     };
-    if nt_AsciiString_5_ipg_end != 0 {
-      self_ipg_start = self_ipg_start.min(left + nt_AsciiString_5_ipg_start);
-      self_ipg_end = self_ipg_end.max(left + nt_AsciiString_5_ipg_end);
+    if nt_A1Chars_3_ipg_end != 0 {
+      self_ipg_start = self_ipg_start.min(left + nt_A1Chars_3_ipg_start);
+      self_ipg_end = self_ipg_end.max(left + nt_A1Chars_3_ipg_end);
     }
-    nt_AsciiString_5_ipg_end += left;
-    nt_AsciiString_5_ipg_start += left;
-    left = nt_AsciiString_5_ipg_start;
-    right = nt_AsciiString_5_ipg_end;
+    nt_A1Chars_3_ipg_end += left;
+    nt_A1Chars_3_ipg_start += left;
+    left = nt_A1Chars_3_ipg_start;
+    right = nt_A1Chars_3_ipg_end;
 
-    // { applicationIdentifier = AsciiString@5.value }
-    let mut self_applicationIdentifier = nt_AsciiString_5.value;
+    // { applicationIdentifier = A1Chars@3.value }
+    let mut self_applicationIdentifier = nt_A1Chars_3.value;
 
-    // AsciiString@6[AsciiString@5.END, AsciiString@5.END + 37]
-    left = nt_AsciiString_5_ipg_end as usize;
-    right = (nt_AsciiString_5_ipg_end + 37 as usize) as usize;
+    // D1Chars@2[A1Chars@3.END, A1Chars@3.END + 37]
+    left = nt_A1Chars_3_ipg_end as usize;
+    right = (nt_A1Chars_3_ipg_end + 37 as usize) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
-    let nt_AsciiString_6_m = AsciiString(input, begin + left, begin + right);
-    let (mut nt_AsciiString_6_ipg_start, mut nt_AsciiString_6_ipg_end, nt_AsciiString_6) = match nt_AsciiString_6_m {
+    let nt_D1Chars_2_m = D1Chars(input, begin + left, begin + right);
+    let (mut nt_D1Chars_2_ipg_start, mut nt_D1Chars_2_ipg_end, nt_D1Chars_2) = match nt_D1Chars_2_m {
       None => { break '_ipg_alt; }
       Some(p) => p,
     };
-    if nt_AsciiString_6_ipg_end != 0 {
-      self_ipg_start = self_ipg_start.min(left + nt_AsciiString_6_ipg_start);
-      self_ipg_end = self_ipg_end.max(left + nt_AsciiString_6_ipg_end);
+    if nt_D1Chars_2_ipg_end != 0 {
+      self_ipg_start = self_ipg_start.min(left + nt_D1Chars_2_ipg_start);
+      self_ipg_end = self_ipg_end.max(left + nt_D1Chars_2_ipg_end);
     }
-    nt_AsciiString_6_ipg_end += left;
-    nt_AsciiString_6_ipg_start += left;
-    left = nt_AsciiString_6_ipg_start;
-    right = nt_AsciiString_6_ipg_end;
+    nt_D1Chars_2_ipg_end += left;
+    nt_D1Chars_2_ipg_start += left;
+    left = nt_D1Chars_2_ipg_start;
+    right = nt_D1Chars_2_ipg_end;
 
-    // { copyrightFileIdentifier = AsciiString@6.value }
-    let mut self_copyrightFileIdentifier = nt_AsciiString_6.value;
+    // { copyrightFileIdentifier = D1Chars@2.value }
+    let mut self_copyrightFileIdentifier = nt_D1Chars_2.value;
 
-    // AsciiString@7[AsciiString@6.END, AsciiString@6.END + 37]
-    left = nt_AsciiString_6_ipg_end as usize;
-    right = (nt_AsciiString_6_ipg_end + 37 as usize) as usize;
+    // D1Chars@3[D1Chars@2.END, D1Chars@2.END + 37]
+    left = nt_D1Chars_2_ipg_end as usize;
+    right = (nt_D1Chars_2_ipg_end + 37 as usize) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
-    let nt_AsciiString_7_m = AsciiString(input, begin + left, begin + right);
-    let (mut nt_AsciiString_7_ipg_start, mut nt_AsciiString_7_ipg_end, nt_AsciiString_7) = match nt_AsciiString_7_m {
+    let nt_D1Chars_3_m = D1Chars(input, begin + left, begin + right);
+    let (mut nt_D1Chars_3_ipg_start, mut nt_D1Chars_3_ipg_end, nt_D1Chars_3) = match nt_D1Chars_3_m {
       None => { break '_ipg_alt; }
       Some(p) => p,
     };
-    if nt_AsciiString_7_ipg_end != 0 {
-      self_ipg_start = self_ipg_start.min(left + nt_AsciiString_7_ipg_start);
-      self_ipg_end = self_ipg_end.max(left + nt_AsciiString_7_ipg_end);
+    if nt_D1Chars_3_ipg_end != 0 {
+      self_ipg_start = self_ipg_start.min(left + nt_D1Chars_3_ipg_start);
+      self_ipg_end = self_ipg_end.max(left + nt_D1Chars_3_ipg_end);
     }
-    nt_AsciiString_7_ipg_end += left;
-    nt_AsciiString_7_ipg_start += left;
-    left = nt_AsciiString_7_ipg_start;
-    right = nt_AsciiString_7_ipg_end;
+    nt_D1Chars_3_ipg_end += left;
+    nt_D1Chars_3_ipg_start += left;
+    left = nt_D1Chars_3_ipg_start;
+    right = nt_D1Chars_3_ipg_end;
 
-    // { abstractFileIdentifier = AsciiString@7.value }
-    let mut self_abstractFileIdentifier = nt_AsciiString_7.value;
+    // { abstractFileIdentifier = D1Chars@3.value }
+    let mut self_abstractFileIdentifier = nt_D1Chars_3.value;
 
-    // AsciiString@8[AsciiString@7.END, AsciiString@7.END + 37]
-    left = nt_AsciiString_7_ipg_end as usize;
-    right = (nt_AsciiString_7_ipg_end + 37 as usize) as usize;
+    // D1Chars@4[D1Chars@3.END, D1Chars@3.END + 37]
+    left = nt_D1Chars_3_ipg_end as usize;
+    right = (nt_D1Chars_3_ipg_end + 37 as usize) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
-    let nt_AsciiString_8_m = AsciiString(input, begin + left, begin + right);
-    let (mut nt_AsciiString_8_ipg_start, mut nt_AsciiString_8_ipg_end, nt_AsciiString_8) = match nt_AsciiString_8_m {
+    let nt_D1Chars_4_m = D1Chars(input, begin + left, begin + right);
+    let (mut nt_D1Chars_4_ipg_start, mut nt_D1Chars_4_ipg_end, nt_D1Chars_4) = match nt_D1Chars_4_m {
       None => { break '_ipg_alt; }
       Some(p) => p,
     };
-    if nt_AsciiString_8_ipg_end != 0 {
-      self_ipg_start = self_ipg_start.min(left + nt_AsciiString_8_ipg_start);
-      self_ipg_end = self_ipg_end.max(left + nt_AsciiString_8_ipg_end);
+    if nt_D1Chars_4_ipg_end != 0 {
+      self_ipg_start = self_ipg_start.min(left + nt_D1Chars_4_ipg_start);
+      self_ipg_end = self_ipg_end.max(left + nt_D1Chars_4_ipg_end);
     }
-    nt_AsciiString_8_ipg_end += left;
-    nt_AsciiString_8_ipg_start += left;
-    left = nt_AsciiString_8_ipg_start;
-    right = nt_AsciiString_8_ipg_end;
+    nt_D1Chars_4_ipg_end += left;
+    nt_D1Chars_4_ipg_start += left;
+    left = nt_D1Chars_4_ipg_start;
+    right = nt_D1Chars_4_ipg_end;
 
-    // { bibliographicFileIdentifier = AsciiString@8.value }
-    let mut self_bibliographicFileIdentifier = nt_AsciiString_8.value;
+    // { bibliographicFileIdentifier = D1Chars@4.value }
+    let mut self_bibliographicFileIdentifier = nt_D1Chars_4.value;
 
-    // DateAndTime@0[AsciiString@8.END, AsciiString@8.END + 17]
-    left = nt_AsciiString_8_ipg_end as usize;
-    right = (nt_AsciiString_8_ipg_end + 17 as usize) as usize;
+    // DateAndTime@0[D1Chars@4.END, D1Chars@4.END + 17]
+    left = nt_D1Chars_4_ipg_end as usize;
+    right = (nt_D1Chars_4_ipg_end + 17 as usize) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
     let nt_DateAndTime_0_m = DateAndTime(input, begin + left, begin + right);
     let (mut nt_DateAndTime_0_ipg_start, mut nt_DateAndTime_0_ipg_end, nt_DateAndTime_0) = match nt_DateAndTime_0_m {
@@ -2007,8 +2085,8 @@ fn SupplementaryOrEnhancedVolumeDescriptor(input: &[u8], begin: usize, end: usiz
     left = nt_NULBytes_1_ipg_start;
     right = nt_NULBytes_1_ipg_end;
 
-    // { descriptor = Supplementary(volumeDescriptorVersion, volumeFlags, systemIdentifier, volumeIdentifier, volumeSpaceSize, escapeSequences, volumeSetSize, volumeSequenceNumber, logicalBlockSize, pathTableSize, locationOfTypeLPathTable, locationOfOptionalTypeLPathTable, locationOfTypeMPathTable, locationOfOptionalTypeMPathTable, rootDirectoryRecord, volumeSetIdentifier, publisherIdentifier, dataPreparerIdentifier, applicationIdentifier, copyrightFileIdentifier, abstractFileIdentifier, bibliographicFileIdentifier, volumeCreationDateAndTime, volumeModificationDateAndTime, volumeExpirationDateAndTime, volumeEffectiveDateAndTime, fileStructureVersion, applicationUse) }
-    let mut self_descriptor = Supplementary(self_volumeDescriptorVersion, self_volumeFlags, self_systemIdentifier, self_volumeIdentifier, self_volumeSpaceSize, self_escapeSequences, self_volumeSetSize, self_volumeSequenceNumber, self_logicalBlockSize, self_pathTableSize, self_locationOfTypeLPathTable, self_locationOfOptionalTypeLPathTable, self_locationOfTypeMPathTable, self_locationOfOptionalTypeMPathTable, self_rootDirectoryRecord, self_volumeSetIdentifier, self_publisherIdentifier, self_dataPreparerIdentifier, self_applicationIdentifier, self_copyrightFileIdentifier, self_abstractFileIdentifier, self_bibliographicFileIdentifier, self_volumeCreationDateAndTime, self_volumeModificationDateAndTime, self_volumeExpirationDateAndTime, self_volumeEffectiveDateAndTime, self_fileStructureVersion, self_applicationUse);
+    // { descriptor = makeSupplementary(volumeDescriptorVersion, volumeFlags, systemIdentifier, volumeIdentifier, volumeSpaceSize, escapeSequences, volumeSetSize, volumeSequenceNumber, logicalBlockSize, pathTableSize, locationOfTypeLPathTable, locationOfOptionalTypeLPathTable, locationOfTypeMPathTable, locationOfOptionalTypeMPathTable, rootDirectoryRecord, volumeSetIdentifier, publisherIdentifier, dataPreparerIdentifier, applicationIdentifier, copyrightFileIdentifier, abstractFileIdentifier, bibliographicFileIdentifier, volumeCreationDateAndTime, volumeModificationDateAndTime, volumeExpirationDateAndTime, volumeEffectiveDateAndTime, fileStructureVersion, applicationUse) }
+    let mut self_descriptor = makeSupplementary(self_volumeDescriptorVersion, self_volumeFlags, self_systemIdentifier, self_volumeIdentifier, self_volumeSpaceSize, self_escapeSequences, self_volumeSetSize, self_volumeSequenceNumber, self_logicalBlockSize, self_pathTableSize, self_locationOfTypeLPathTable, self_locationOfOptionalTypeLPathTable, self_locationOfTypeMPathTable, self_locationOfOptionalTypeMPathTable, self_rootDirectoryRecord, self_volumeSetIdentifier, self_publisherIdentifier, self_dataPreparerIdentifier, self_applicationIdentifier, self_copyrightFileIdentifier, self_abstractFileIdentifier, self_bibliographicFileIdentifier, self_volumeCreationDateAndTime, self_volumeModificationDateAndTime, self_volumeExpirationDateAndTime, self_volumeEffectiveDateAndTime, self_fileStructureVersion, self_applicationUse);
 
     return Some((self_ipg_start, self_ipg_end, VolumeDescriptor {
       descriptor: self_descriptor,
@@ -2138,8 +2216,8 @@ fn VolumePartitionDescriptor(input: &[u8], begin: usize, end: usize) -> Option<(
     // { systemUse = HexBytes@0.value }
     let mut self_systemUse = nt_HexBytes_0.value;
 
-    // { descriptor = VolumePartition(systemIdentifier, volumePartitionIdentifier, volumePartitionLocation, volumePartitionSize, systemUse) }
-    let mut self_descriptor = VolumePartition(self_systemIdentifier, self_volumePartitionIdentifier, self_volumePartitionLocation, self_volumePartitionSize, self_systemUse);
+    // { descriptor = makeVolumePartition(systemIdentifier, volumePartitionIdentifier, volumePartitionLocation, volumePartitionSize, systemUse) }
+    let mut self_descriptor = makeVolumePartition(self_systemIdentifier, self_volumePartitionIdentifier, self_volumePartitionLocation, self_volumePartitionSize, self_systemUse);
 
     return Some((self_ipg_start, self_ipg_end, VolumeDescriptor {
       descriptor: self_descriptor,
@@ -2227,8 +2305,8 @@ fn BootRecord(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, V
     // { systemUse = HexBytes@0.value }
     let mut self_systemUse = nt_HexBytes_0.value;
 
-    // { descriptor = Boot(bootSystemIdentifier, bootIdentifier, systemUse) }
-    let mut self_descriptor = Boot(self_bootSystemIdentifier, self_bootIdentifier, self_systemUse);
+    // { descriptor = makeBoot(bootSystemIdentifier, bootIdentifier, systemUse) }
+    let mut self_descriptor = makeBoot(self_bootSystemIdentifier, self_bootIdentifier, self_systemUse);
 
     return Some((self_ipg_start, self_ipg_end, VolumeDescriptor {
       descriptor: self_descriptor,
@@ -2346,11 +2424,11 @@ fn DirectoriesRecursive(input: &[u8], begin: usize, end: usize, a_logicalBlockSi
     // { offset = logicalBlockSize * locationOfExtent(ref(node)) }
     let mut self_offset = a_logicalBlockSize * locationOfExtent(&(a_node));
 
-    // DirectoryRecords@0[offset, offset + dataLength(ref(node))]
+    // DirectoryRecords@0(false)[offset, offset + dataLength(ref(node))]
     left = self_offset as usize;
     right = (self_offset + dataLength(&(a_node))) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
-    let nt_DirectoryRecords_0_m = DirectoryRecords(input, begin + left, begin + right);
+    let nt_DirectoryRecords_0_m = DirectoryRecords(input, begin + left, begin + right, false);
     let (mut nt_DirectoryRecords_0_ipg_start, mut nt_DirectoryRecords_0_ipg_end, nt_DirectoryRecords_0) = match nt_DirectoryRecords_0_m {
       None => { break '_ipg_alt; }
       Some(p) => p,
@@ -2420,17 +2498,17 @@ fn DirectoriesRecursive(input: &[u8], begin: usize, end: usize, a_logicalBlockSi
   return None;
 }
 
-fn DirectoryRecords(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, DirectoryRecords)> {
+fn DirectoryRecords(input: &[u8], begin: usize, end: usize, a_enhanced: bool) -> Option<(usize, usize, DirectoryRecords)> {
   let EOI: usize = end - begin;
   '_ipg_alt: {
     let mut left: usize = EOI; let mut right: usize = 0;
     let mut self_ipg_start: usize = EOI; let mut self_ipg_end: usize = 0;
 
-    // repeat DirectoryRecord@0[DirectoryRecord@0.END, EOI].this starting on [0, EOI]
+    // repeat DirectoryRecord@0(enhanced)[DirectoryRecord@0.END, EOI].this starting on [0, EOI]
     let mut self_values = Vec::new();
     left = 0 as usize;
     right = EOI as usize;
-    let nt_DirectoryRecord_0_m = DirectoryRecord(input, begin + left, begin + right);
+    let nt_DirectoryRecord_0_m = DirectoryRecord(input, begin + left, begin + right, a_enhanced);
     let mut nt_DirectoryRecord_0_ipg_start = right;
     let mut nt_DirectoryRecord_0_ipg_end = left;
     match nt_DirectoryRecord_0_m {
@@ -2448,7 +2526,7 @@ fn DirectoryRecords(input: &[u8], begin: usize, end: usize) -> Option<(usize, us
         self_values.push(nt_DirectoryRecord_0);
 
         while left <= right && right <= EOI {
-          let nt_DirectoryRecord_0_m = DirectoryRecord(input, begin + left, begin + right);
+          let nt_DirectoryRecord_0_m = DirectoryRecord(input, begin + left, begin + right, a_enhanced);
           let (nt_DirectoryRecord_0_ipg_start_, nt_DirectoryRecord_0_ipg_end_, nt_DirectoryRecord_0) = match nt_DirectoryRecord_0_m {
             None => { break; }
             Some(p) => p,
@@ -2475,7 +2553,7 @@ fn DirectoryRecords(input: &[u8], begin: usize, end: usize) -> Option<(usize, us
   return None;
 }
 
-fn DirectoryRecord(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, DirectoryRecord)> {
+fn DirectoryRecord(input: &[u8], begin: usize, end: usize, a_enhanced: bool) -> Option<(usize, usize, DirectoryRecord)> {
   let EOI: usize = end - begin;
   '_ipg_alt: {
     let mut left: usize = EOI; let mut right: usize = 0;
@@ -2644,29 +2722,29 @@ fn DirectoryRecord(input: &[u8], begin: usize, end: usize) -> Option<(usize, usi
     self_ipg_start = self_ipg_start.min(left);
     self_ipg_end = self_ipg_end.max(right);
 
-    // AsciiString@0[BB_U16@0.END + 1, BB_U16@0.END + 1 + lengthOfFileIdentifier]
+    // DorD1Chars@0(enhanced)[BB_U16@0.END + 1, BB_U16@0.END + 1 + lengthOfFileIdentifier]
     left = (nt_BB_U16_0_ipg_end + 1 as usize) as usize;
     right = (nt_BB_U16_0_ipg_end + 1 + self_lengthOfFileIdentifier as usize) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
-    let nt_AsciiString_0_m = AsciiString(input, begin + left, begin + right);
-    let (mut nt_AsciiString_0_ipg_start, mut nt_AsciiString_0_ipg_end, nt_AsciiString_0) = match nt_AsciiString_0_m {
+    let nt_DorD1Chars_0_m = DorD1Chars(input, begin + left, begin + right, a_enhanced);
+    let (mut nt_DorD1Chars_0_ipg_start, mut nt_DorD1Chars_0_ipg_end, nt_DorD1Chars_0) = match nt_DorD1Chars_0_m {
       None => { break '_ipg_alt; }
       Some(p) => p,
     };
-    if nt_AsciiString_0_ipg_end != 0 {
-      self_ipg_start = self_ipg_start.min(left + nt_AsciiString_0_ipg_start);
-      self_ipg_end = self_ipg_end.max(left + nt_AsciiString_0_ipg_end);
+    if nt_DorD1Chars_0_ipg_end != 0 {
+      self_ipg_start = self_ipg_start.min(left + nt_DorD1Chars_0_ipg_start);
+      self_ipg_end = self_ipg_end.max(left + nt_DorD1Chars_0_ipg_end);
     }
-    nt_AsciiString_0_ipg_end += left;
-    nt_AsciiString_0_ipg_start += left;
-    left = nt_AsciiString_0_ipg_start;
-    right = nt_AsciiString_0_ipg_end;
+    nt_DorD1Chars_0_ipg_end += left;
+    nt_DorD1Chars_0_ipg_start += left;
+    left = nt_DorD1Chars_0_ipg_start;
+    right = nt_DorD1Chars_0_ipg_end;
 
-    // { fileIdentifier = AsciiString@0.value }
-    let mut self_fileIdentifier = nt_AsciiString_0.value;
+    // { fileIdentifier = DorD1Chars@0.value }
+    let mut self_fileIdentifier = nt_DorD1Chars_0.value;
 
-    // EvenPadByte@0(lengthOfFileIdentifier)[AsciiString@0.END, EOI]
-    left = nt_AsciiString_0_ipg_end as usize;
+    // EvenPadByte@0(lengthOfFileIdentifier)[DorD1Chars@0.END, EOI]
+    left = nt_DorD1Chars_0_ipg_end as usize;
     right = EOI as usize;
     if right < left || right > EOI { break '_ipg_alt; }
     let nt_EvenPadByte_0_m = EvenPadByte(input, begin + left, begin + right, self_lengthOfFileIdentifier);
@@ -2817,17 +2895,17 @@ fn RecordingDateAndTime(input: &[u8], begin: usize, end: usize) -> Option<(usize
   return None;
 }
 
-fn LPathTableRecords(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, LPathTableRecords)> {
+fn LPathTableRecords(input: &[u8], begin: usize, end: usize, a_enhanced: bool) -> Option<(usize, usize, LPathTableRecords)> {
   let EOI: usize = end - begin;
   '_ipg_alt: {
     let mut left: usize = EOI; let mut right: usize = 0;
     let mut self_ipg_start: usize = EOI; let mut self_ipg_end: usize = 0;
 
-    // repeat LPathTableRecord@0[LPathTableRecord@0.END, EOI].this starting on [0, EOI]
+    // repeat LPathTableRecord@0(enhanced)[LPathTableRecord@0.END, EOI].this starting on [0, EOI]
     let mut self_values = Vec::new();
     left = 0 as usize;
     right = EOI as usize;
-    let nt_LPathTableRecord_0_m = LPathTableRecord(input, begin + left, begin + right);
+    let nt_LPathTableRecord_0_m = LPathTableRecord(input, begin + left, begin + right, a_enhanced);
     let mut nt_LPathTableRecord_0_ipg_start = right;
     let mut nt_LPathTableRecord_0_ipg_end = left;
     match nt_LPathTableRecord_0_m {
@@ -2845,7 +2923,7 @@ fn LPathTableRecords(input: &[u8], begin: usize, end: usize) -> Option<(usize, u
         self_values.push(nt_LPathTableRecord_0);
 
         while left <= right && right <= EOI {
-          let nt_LPathTableRecord_0_m = LPathTableRecord(input, begin + left, begin + right);
+          let nt_LPathTableRecord_0_m = LPathTableRecord(input, begin + left, begin + right, a_enhanced);
           let (nt_LPathTableRecord_0_ipg_start_, nt_LPathTableRecord_0_ipg_end_, nt_LPathTableRecord_0) = match nt_LPathTableRecord_0_m {
             None => { break; }
             Some(p) => p,
@@ -2872,7 +2950,7 @@ fn LPathTableRecords(input: &[u8], begin: usize, end: usize) -> Option<(usize, u
   return None;
 }
 
-fn LPathTableRecord(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, PathTableRecord)> {
+fn LPathTableRecord(input: &[u8], begin: usize, end: usize, a_enhanced: bool) -> Option<(usize, usize, PathTableRecord)> {
   let EOI: usize = end - begin;
   '_ipg_alt: {
     let mut left: usize = EOI; let mut right: usize = 0;
@@ -2936,29 +3014,29 @@ fn LPathTableRecord(input: &[u8], begin: usize, end: usize) -> Option<(usize, us
     // { parentDirectoryNumber = LE_U16@0.value }
     let mut self_parentDirectoryNumber = nt_LE_U16_0.value;
 
-    // AsciiString@0[LE_U16@0.END, LE_U16@0.END + lengthOfDirectoryIdentifier]
+    // DorD1Chars@0(enhanced)[LE_U16@0.END, LE_U16@0.END + lengthOfDirectoryIdentifier]
     left = nt_LE_U16_0_ipg_end as usize;
     right = (nt_LE_U16_0_ipg_end + self_lengthOfDirectoryIdentifier as usize) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
-    let nt_AsciiString_0_m = AsciiString(input, begin + left, begin + right);
-    let (mut nt_AsciiString_0_ipg_start, mut nt_AsciiString_0_ipg_end, nt_AsciiString_0) = match nt_AsciiString_0_m {
+    let nt_DorD1Chars_0_m = DorD1Chars(input, begin + left, begin + right, a_enhanced);
+    let (mut nt_DorD1Chars_0_ipg_start, mut nt_DorD1Chars_0_ipg_end, nt_DorD1Chars_0) = match nt_DorD1Chars_0_m {
       None => { break '_ipg_alt; }
       Some(p) => p,
     };
-    if nt_AsciiString_0_ipg_end != 0 {
-      self_ipg_start = self_ipg_start.min(left + nt_AsciiString_0_ipg_start);
-      self_ipg_end = self_ipg_end.max(left + nt_AsciiString_0_ipg_end);
+    if nt_DorD1Chars_0_ipg_end != 0 {
+      self_ipg_start = self_ipg_start.min(left + nt_DorD1Chars_0_ipg_start);
+      self_ipg_end = self_ipg_end.max(left + nt_DorD1Chars_0_ipg_end);
     }
-    nt_AsciiString_0_ipg_end += left;
-    nt_AsciiString_0_ipg_start += left;
-    left = nt_AsciiString_0_ipg_start;
-    right = nt_AsciiString_0_ipg_end;
+    nt_DorD1Chars_0_ipg_end += left;
+    nt_DorD1Chars_0_ipg_start += left;
+    left = nt_DorD1Chars_0_ipg_start;
+    right = nt_DorD1Chars_0_ipg_end;
 
-    // { directoryIdentifier = AsciiString@0.value }
-    let mut self_directoryIdentifier = nt_AsciiString_0.value;
+    // { directoryIdentifier = DorD1Chars@0.value }
+    let mut self_directoryIdentifier = nt_DorD1Chars_0.value;
 
-    // OddPadByte@0(lengthOfDirectoryIdentifier)[AsciiString@0.END, EOI]
-    left = nt_AsciiString_0_ipg_end as usize;
+    // OddPadByte@0(lengthOfDirectoryIdentifier)[DorD1Chars@0.END, EOI]
+    left = nt_DorD1Chars_0_ipg_end as usize;
     right = EOI as usize;
     if right < left || right > EOI { break '_ipg_alt; }
     let nt_OddPadByte_0_m = OddPadByte(input, begin + left, begin + right, self_lengthOfDirectoryIdentifier);
@@ -2987,17 +3065,17 @@ fn LPathTableRecord(input: &[u8], begin: usize, end: usize) -> Option<(usize, us
   return None;
 }
 
-fn MPathTableRecords(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, MPathTableRecords)> {
+fn MPathTableRecords(input: &[u8], begin: usize, end: usize, a_enhanced: bool) -> Option<(usize, usize, MPathTableRecords)> {
   let EOI: usize = end - begin;
   '_ipg_alt: {
     let mut left: usize = EOI; let mut right: usize = 0;
     let mut self_ipg_start: usize = EOI; let mut self_ipg_end: usize = 0;
 
-    // repeat MPathTableRecord@0[MPathTableRecord@0.END, EOI].this starting on [0, EOI]
+    // repeat MPathTableRecord@0(enhanced)[MPathTableRecord@0.END, EOI].this starting on [0, EOI]
     let mut self_values = Vec::new();
     left = 0 as usize;
     right = EOI as usize;
-    let nt_MPathTableRecord_0_m = MPathTableRecord(input, begin + left, begin + right);
+    let nt_MPathTableRecord_0_m = MPathTableRecord(input, begin + left, begin + right, a_enhanced);
     let mut nt_MPathTableRecord_0_ipg_start = right;
     let mut nt_MPathTableRecord_0_ipg_end = left;
     match nt_MPathTableRecord_0_m {
@@ -3015,7 +3093,7 @@ fn MPathTableRecords(input: &[u8], begin: usize, end: usize) -> Option<(usize, u
         self_values.push(nt_MPathTableRecord_0);
 
         while left <= right && right <= EOI {
-          let nt_MPathTableRecord_0_m = MPathTableRecord(input, begin + left, begin + right);
+          let nt_MPathTableRecord_0_m = MPathTableRecord(input, begin + left, begin + right, a_enhanced);
           let (nt_MPathTableRecord_0_ipg_start_, nt_MPathTableRecord_0_ipg_end_, nt_MPathTableRecord_0) = match nt_MPathTableRecord_0_m {
             None => { break; }
             Some(p) => p,
@@ -3042,7 +3120,7 @@ fn MPathTableRecords(input: &[u8], begin: usize, end: usize) -> Option<(usize, u
   return None;
 }
 
-fn MPathTableRecord(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, PathTableRecord)> {
+fn MPathTableRecord(input: &[u8], begin: usize, end: usize, a_enhanced: bool) -> Option<(usize, usize, PathTableRecord)> {
   let EOI: usize = end - begin;
   '_ipg_alt: {
     let mut left: usize = EOI; let mut right: usize = 0;
@@ -3106,29 +3184,29 @@ fn MPathTableRecord(input: &[u8], begin: usize, end: usize) -> Option<(usize, us
     // { parentDirectoryNumber = BE_U16@0.value }
     let mut self_parentDirectoryNumber = nt_BE_U16_0.value;
 
-    // AsciiString@0[BE_U16@0.END, BE_U16@0.END + lengthOfDirectoryIdentifier]
+    // DorD1Chars@0(enhanced)[BE_U16@0.END, BE_U16@0.END + lengthOfDirectoryIdentifier]
     left = nt_BE_U16_0_ipg_end as usize;
     right = (nt_BE_U16_0_ipg_end + self_lengthOfDirectoryIdentifier as usize) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
-    let nt_AsciiString_0_m = AsciiString(input, begin + left, begin + right);
-    let (mut nt_AsciiString_0_ipg_start, mut nt_AsciiString_0_ipg_end, nt_AsciiString_0) = match nt_AsciiString_0_m {
+    let nt_DorD1Chars_0_m = DorD1Chars(input, begin + left, begin + right, a_enhanced);
+    let (mut nt_DorD1Chars_0_ipg_start, mut nt_DorD1Chars_0_ipg_end, nt_DorD1Chars_0) = match nt_DorD1Chars_0_m {
       None => { break '_ipg_alt; }
       Some(p) => p,
     };
-    if nt_AsciiString_0_ipg_end != 0 {
-      self_ipg_start = self_ipg_start.min(left + nt_AsciiString_0_ipg_start);
-      self_ipg_end = self_ipg_end.max(left + nt_AsciiString_0_ipg_end);
+    if nt_DorD1Chars_0_ipg_end != 0 {
+      self_ipg_start = self_ipg_start.min(left + nt_DorD1Chars_0_ipg_start);
+      self_ipg_end = self_ipg_end.max(left + nt_DorD1Chars_0_ipg_end);
     }
-    nt_AsciiString_0_ipg_end += left;
-    nt_AsciiString_0_ipg_start += left;
-    left = nt_AsciiString_0_ipg_start;
-    right = nt_AsciiString_0_ipg_end;
+    nt_DorD1Chars_0_ipg_end += left;
+    nt_DorD1Chars_0_ipg_start += left;
+    left = nt_DorD1Chars_0_ipg_start;
+    right = nt_DorD1Chars_0_ipg_end;
 
-    // { directoryIdentifier = AsciiString@0.value }
-    let mut self_directoryIdentifier = nt_AsciiString_0.value;
+    // { directoryIdentifier = DorD1Chars@0.value }
+    let mut self_directoryIdentifier = nt_DorD1Chars_0.value;
 
-    // OddPadByte@0(lengthOfDirectoryIdentifier)[AsciiString@0.END, EOI]
-    left = nt_AsciiString_0_ipg_end as usize;
+    // OddPadByte@0(lengthOfDirectoryIdentifier)[DorD1Chars@0.END, EOI]
+    left = nt_DorD1Chars_0_ipg_end as usize;
     right = EOI as usize;
     if right < left || right > EOI { break '_ipg_alt; }
     let nt_OddPadByte_0_m = OddPadByte(input, begin + left, begin + right, self_lengthOfDirectoryIdentifier);
@@ -3157,7 +3235,7 @@ fn MPathTableRecord(input: &[u8], begin: usize, end: usize) -> Option<(usize, us
   return None;
 }
 
-fn ExtendedAttributeRecord(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, ExtendedAttributeRecord)> {
+fn ExtendedAttributeRecord(input: &[u8], begin: usize, end: usize, a_enhanced: bool) -> Option<(usize, usize, ExtendedAttributeRecord)> {
   let EOI: usize = end - begin;
   '_ipg_alt: {
     let mut left: usize = EOI; let mut right: usize = 0;
@@ -3347,30 +3425,30 @@ fn ExtendedAttributeRecord(input: &[u8], begin: usize, end: usize) -> Option<(us
     // { recordLength = BB_U16@2.value }
     let mut self_recordLength = nt_BB_U16_2.value;
 
-    // AsciiString@0[BB_U16@2.END, BB_U16@2.END + 32]
+    // AorA1Chars@0(enhanced)[BB_U16@2.END, BB_U16@2.END + 32]
     left = nt_BB_U16_2_ipg_end as usize;
     right = (nt_BB_U16_2_ipg_end + 32 as usize) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
-    let nt_AsciiString_0_m = AsciiString(input, begin + left, begin + right);
-    let (mut nt_AsciiString_0_ipg_start, mut nt_AsciiString_0_ipg_end, nt_AsciiString_0) = match nt_AsciiString_0_m {
+    let nt_AorA1Chars_0_m = AorA1Chars(input, begin + left, begin + right, a_enhanced);
+    let (mut nt_AorA1Chars_0_ipg_start, mut nt_AorA1Chars_0_ipg_end, nt_AorA1Chars_0) = match nt_AorA1Chars_0_m {
       None => { break '_ipg_alt; }
       Some(p) => p,
     };
-    if nt_AsciiString_0_ipg_end != 0 {
-      self_ipg_start = self_ipg_start.min(left + nt_AsciiString_0_ipg_start);
-      self_ipg_end = self_ipg_end.max(left + nt_AsciiString_0_ipg_end);
+    if nt_AorA1Chars_0_ipg_end != 0 {
+      self_ipg_start = self_ipg_start.min(left + nt_AorA1Chars_0_ipg_start);
+      self_ipg_end = self_ipg_end.max(left + nt_AorA1Chars_0_ipg_end);
     }
-    nt_AsciiString_0_ipg_end += left;
-    nt_AsciiString_0_ipg_start += left;
-    left = nt_AsciiString_0_ipg_start;
-    right = nt_AsciiString_0_ipg_end;
+    nt_AorA1Chars_0_ipg_end += left;
+    nt_AorA1Chars_0_ipg_start += left;
+    left = nt_AorA1Chars_0_ipg_start;
+    right = nt_AorA1Chars_0_ipg_end;
 
-    // { systemIdentifier = AsciiString@0.value }
-    let mut self_systemIdentifier = nt_AsciiString_0.value;
+    // { systemIdentifier = AorA1Chars@0.value }
+    let mut self_systemIdentifier = nt_AorA1Chars_0.value;
 
-    // HexBytes@0[AsciiString@0.END, AsciiString@0.END + 64]
-    left = nt_AsciiString_0_ipg_end as usize;
-    right = (nt_AsciiString_0_ipg_end + 64 as usize) as usize;
+    // HexBytes@0[AorA1Chars@0.END, AorA1Chars@0.END + 64]
+    left = nt_AorA1Chars_0_ipg_end as usize;
+    right = (nt_AorA1Chars_0_ipg_end + 64 as usize) as usize;
     if right < left || right > EOI { break '_ipg_alt; }
     let nt_HexBytes_0_m = HexBytes(input, begin + left, begin + right);
     let (mut nt_HexBytes_0_ipg_start, mut nt_HexBytes_0_ipg_end, nt_HexBytes_0) = match nt_HexBytes_0_m {
@@ -3584,7 +3662,7 @@ fn OddPadByte(input: &[u8], begin: usize, end: usize, a_n: u8) -> Option<(usize,
   return None;
 }
 
-fn AsciiString(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, AsciiString)> {
+fn A1Chars(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, A1Chars)> {
   let EOI: usize = end - begin;
   '_ipg_alt: {
     let mut left: usize = EOI; let mut right: usize = 0;
@@ -3600,10 +3678,91 @@ fn AsciiString(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, 
       self_ipg_end = self_ipg_end.max(right);
     }
 
-    // { value = decodeAscii(bytes) }
-    let mut self_value = decodeAscii(self_bytes);
+    // { value = decodeUtf16(bytes) }
+    let mut self_value = decodeUtf16(self_bytes);
 
-    return Some((self_ipg_start, self_ipg_end, AsciiString {
+    return Some((self_ipg_start, self_ipg_end, A1Chars {
+      value: self_value,
+    }));
+  }
+
+  return None;
+}
+
+fn D1Chars(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, D1Chars)> {
+  let EOI: usize = end - begin;
+  '_ipg_alt: {
+    let mut left: usize = EOI; let mut right: usize = 0;
+    let mut self_ipg_start: usize = EOI; let mut self_ipg_end: usize = 0;
+
+    // { bytes = *[0, EOI] }
+    left = 0 as usize;
+    right = EOI as usize;
+    if right < left || right > EOI { break '_ipg_alt; }
+    let mut self_bytes = (&input[begin + left .. begin + right]).to_vec();
+    if left != right {
+      self_ipg_start = self_ipg_start.min(left);
+      self_ipg_end = self_ipg_end.max(right);
+    }
+
+    // { value = decodeUtf16(bytes) }
+    let mut self_value = decodeUtf16(self_bytes);
+
+    return Some((self_ipg_start, self_ipg_end, D1Chars {
+      value: self_value,
+    }));
+  }
+
+  return None;
+}
+
+fn DorD1Chars(input: &[u8], begin: usize, end: usize, a_isEnhanced: bool) -> Option<(usize, usize, DorD1Chars)> {
+  let EOI: usize = end - begin;
+  '_ipg_alt: {
+    let mut left: usize = EOI; let mut right: usize = 0;
+    let mut self_ipg_start: usize = EOI; let mut self_ipg_end: usize = 0;
+
+    // { bytes = *[0, EOI] }
+    left = 0 as usize;
+    right = EOI as usize;
+    if right < left || right > EOI { break '_ipg_alt; }
+    let mut self_bytes = (&input[begin + left .. begin + right]).to_vec();
+    if left != right {
+      self_ipg_start = self_ipg_start.min(left);
+      self_ipg_end = self_ipg_end.max(right);
+    }
+
+    // { value = isEnhanced ? decodeUtf16(bytes) : decodeAscii(bytes) }
+    let mut self_value = if a_isEnhanced { decodeUtf16(self_bytes) } else { decodeAscii(self_bytes) };
+
+    return Some((self_ipg_start, self_ipg_end, DorD1Chars {
+      value: self_value,
+    }));
+  }
+
+  return None;
+}
+
+fn AorA1Chars(input: &[u8], begin: usize, end: usize, a_isEnhanced: bool) -> Option<(usize, usize, AorA1Chars)> {
+  let EOI: usize = end - begin;
+  '_ipg_alt: {
+    let mut left: usize = EOI; let mut right: usize = 0;
+    let mut self_ipg_start: usize = EOI; let mut self_ipg_end: usize = 0;
+
+    // { bytes = *[0, EOI] }
+    left = 0 as usize;
+    right = EOI as usize;
+    if right < left || right > EOI { break '_ipg_alt; }
+    let mut self_bytes = (&input[begin + left .. begin + right]).to_vec();
+    if left != right {
+      self_ipg_start = self_ipg_start.min(left);
+      self_ipg_end = self_ipg_end.max(right);
+    }
+
+    // { value = isEnhanced ? decodeUtf16(bytes) : decodeAscii(bytes) }
+    let mut self_value = if a_isEnhanced { decodeUtf16(self_bytes) } else { decodeAscii(self_bytes) };
+
+    return Some((self_ipg_start, self_ipg_end, AorA1Chars {
       value: self_value,
     }));
   }
