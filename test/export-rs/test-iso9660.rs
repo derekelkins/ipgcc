@@ -8,10 +8,10 @@
 
 type AString = String;
 
-fn decodeAscii(bytes: &[u8]) -> String { String::from(std::str::from_utf8(bytes).unwrap()) }
-fn decodeAscii2(bytes: &[u8]) -> String { String::from(std::str::from_utf8(bytes).unwrap()) }
+fn decodeAscii(bytes: Vec<u8>) -> String { String::from_utf8(bytes).unwrap() }
+fn decodeAscii2(bytes: Vec<u8>) -> String { String::from_utf8(bytes).unwrap() }
 fn length<a>(xs: &[a]) -> usize { xs.len() }
-fn asHex(bs: &[u8]) -> String { format!("{:02X?}", bs) }
+fn asHex(bs: Vec<u8>) -> String { format!("{:02X?}", bs) }
 
 // TODO: The variants should really be records rather than tuples, but I don't feel like
 // making the adapter functions.
@@ -283,6 +283,21 @@ struct PathTableRecord {
 }
 
 #[derive(Clone, Debug)]
+struct AsciiString {
+  value: AString,
+}
+
+#[derive(Clone, Debug)]
+struct AChars {
+  value: AString,
+}
+
+#[derive(Clone, Debug)]
+struct DChars {
+  value: AString,
+}
+
+#[derive(Clone, Debug)]
 struct DateAndTime {
   day: AString,
   gmtOffset: u8,
@@ -292,6 +307,36 @@ struct DateAndTime {
   month: AString,
   second: AString,
   year: AString,
+}
+
+#[derive(Clone, Debug)]
+struct Digits {
+  value: AString,
+}
+
+#[derive(Clone, Debug)]
+struct HexBytes {
+  value: AString,
+}
+
+#[derive(Clone, Debug)]
+struct LE_U16 {
+  value: i64,
+}
+
+#[derive(Clone, Debug)]
+struct BE_U16 {
+  value: i64,
+}
+
+#[derive(Clone, Debug)]
+struct LE_U32 {
+  value: i64,
+}
+
+#[derive(Clone, Debug)]
+struct BE_U32 {
+  value: i64,
 }
 
 #[derive(Clone, Debug)]
@@ -361,66 +406,12 @@ struct OddPadByte {
 }
 
 #[derive(Clone, Debug)]
-struct AsciiString {
-  bytes: Vec<u8>,
-  value: AString,
-}
-
-#[derive(Clone, Debug)]
-struct AChars {
-  bytes: Vec<u8>,
-  value: AString,
-}
-
-#[derive(Clone, Debug)]
-struct DChars {
-  bytes: Vec<u8>,
-  value: AString,
-}
-
-#[derive(Clone, Debug)]
-struct Digits {
-  value: AString,
-  values: Vec<u8>,
-}
-
-#[derive(Clone, Debug)]
 struct Digit {
   value: u8,
 }
 
 #[derive(Clone, Debug)]
-struct HexBytes {
-  bytes: Vec<u8>,
-  value: AString,
-}
-
-#[derive(Clone, Debug)]
-struct LE_U16 {
-  b: Vec<u8>,
-  value: i64,
-}
-
-#[derive(Clone, Debug)]
-struct BE_U16 {
-  b: Vec<u8>,
-  value: i64,
-}
-
-#[derive(Clone, Debug)]
 struct BB_U16 {
-  value: i64,
-}
-
-#[derive(Clone, Debug)]
-struct LE_U32 {
-  b: Vec<u8>,
-  value: i64,
-}
-
-#[derive(Clone, Debug)]
-struct BE_U32 {
-  b: Vec<u8>,
   value: i64,
 }
 
@@ -3609,11 +3600,10 @@ fn AsciiString(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, 
       self_ipg_end = self_ipg_end.max(right);
     }
 
-    // { value = decodeAscii(ref(bytes)) }
-    let mut self_value = decodeAscii(&(self_bytes));
+    // { value = decodeAscii(bytes) }
+    let mut self_value = decodeAscii(self_bytes);
 
     return Some((self_ipg_start, self_ipg_end, AsciiString {
-      bytes: self_bytes,
       value: self_value,
     }));
   }
@@ -3637,11 +3627,10 @@ fn AChars(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, AChar
       self_ipg_end = self_ipg_end.max(right);
     }
 
-    // { value = decodeAscii(ref(bytes)) }
-    let mut self_value = decodeAscii(&(self_bytes));
+    // { value = decodeAscii(bytes) }
+    let mut self_value = decodeAscii(self_bytes);
 
     return Some((self_ipg_start, self_ipg_end, AChars {
-      bytes: self_bytes,
       value: self_value,
     }));
   }
@@ -3665,11 +3654,10 @@ fn DChars(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, DChar
       self_ipg_end = self_ipg_end.max(right);
     }
 
-    // { value = decodeAscii(ref(bytes)) }
-    let mut self_value = decodeAscii(&(self_bytes));
+    // { value = decodeAscii(bytes) }
+    let mut self_value = decodeAscii(self_bytes);
 
     return Some((self_ipg_start, self_ipg_end, DChars {
-      bytes: self_bytes,
       value: self_value,
     }));
   }
@@ -3900,12 +3888,11 @@ fn Digits(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, Digit
       }
     };
 
-    // { value = decodeAscii2(ref(values)) }
-    let mut self_value = decodeAscii2(&(self_values));
+    // { value = decodeAscii2(values) }
+    let mut self_value = decodeAscii2(self_values);
 
     return Some((self_ipg_start, self_ipg_end, Digits {
       value: self_value,
-      values: self_values,
     }));
   }
 
@@ -3953,11 +3940,10 @@ fn HexBytes(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, Hex
       self_ipg_end = self_ipg_end.max(right);
     }
 
-    // { value = asHex(ref(bytes)) }
-    let mut self_value = asHex(&(self_bytes));
+    // { value = asHex(bytes) }
+    let mut self_value = asHex(self_bytes);
 
     return Some((self_ipg_start, self_ipg_end, HexBytes {
-      bytes: self_bytes,
       value: self_value,
     }));
   }
@@ -3985,7 +3971,6 @@ fn LE_U16(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, LE_U1
     let mut self_value = (self_b[1] as i64) << 8 | (self_b[0] as i64);
 
     return Some((self_ipg_start, self_ipg_end, LE_U16 {
-      b: self_b,
       value: self_value,
     }));
   }
@@ -4013,7 +3998,6 @@ fn BE_U16(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, BE_U1
     let mut self_value = (self_b[0] as i64) << 8 | (self_b[1] as i64);
 
     return Some((self_ipg_start, self_ipg_end, BE_U16 {
-      b: self_b,
       value: self_value,
     }));
   }
@@ -4097,7 +4081,6 @@ fn LE_U32(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, LE_U3
     let mut self_value = (self_b[3] as i64) << 24 | (self_b[2] as i64) << 16 | (self_b[1] as i64) << 8 | (self_b[0] as i64);
 
     return Some((self_ipg_start, self_ipg_end, LE_U32 {
-      b: self_b,
       value: self_value,
     }));
   }
@@ -4125,7 +4108,6 @@ fn BE_U32(input: &[u8], begin: usize, end: usize) -> Option<(usize, usize, BE_U3
     let mut self_value = (self_b[0] as i64) << 24 | (self_b[1] as i64) << 16 | (self_b[2] as i64) << 8 | (self_b[3] as i64);
 
     return Some((self_ipg_start, self_ipg_end, BE_U32 {
-      b: self_b,
       value: self_value,
     }));
   }

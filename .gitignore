@@ -6,6 +6,8 @@ package-lock.json
 cabal.project
 cabal.project.local
 
+examples/
+
 Cargo.toml
 Cargo.lock
 /target

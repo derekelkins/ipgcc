@@ -8,10 +8,10 @@
 
 type AString = String;
 
-fn decodeAscii(bytes: &[u8]) -> String { String::from(std::str::from_utf8(bytes).unwrap()) }
-fn decodeAscii2(bytes: &[u8]) -> String { String::from(std::str::from_utf8(bytes).unwrap()) }
+fn decodeAscii(bytes: Vec<u8>) -> String { String::from_utf8(bytes).unwrap() }
+fn decodeAscii2(bytes: Vec<u8>) -> String { String::from_utf8(bytes).unwrap() }
 fn length<a>(xs: &[a]) -> usize { xs.len() }
-fn asHex(bs: &[u8]) -> String { format!("{:02X?}", bs) }
+fn asHex(bs: Vec<u8>) -> String { format!("{:02X?}", bs) }
 
 // TODO: The variants should really be records rather than tuples, but I don't feel like
 // making the adapter functions.
@@ -695,12 +695,15 @@ EvenPadByte(n) -> ?[ n % 2 == 0 ] "\x00" / ""; // 10.1.13
 rule OddPadByte(n: U8);
 OddPadByte(n) -> ?[ n % 2 == 1 ] "\x00" / ""; // 10.4.7
 
-AsciiString -> { bytes = * } { value = decodeAscii(ref(bytes)) };
+rule AsciiString: { value: AString };
+AsciiString -> { bytes = * } { value = decodeAscii(bytes) };
 
 // See 8.4.1 and Annex A.
 // SEPARATOR 1 is 0x2E ('.'), SEPARATOR 2 (';') is 0x3B and FILLER is 0x20 (' ')
-AChars -> { bytes = * } { value = decodeAscii(ref(bytes)) }; // TODO: Actually check these are a-characters.
-DChars -> { bytes = * } { value = decodeAscii(ref(bytes)) }; // TODO: Actually check these are d-characters.
+rule AChars: { value: AString };
+AChars -> { bytes = * } { value = decodeAscii(bytes) };
+rule DChars: { value: AString };
+DChars -> { bytes = * } { value = decodeAscii(bytes) };
 
 typedef DateAndTime = {
     year: AString,
@@ -725,22 +728,28 @@ DateAndTime
        Digits[2] { hundrethsOfSecond = Digits.value }
        { gmtOffset = . }; // Offset from GMT in 15min increments from -48 to 52.
 
-Digits -> repeat Digit.value { value = decodeAscii2(ref(values)) };
+rule Digits: { value: AString };
+Digits -> repeat Digit.value { value = decodeAscii2(values) };
 Digit -> { value = . } ?[ value == 0 || value >= 0x30 && value <= 0x39 ];
 
-HexBytes -> { bytes = * } { value = asHex(ref(bytes)) };
+rule HexBytes: { value: AString };
+HexBytes -> { bytes = * } { value = asHex(bytes) };
 
+rule LE_U16: { value: Int };
 LE_U16 -> { b = *[2] } { value = (b[1] :: Int << 8) | (b[0] :: Int) }; // 8.2.2
 
+rule BE_U16: { value: Int };
 BE_U16 -> { b = *[2] } { value = (b[0] :: Int << 8) | (b[1] :: Int) }; // 8.2.3
 
 // Both-byte orders
 BB_U16 -> LE_U16 BE_U16 ?[ LE_U16.value == BE_U16.value ] { value = LE_U16.value }; // 8.2.4
 
+rule LE_U32: { value: Int };
 LE_U32 -> // 8.3.2
     { b = *[4] }
     { value = (b[3] :: Int << 24) | (b[2] :: Int << 16) | (b[1] :: Int << 8) | (b[0] :: Int) };
 
+rule BE_U32: { value: Int };
 BE_U32 -> // 8.3.3
     { b = *[4] }
     { value = (b[0] :: Int << 24) | (b[1] :: Int << 16) | (b[2] :: Int << 8) | (b[3] :: Int) };

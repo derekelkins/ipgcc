@@ -272,7 +272,6 @@ typeCheck
     -> Either Out (Environments nt t id)
 typeCheck ctxt (Grammar decls) = case errs of [] -> Right envs; (err:_) -> Left err
   where (rules, consts, tyEnv, ruleDecls, funDecls) = partitionDeclarations decls
-        -- TODO: Need to handle mutual recursion.
         tyEnv' = Map.fromList (map (\(n, vs, ty) -> (n, (vs, ty))) tyEnv)
         fTypes' = Map.fromList (map (\(n, tys, ty) -> (n, (map snd tys, ty))) funDecls)
         -- Add zero-arity rules that don't have explicit declarations so we don't need to write them.
@@ -306,7 +305,7 @@ typeCheckConsts ctxt envs eAcc acc (c@(n, _, _):cs) =
     typeCheckConsts ctxt envs eAcc' (Map.insert n ty acc) cs
   where (eAcc', ty) =
             case typeCheckConst ctxt envs c of
-                Left err -> (err:eAcc, error ("TODO: typeCheckConsts\n" <> outToString err))
+                Left err -> (err:eAcc, error ("typeCheckConsts\n" <> outToString err))
                 Right ty' -> (eAcc, ty')
 
 typeCheckConst
@@ -335,14 +334,14 @@ typeCheckRules
     -> ([Out], RuleTypes (Note nt t id) nt id)
 typeCheckRules _ _ _ eAcc acc [] = (eAcc, acc)
 typeCheckRules ctxt envs argTys eAcc acc (r@(Rule _ nt _ _):rs) =
-    if not (nt `Map.member` argTys) then (missingDeclErr:eAcc, error "TODO: typeCheckRules1")
+    if not (nt `Map.member` argTys) then (missingDeclErr:eAcc, error "typeCheckRules1")
         else typeCheckRules ctxt envs argTys eAcc' (Map.insert nt (tys, ty) acc) rs
   where (tys, mty) =
             case Map.lookup nt argTys of ~(Just y) -> y
         missingDeclErr = ntOut ctxt nt <> " needs a rule declaration because it has parameters"
         (eAcc', ty) =
             case typeCheckRule ctxt envs r tys mty of
-                Left err -> (err:eAcc, error ("TODO: typeCheckRules2\n" <> outToString err))
+                Left err -> (err:eAcc, error ("typeCheckRules2\n" <> outToString err))
                 Right ty' -> (eAcc, ty')
 
 typeCheckRule

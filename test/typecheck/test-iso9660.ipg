@@ -443,8 +443,8 @@ String -> { bytes = * } { value = decodeAscii(bytes) };
 
 // See 8.4.1 and Annex A.
 // SEPARATOR 1 is 0x2E ('.'), SEPARATOR 2 (';') is 0x3B and FILLER is 0x20 (' ')
-AChars -> { bytes = * } { value = decodeAscii(bytes) }; // TODO: Actually check these are a-characters.
-DChars -> { bytes = * } { value = decodeAscii(bytes) }; // TODO: Actually check these are d-characters.
+AChars -> { bytes = * } { value = decodeAscii(bytes) };
+DChars -> { bytes = * } { value = decodeAscii(bytes) };
 
 typedef DateAndTime = {
     year: String,

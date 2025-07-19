@@ -72,18 +72,16 @@ defaultContext = Context {
 u :: (T, Int) -> Out
 u (nt, n) = Builder.byteString nt <> "_" <> Builder.intDec n
 
--- TODO: Add more primitive types (e.g. u8/u16/u32/u64/i8/i16/i32/i64/f32) to IPG itself?
+-- TODO: Add more primitive types (e.g. u16/u32/u64/i8/i16/i32/i64/f32) to IPG itself?
 
--- TODO: Evaluate the need for the clones. Worst-case scenario, the user can use a clone
--- function when necessary.
 refToRust :: Context -> Env -> Ref T T Expr -> Out
 refToRust c env (Id x)
     | x == iterationVar c = [i|i_#{x}|]
     | x `Set.member` env  = [i|a_#{x}|]
     | not (x `Set.member` constants c) = [i|self_#{x}|]
     | otherwise = [i|#{x}|]
-refToRust _ _   (Attr nt "this") = [i|nt_#{u nt}|] -- TODO: .clone()|]
-refToRust _ _   (Attr nt "these") = [i|seq_#{u nt}|] -- TODO: .clone()|]
+refToRust _ _   (Attr nt "this") = [i|nt_#{u nt}|]
+refToRust _ _   (Attr nt "these") = [i|seq_#{u nt}|]
 refToRust _ _   (Attr nt f) = [i|nt_#{u nt}.#{f}|]
 refToRust c env (Index nt e "this") =
     [i|seq_#{u nt}[(#{exprToRust c env e} - seq_#{u nt}_start.into()) as usize].clone()|]
@@ -422,13 +420,13 @@ typeToRust _ BoolTy = "bool"
 typeToRust _ U8Ty = "u8"
 typeToRust _ IntTy = "i64"
 typeToRust _ FloatTy = "f64"
-typeToRust _ StringTy = "Vec<u8>" -- "String" -- TODO: Change based on whether this is a parameter or not?
-typeToRust _ (RowTy fs) = error [i|Row types need to be named...\n#{show fs}|] -- TODO
-typeToRust c (ArrayTy ty) = "Vec<" <> typeToRust c ty <> ">" -- TODO
+typeToRust _ StringTy = "Vec<u8>"
+typeToRust _ (RowTy fs) = error [i|Row types need to be named...\n#{show fs}|]
+typeToRust c (ArrayTy ty) = "Vec<" <> typeToRust c ty <> ">"
 typeToRust c (TyApp "Ref" [ty]) = "&" <> typeToRust c ty
 typeToRust c (TyApp "RefMut" [ty]) = "&mut " <> typeToRust c ty
 typeToRust _ (TyApp t []) = Builder.byteString t
-typeToRust c (TyApp t tys) = -- TODO
+typeToRust c (TyApp t tys) =
     Builder.byteString t <> "<" <> mconcat (intersperse ", " $ map (typeToRust c) tys) <> ">"
 typeToRust _ (ExternalTy t) = Builder.byteString t
 typeToRust _ (TyVar v) = Builder.byteString (BS.drop 1 v)
@@ -459,6 +457,7 @@ ruleDeclToRust c (nt, _, ty) = toStruct ty
           toStruct (Just _) = ""
           toStruct Nothing = error "Shouldn't happen if the code is annotated first"
 
+-- TODO: Make derived traits configurable.
 struct :: Context -> T -> Map.Map T (Ty T T) -> Out
 struct c t fs = [i|\#[derive(Clone, Debug)]\nstruct #{t} {\n#{foldMap toField (Map.toList fs)}}\n|]
   where toField :: (T, Ty T T) -> Out
