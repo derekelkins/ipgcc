@@ -4,6 +4,7 @@
 #![allow(unused_mut)]
 #![allow(unused_assignments)]
 #![allow(unused_variables)]
+#![allow(non_camel_case_types)]
 
 use image::{RgbaImage, Rgba, error::ImageResult};
 use std::fs;
@@ -24,7 +25,7 @@ fn render(width: u32, height: u32, colors: &[Color], out_path: &str) -> ImageRes
 #[derive(Clone, Copy, Debug)]
 struct Color { r: u8, g: u8, b: u8, a: u8 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct State {
     prev_color: Color,
     history: [Color; 64],
@@ -96,13 +97,13 @@ fn Run(state: &mut State, runLength: u8) {
 fn wrapping_sub(x: u8, y: u8) -> u8 { x.wrapping_sub(y) }
 
 type ChunkType = ();
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Chunk {
   run: ChunkType,
   tag: Vec<u8>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct QOI {
   channels: u8,
   colorspace: u8,
@@ -111,7 +112,7 @@ struct QOI {
   width: i64,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct QOIHeader {
   channels: u8,
   colorspace: u8,
@@ -119,27 +120,27 @@ struct QOIHeader {
   width: i64,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct QOIChunks {
   values: Vec<ChunkType>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct QOIChunk {
   chunk: ChunkType,
   tagByte: u8,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct EndMarker {
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct U8 {
   value: u8,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct BE_U32 {
   bs: Vec<u8>,
   value: i64,

@@ -5,7 +5,7 @@
 #![allow(unused_assignments)]
 #![allow(unused_variables)]
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum ChunkType {
     RGB(u8, u8, u8),
     RGBA(u8, u8, u8, u8),
@@ -18,13 +18,13 @@ enum ChunkType {
 use ChunkType::*;
 
 fn wrapping_sub(x: u8, y: u8) -> u8 { x.wrapping_sub(y) }
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Chunk {
   chunk: ChunkType,
   tag: Vec<u8>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct QOI {
   channels: u8,
   chunks: Vec<ChunkType>,
@@ -33,7 +33,7 @@ struct QOI {
   width: i64,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct QOIHeader {
   channels: u8,
   colorspace: u8,
@@ -41,27 +41,27 @@ struct QOIHeader {
   width: i64,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct QOIChunks {
   values: Vec<ChunkType>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct QOIChunk {
   chunk: ChunkType,
   tagByte: u8,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct EndMarker {
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct U8 {
   value: u8,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct BE_U32 {
   bs: Vec<u8>,
   value: i64,

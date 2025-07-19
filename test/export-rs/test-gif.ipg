@@ -1,0 +1,201 @@
+#![allow(non_snake_case)]
+#![allow(dead_code)]
+#![allow(unreachable_code)]
+#![allow(unused_mut)]
+#![allow(unused_assignments)]
+#![allow(unused_variables)]
+
+#[derive(Clone, Debug)]
+enum Extension {
+    NoExt(),
+    GraphicControlExt(u8, bool, bool, i64, u8),
+    ApplicationExt(String, String, Vec<u8>),
+    CommentExt(String),
+    TableBasedImageExt(ImageDescriptor, Vec<Color>, ImageData),
+    PlainTextExt(i64, i64, i64, i64, u8, u8, u8, u8, Vec<u8>),
+    GraphicBlockExt(Box<Extension>, Box<Extension>),
+}
+
+use Extension::*;
+
+fn GBExt(extension: Extension, renderingBlock: Extension) -> Extension {
+    GraphicBlockExt(Box::new(extension), Box::new(renderingBlock))
+}
+
+fn emptyTable() -> Vec<Color> { vec![] }
+fn concat(chunks: &[Vec<u8>]) -> Vec<u8> { chunks.concat() }
+fn decodeAscii(bytes: &[u8]) -> String { String::from(std::str::from_utf8(bytes).unwrap()) }
+
+%preamble_end
+
+%declare_type Extension %end
+
+typedef Color = { r: U8, g: U8, b: U8 };
+typedef ExtensionBlock = { extension: Extension };
+typedef Ref('a) = 'a;
+
+function ref(x: 'a): 'a;
+function emptyTable(): [Color];
+function concat(chunks: Ref([String])): String;
+function decodeAscii(bytes: Ref(String)): String;
+
+function NoExt(): Extension;
+function GBExt(extension: Extension, renderingBlock: Extension): Extension;
+function GraphicControlExt(
+    disposalMethod: U8,
+    userInputFlag: Bool,
+    transparentColorFlag: Bool,
+    delayTime: Int,
+    transparentColorIndex: U8
+): Extension;
+function ApplicationExt(id: String, authCode: String, data: String): Extension;
+function CommentExt(comment: String): Extension;
+function TableBasedImageExt(descriptor: {}, ct: [Color], data: {}): Extension;
+function PlainTextExt(
+    tglp: Int, tgtp: Int, tgw: Int, tgh: Int, ccw: U8, cch: U8, tfci: U8, tbci: U8, data: String
+): Extension;
+
+// Instead of adapting the versions from the paper's resources, I'm just going to implement from
+// scratch from the spec. https://giflib.sourceforge.net/gifstandard/GIF89a.html
+GIF -> Header
+       LogicalScreen { logicalScreen = LogicalScreen.this }
+       Blocks { blocks = Blocks.values };
+
+Header -> "GIF89a";
+
+LogicalScreen
+    -> LogicalScreenDescriptor
+       MaybeColorTable(LogicalScreenDescriptor.hasGlobalColorTable)[3*LogicalScreenDescriptor.globalColorTableSize]
+       { descriptor = LogicalScreenDescriptor.this }
+       { globalColorTable = MaybeColorTable.table };
+
+LogicalScreenDescriptor
+    -> U16 { width = U16.value }
+       U16 { height = U16.value }
+       { packedFields = . }
+       { backgroundColorIndex = . }
+       { pixelAspectRation = . }
+       { hasGlobalColorTable = (packedFields >> 7) == 1 }
+       { colorResolution = ((packedFields >> 4) & 0x07u8) + 1u8 }
+       { sorted = (packedFields >> 3) & 0x01u8 }
+       { globalColorTableSize = 2 << (packedFields & 0x07) };
+       // Even if hasGlobalColorTable == 0, globalColorTableSize will be set like this.
+
+rule MaybeColorTable(hasColorTable: Bool): { table: [Color] };
+MaybeColorTable(hasColorTable)
+    -> ?[ !hasColorTable ] { table = emptyTable() }
+     / ColorTable { table = ColorTable.table };
+
+ColorTable -> for i=0 to EOI/3 do RGB[3*i, 3*i + 3] { table = RGB.these };
+
+Blocks -> repeat Block.extension until Trailer;
+
+rule Block: ExtensionBlock;
+Block
+    -> GraphicBlock { extension = GraphicBlock.extension }
+     / ApplicationExtension { extension = ApplicationExtension.extension }
+     / CommentExtension { extension = CommentExtension.extension };
+
+GraphicBlock
+    -> MaybeGraphicControlExtension
+       GraphicRenderingBlock
+       { extension = GBExt(MaybeGraphicControlExtension.extension,
+                                  GraphicRenderingBlock.extension) };
+
+MaybeGraphicControlExtension
+    -> "!\xF9"
+       "\x04" // size
+       { packedFields = . } // { reserved:3, disposalMethod:3, userInputFlag:1, transparentColorFlag: 1 }
+       { disposalMethod = (packedFields >> 2) & 0x07u8 }
+       { userInputFlag = ((packedFields >> 1) & 0x01) == 1 }
+       { transparentColorFlag = (packedFields & 0x01) == 1 }
+       U16 { delayTime = U16.value }
+       { transparentColorIndex = . }
+       BlockTerminator
+       { extension = GraphicControlExt(
+            disposalMethod, userInputFlag, transparentColorFlag, delayTime, transparentColorIndex) }
+     / { extension = NoExt() };
+
+
+GraphicRenderingBlock
+    -> TableBasedImage { extension = TableBasedImage.extension }
+     / PlainTextExtension { extension = PlainTextExtension.extension };
+
+TableBasedImage
+    -> ImageDescriptor
+       MaybeColorTable(ImageDescriptor.localColorTableFlag)[3*ImageDescriptor.localColorTableSize]
+       ImageData
+       { extension = TableBasedImageExt(ImageDescriptor.this, MaybeColorTable.table, ImageData.this) };
+
+ImageDescriptor
+    -> ","
+       U16 { imageLeftPosition = U16.value }
+       U16 { imageTopPosition = U16.value }
+       U16 { imageWidth = U16.value }
+       U16 { imageHeight = U16.value }
+       { packedFields = . }
+       { localColorTableFlag = (packedFields >> 7) == 1 }
+       { interlaceFlag = ((packedFields >> 6) & 0x01) == 1 }
+       { sorted = ((packedFields >> 5) & 0x01) == 1 }
+       { localColorTableSize = 2 << (packedFields & 0x07) };
+
+ImageData
+    -> { lzwMinimumCodeSize = . }
+       Subblocks { imageData = concat(ref(Subblocks.values)) };
+
+PlainTextExtension
+    -> "!\x01"
+       "\x03" // size of this subblock which doesn't include the PlainTextData subblocks
+       U16 { textGridLeftPosition = U16.value }
+       U16 { textGridTopPosition = U16.value }
+       U16 { textGridWidth = U16.value }
+       U16 { textGridHeight = U16.value }
+       { characterCellWidth = . }
+       { characterCellHeight = . }
+       { textForegroundColorIndex = . }
+       { textBackgroundColorIndex = . }
+       Subblocks
+       { extension = PlainTextExt(
+            textGridLeftPosition, textGridTopPosition, textGridWidth,
+            textGridHeight, characterCellWidth, characterCellHeight,
+            textForegroundColorIndex, textBackgroundColorIndex, concat(ref(Subblocks.values))) };
+
+rule B(n: Int);
+B(n) -> { value = *[n] };
+
+rule ApplicationExtension: ExtensionBlock;
+ApplicationExtension
+    -> "!\xFF"
+       "\x0B" // size of this subblock which doesn't include the ApplicationData subblocks
+       B(8) { applicationIdentifier = decodeAscii(ref(B.value)) }
+       B(3) { applicationAuthenticationCode = decodeAscii(ref(B.value)) }
+       Subblocks { applicationData = concat(ref(Subblocks.values)) }
+       { extension = ApplicationExt(applicationIdentifier, applicationAuthenticationCode,
+                        applicationData) };
+
+rule CommentExtension: ExtensionBlock;
+CommentExtension
+    -> "!\xFE"
+       Subblocks { extension = CommentExt(decodeAscii(ref(concat(ref(Subblocks.values))))) };
+
+Subblocks -> repeat Subblock.data until BlockTerminator;
+
+Subblock -> { size = . } { data = *[size] };
+
+Trailer -> ";";
+
+U16 -> { bs = *[2] } { value = (bs[0] :: Int) | (bs[1] :: Int << 8) }; // Little-endian
+
+BlockTerminator -> "\x00";
+
+rule RGB: Color;
+RGB -> { r = . } { g = . } { b = . };
+
+%postamble_begin
+
+use std::fs;
+
+fn main() {
+    let input = fs::read("./test/node/samples/1.gif").unwrap();
+    println!("{:#?}", GIF(&input, 0, input.len()));
+}

@@ -76,7 +76,7 @@ LogicalScreenDescriptor
 
 rule MaybeColorTable(hasColorTable: Bool);
 MaybeColorTable(hasColorTable)
-    -> ?[ hasColorTable ] { table = emptyTable() }
+    -> ?[ !hasColorTable ] { table = emptyTable() }
      / ColorTable { table = ColorTable.table };
 
 ColorTable -> for i=0 to EOI/3 do RGB[3*i, 3*i + 3] { table = RGB.these };

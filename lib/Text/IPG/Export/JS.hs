@@ -133,7 +133,7 @@ paramList :: [T] -> T
 paramList = BS.concat . map (", a_"<>)
 
 argList :: [Out] -> Out
-argList = foldMap ((", "<>))
+argList = foldMap (", "<>)
 
 -- left and right will be the interval *actually* consumed by the previous term if
 -- it is a consuming term, otherwise it will be unchanged from earlier terms.

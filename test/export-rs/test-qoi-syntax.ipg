@@ -5,7 +5,7 @@
 #![allow(unused_assignments)]
 #![allow(unused_variables)]
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum ChunkType {
     RGB(u8, u8, u8),
     RGBA(u8, u8, u8, u8),

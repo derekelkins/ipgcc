@@ -50,7 +50,7 @@ LogicalScreenDescriptor
 rule MaybeColorTable(hasColorTable: Bool): { table: [{ b: U8, g: U8, r: U8 }] };
 
 MaybeColorTable(hasColorTable)
-  -> ?[ hasColorTable ]
+  -> ?[ !hasColorTable ]
      { table = emptyTable() }
    / ColorTable@0[0, EOI]
      { table = ColorTable@0.table };

@@ -4,6 +4,7 @@
 #![allow(unused_mut)]
 #![allow(unused_assignments)]
 #![allow(unused_variables)]
+#![allow(non_camel_case_types)]
 
 use image::{RgbaImage, Rgba, error::ImageResult};
 use std::fs;
@@ -24,7 +25,7 @@ fn render(width: u32, height: u32, colors: &[Color], out_path: &str) -> ImageRes
 #[derive(Clone, Copy, Debug)]
 struct Color { r: u8, g: u8, b: u8, a: u8 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct State {
     prev_color: Color,
     history: [Color; 64],

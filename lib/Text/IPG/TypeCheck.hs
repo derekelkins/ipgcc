@@ -219,6 +219,7 @@ tyApp tyEnv t ts =
                 Just ty -> ty
                 Nothing -> error "tyApp: Extra type variables"
 
+type ExpTypes x id = Map.Map [Int] (Ty id x)
 type TypeDefs' x v id = Map.Map id ([v], Ty' v id x)
 type TypeDefs x id = TypeDefs' x id id
 type ConstTypes x id = Map.Map id (Ty id x)
@@ -271,21 +272,23 @@ typeCheck
     -> Either Out (Environments nt t id)
 typeCheck ctxt (Grammar decls) = case errs of [] -> Right envs; (err:_) -> Left err
   where (rules, consts, tyEnv, ruleDecls, funDecls) = partitionDeclarations decls
-        -- TODO: Need to handle mutual recursion and args.
+        -- TODO: Need to handle mutual recursion.
         tyEnv' = Map.fromList (map (\(n, vs, ty) -> (n, (vs, ty))) tyEnv)
         fTypes' = Map.fromList (map (\(n, tys, ty) -> (n, (map snd tys, ty))) funDecls)
         -- Add zero-arity rules that don't have explicit declarations so we don't need to write them.
         zeroArityRules = catMaybes
                             (map (\(Rule _ nt es _) -> if null es then Just nt else Nothing) rules)
         argTys' = Map.fromList (map (\(nt, es, mty) -> (nt, (map snd es, mty))) ruleDecls)
+        declaredRuleTypes = Map.mapMaybe (\(ts, mty) -> (,) ts <$> mty) argTys'
         argTys = Map.union argTys' (Map.fromList (map (\nt -> (nt, ([], Nothing))) zeroArityRules))
+        declaredConstTypes = Map.fromList (catMaybes (map (\(n, mty, _) -> (,) n <$> mty) consts))
         (cErrs, cTypes) = typeCheckConsts ctxt envs [] Map.empty consts
         (errs, rTypes) = typeCheckRules ctxt envs argTys cErrs Map.empty rules
-        envs = Environments {
+        envs = Environments { -- Knot tying
                  typeDefs = tyEnv',
-                 constTypes = cTypes,
+                 constTypes = Map.union declaredConstTypes cTypes, -- Prefer declarations
                  funTypes = fTypes',
-                 ruleTypes = rTypes,
+                 ruleTypes = Map.union declaredRuleTypes rTypes, -- Prefer declarations
                  locals = Map.empty,
                  localRuleTypes = Map.empty
                }

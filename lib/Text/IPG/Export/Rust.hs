@@ -25,6 +25,9 @@ type Out = Builder.Builder
 type Expr = Exp T T T T
 type Env = Set.Set T
 
+-- TODO: I need to annotate the entire expression tree to deal with type-based overloading of
+-- + and the various implicit conversion due to subtyping.
+
 -- TODO
 -- data RefType = MOVE | REF | REFMUT
 
@@ -83,9 +86,9 @@ refToRust _ _   (Attr nt "this") = [i|nt_#{u nt}|] -- TODO: .clone()|]
 refToRust _ _   (Attr nt "these") = [i|seq_#{u nt}|] -- TODO: .clone()|]
 refToRust _ _   (Attr nt f) = [i|nt_#{u nt}.#{f}|]
 refToRust c env (Index nt e "this") =
-    [i|seq_#{u nt}[(#{exprToRust c env e} - seq_#{u nt}_start) as usize].clone()|]
+    [i|seq_#{u nt}[(#{exprToRust c env e} - seq_#{u nt}_start.into()) as usize].clone()|]
 refToRust c env (Index nt e f) =
-    [i|seq_#{u nt}[(#{exprToRust c env e} - seq_#{u nt}_start) as usize].#{f}|]
+    [i|seq_#{u nt}[(#{exprToRust c env e} - seq_#{u nt}_start.into()) as usize].#{f}|]
 refToRust _ _   EOI = "EOI";
 refToRust _ _   (Start nt) = [i|nt_#{u nt}_ipg_start|]
 refToRust _ _   (End nt) = [i|nt_#{u nt}_ipg_end|]
@@ -95,6 +98,20 @@ exprToRust ctxt env e = exprToRust' ctxt env 0 e
 
 explode :: T -> Out
 explode = mconcat . intersperse ", " . map Builder.word8Dec . BS.unpack
+
+-- TODO: For now, this deals with inferred index expressions.
+indexExprToRust :: Context -> Env -> Int -> Expr -> Out
+indexExprToRust c env p (Bin Add l@(U8 _) r) =
+    outParen (p > 11) (exprToRust' c env 11 l <> " + " <> exprToRust' c env 14 r <> " as usize")
+indexExprToRust c env p (Bin Add l@(Int _) r) =
+    outParen (p > 11) (exprToRust' c env 11 l <> " + " <> exprToRust' c env 14 r <> " as usize")
+indexExprToRust c env p (Bin Add l@(Ref (End _)) r) =
+    outParen (p > 11) (exprToRust' c env 11 l <> " + " <> exprToRust' c env 14 r <> " as usize")
+indexExprToRust c env p (Bin Add l@(Ref (Start _)) r) =
+    outParen (p > 11) (exprToRust' c env 11 l <> " + " <> exprToRust' c env 14 r <> " as usize")
+indexExprToRust c env p (Bin Add l@(Bin Add _ _) r) =
+    outParen (p > 11) (exprToRust' c env 11 l <> " + " <> exprToRust' c env 14 r <> " as usize")
+indexExprToRust c env p e = exprToRust' c env p e
 
 -- TODO: Compare the precedences to the Rust precedences.
 -- See https://doc.rust-lang.org/reference/expressions.html
@@ -170,7 +187,7 @@ paramList :: Context -> [(T, Ty T T)] -> Out
 paramList c = mconcat . map (\(x, ty) -> ", a_" <> Builder.byteString x <> ": " <> typeToRust c ty)
 
 argList :: [Out] -> Out
-argList = foldMap ((", "<>))
+argList = foldMap (", "<>)
 
 mut :: Context -> Out
 mut c | mutableFields c = " mut"
@@ -198,14 +215,14 @@ termToRust indent c env z@(NonTerminal nt args l r)
    <> indent <> [i|nt_#{u nt}_ipg_start += left;\n|]
    <> indent <> [i|left = nt_#{u nt}_ipg_start;\n|]
    <> indent <> [i|right = nt_#{u nt}_ipg_end;\n\n|]
-  where lExp = exprToRust' c env 14 l; rExp = exprToRust' c env 14 r
+  where lExp = indexExprToRust c env 14 l; rExp = indexExprToRust c env 14 r
         es = map (exprToRust c env) args
 termToRust indent c env z@(Terminal "" l r)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> indent <> [i|left = #{lExp} as usize;\n|]
    <> indent <> [i|right = #{rExp} as usize;\n|]
    <> indent <>   "if right < left || right > EOI { break '_ipg_alt; }\n\n"
-  where lExp = exprToRust' c env 14 l; rExp = exprToRust' c env 14 r
+  where lExp = indexExprToRust c env 14 l; rExp = indexExprToRust c env 14 r
 termToRust indent c env z@(Terminal t l r)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> indent <> [i|left = #{lExp} as usize;\n|]
@@ -215,7 +232,7 @@ termToRust indent c env z@(Terminal t l r)
    <> indent <>   "self_ipg_start = self_ipg_start.min(left);\n"
    <> indent <> [i|right = left + #{BS.length t};\n|]
    <> indent <>   "self_ipg_end = self_ipg_end.max(right);\n\n"
-  where lExp = exprToRust' c env 14 l; rExp = exprToRust' c env 14 r; terminal = explode t
+  where lExp = indexExprToRust c env 14 l; rExp = indexExprToRust c env 14 r; terminal = explode t
 termToRust indent c env z@(x := e)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> indent <> [i|let#{mut c} self_#{x} = #{eExp};\n\n|]
@@ -253,7 +270,7 @@ termToRust indent c env z@(Array x start end nt args l r)
    <> indent <> [i|left = nt_#{u nt}_ipg_start;\n|]
    <> indent <> [i|right = nt_#{u nt}_ipg_end;\n\n|]
   where startExp = exprToRust' c env 14 start; endExp = exprToRust' c env 14 end
-        lExp = exprToRust' c' env 14 l; rExp = exprToRust' c' env 14 r
+        lExp = indexExprToRust c' env 14 l; rExp = indexExprToRust c' env 14 r
         es = map (exprToRust c' env) args
         c' = c { iterationVar = x }
 termToRust indent c env z@(Any x l)
@@ -275,7 +292,7 @@ termToRust indent c env z@(Slice x l r)
    <> indent <>   "  self_ipg_start = self_ipg_start.min(left);\n"
    <> indent <>   "  self_ipg_end = self_ipg_end.max(right);\n"
    <> indent <>   "}\n\n"
-  where lExp = exprToRust' c env 14 l; rExp = exprToRust' c env 14 r
+  where lExp = indexExprToRust c env 14 l; rExp = indexExprToRust c env 14 r
 termToRust indent c env z@(Repeat nt args l r x l0 r0)
     = indent <> [i|// #{pprintTerm z}\n|]
    <> indent <>   "let mut self_values = Vec::new();\n"
@@ -318,8 +335,8 @@ termToRust indent c env z@(Repeat nt args l r x l0 r0)
    <> indent <>   "  }\n"
    <> indent <>   "};\n\n"
   where es = map (exprToRust c env) args
-        lExp = exprToRust' c env 14 l; rExp = exprToRust' c env 14 r
-        l0Exp = exprToRust' c env 14 l0; r0Exp = exprToRust' c env 14 r0
+        lExp = indexExprToRust c env 14 l; rExp = indexExprToRust c env 14 r
+        l0Exp = indexExprToRust c env 14 l0; r0Exp = indexExprToRust c env 14 r0
         xAttr = refToRust c env (Attr nt x)
 termToRust indent c env z@(RepeatUntil nt1 args1 l r x l0 r0 nt2 args2)
     = indent <> [i|// #{pprintTerm z}\n|]
@@ -361,22 +378,30 @@ termToRust indent c env z@(RepeatUntil nt1 args1 l r x l0 r0 nt2 args2)
    <> indent <> [i|  right = #{rExp} as usize;\n|]
    <> indent <>   "}\n\n"
   where es1 = map (exprToRust c env) args1; es2 = map (exprToRust c env) args2
-        lExp = exprToRust' c env 14 l; rExp = exprToRust' c env 14 r
-        l0Exp = exprToRust' c env 14 l0; r0Exp = exprToRust' c env 14 r0
+        lExp = indexExprToRust c env 14 l; rExp = indexExprToRust c env 14 r
+        l0Exp = indexExprToRust c env 14 l0; r0Exp = indexExprToRust c env 14 r0
         xAttr = refToRust c env (Attr nt1 x)
 
-alternativeToRust :: Out -> Context -> Env -> Alternative T T T Expr -> Out
-alternativeToRust indent c env (Alternative ts)
+alternativeToRust :: Maybe (T, [T]) -> Out -> Context -> Env -> Alternative T T T Expr -> Out
+alternativeToRust instrument indent c env (Alternative ts)
     = indent <>   "'_ipg_alt: {\n"
    <> indent <>   "  let mut left: usize = EOI; let mut right: usize = 0;\n"
    <> indent <>   "  let mut self_ipg_start: usize = EOI; let mut self_ipg_end: usize = 0;\n\n"
    <>                foldMap (termToRust ("  " <> indent) c env) ts
+   <>                instrumentation
    <> indent <> [i|  return Some((self_ipg_start, self_ipg_end, #{structName} {\n|]
    <>                  foldMap setField fields
    <> indent <>   "  }));\n"
    <> indent <>   "}\n"
   where (structName, fields) = ruleRows c Map.! currentRule c
         setField f = indent <> [i|    #{f :: T}: self_#{f},\n|]
+        fieldList = mconcat (intersperse ", " (map (\f -> [i|("#{f}", &self_#{f})|]) fields)) :: T
+        instrumentation =
+            case instrument of
+                Nothing -> ""
+                Just (nt, args) -> indent <> "  " <>
+                    let args' = mconcat (intersperse ", " (map (\a -> [i|a_#{a}|]) args)) :: T
+                    in [i|eprintln!("{}({:?}) -> {:?}", "#{nt}", (#{args'}), (#{fieldList}));\n|]
 
 typeDeclToRust :: Context -> (T, [T], Ty T T) -> Out
 typeDeclToRust _ ("Ref", [_], _) = ""
@@ -389,8 +414,8 @@ typeDeclToRust c (t, xs, ty) = [i|type #{t}<#{xs'}> = #{typeToRust c ty};\n\n|]
     where xs' = mconcat (intersperse ", " (map (Builder.byteString . BS.drop 1) xs))
 
 constToRust :: Context -> (T, Maybe (Ty T T), Expr) -> Out
-constToRust c (n, Just ty, e) = [i|let #{n}: #{typeToRust c ty} = #{exprToRust c Set.empty e};\n|]
-constToRust c (n, Nothing, e) = [i|let #{n} = #{exprToRust c Set.empty e};\n|]
+constToRust c (n, Just ty, e) = [i|const #{n}: #{typeToRust c ty} = #{exprToRust c Set.empty e};\n|]
+constToRust c (n, Nothing, e) = [i|const #{n} = #{exprToRust c Set.empty e};\n|]
 
 typeToRust :: Context -> Ty T T -> Out
 typeToRust _ BoolTy = "bool"
@@ -415,7 +440,7 @@ ruleToRust c (Rule mt nt args alts) =
     [__i|
       #{export}fn #{nt}(input: &[u8], begin: usize, end: usize#{paramList c' tyArgs}) -> Option<(usize, usize, #{rt})> {
         let EOI: usize = end - begin;
-      #{foldMap (alternativeToRust "  " c' env) alts}
+      #{foldMap (alternativeToRust instrument "  " c' env) alts}
         return None;
       }\n\n
     |]
@@ -425,6 +450,7 @@ ruleToRust c (Rule mt nt args alts) =
         (rt, _) = ruleRows c Map.! nt
         tyArgs = zip args argTys
         c' = c { currentRule = nt }
+        instrument = if INSTRUMENT `elem` mt then Just (nt, args) else Nothing
 
 -- Turn rules with explicit row type results into structs with those rows as fields.
 ruleDeclToRust :: Context -> (T, [(T, Ty T T)], Maybe (Ty T T)) -> Out
@@ -434,7 +460,7 @@ ruleDeclToRust c (nt, _, ty) = toStruct ty
           toStruct Nothing = error "Shouldn't happen if the code is annotated first"
 
 struct :: Context -> T -> Map.Map T (Ty T T) -> Out
-struct c t fs = [i|\#[derive(Debug)]\nstruct #{t} {\n#{foldMap toField (Map.toList fs)}}\n|]
+struct c t fs = [i|\#[derive(Clone, Debug)]\nstruct #{t} {\n#{foldMap toField (Map.toList fs)}}\n|]
   where toField :: (T, Ty T T) -> Out
         toField (fieldName, ty') = [i|  #{fieldName}: #{typeToRust c ty'},\n|]
 
