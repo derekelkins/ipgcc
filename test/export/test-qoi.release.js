@@ -80,6 +80,7 @@ function _ipg_startsWith(s, l, r, prefix) {
   }
   return true;
 }
+function _ipg_oob() { throw "Out of bounds"; }
 function QOI(input, begin = 0, end = input.length) {
   const EOI = end - begin; let self;
   

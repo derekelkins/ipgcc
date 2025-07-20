@@ -286,13 +286,10 @@ behave as you expect. The first accesses the attribute associated to the *most
 recently preceding* invocation of the non-terminal `A`. `A(e).id` is similar
 but it applies to the most recent array term involving `A` and access the `id`
 attribute of the `e`-th element of that sequence. While it's currently unchecked,
-attempting to access an out of bounds element of the sequence will lead to failure.
-(TODO: I'm not sure if it should just be parse failure or a panic.)
+attempting to access an out of bounds element of the sequence will lead to an exception.
 Finally, `id` references either a parameter or an attribute on the current rule.
 Currently, it will always prefer a parameter, but I may change it to allow attributes
 to shadow parameters in following terms.
-
-TODO: Check out-of-bounds sequence accesses.
 
 Most of the actual *novel* semantics is due to the terms.
 

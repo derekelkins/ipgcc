@@ -145,6 +145,7 @@ async function _ipg_startsWith(input, l, r, prefix) {
   }
   return true;
 }
+function _ipg_oob() { throw "Out of bounds"; }
 export async function RM6(input, begin = 0, end = input.length) {
   const EOI = end - begin; let self;
   

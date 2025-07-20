@@ -28,6 +28,9 @@ type Env = Set.Set T
 -- TODO: I need to annotate the entire expression tree to deal with type-based overloading of
 -- + and the various implicit conversion due to subtyping.
 
+-- TODO: I could be smarter about moving (non-consuming) attribute assignments as late as possible
+-- to lessen issues of values used after they are moved.
+
 -- TODO
 -- data RefType = MOVE | REF | REFMUT
 
@@ -479,8 +482,6 @@ toRustWithContext c (Grammar decls) =
               TC.tOut = Builder.byteString,
               TC.ntOut = Builder.byteString
           }
-        -- rewrite (RuleDeclaration nt _ Nothing) =
-        --     error [i|Rule declaration for #{nt :: T} without return type|]
         rewrite (RuleDeclaration nt args (Just ty@(RowTy _))) =
             [TypeDeclaration nt [] ty, RuleDeclaration nt args (Just (TyApp nt []))]
         rewrite d = [d]
@@ -489,7 +490,7 @@ toRustWithContext' :: Context -> TC.Environments T T T -> Grammar T T T T Expr -
 toRustWithContext' c envs (Grammar decls) = Builder.toLazyByteString $
     foldMap (typeDeclToRust c') typeDecls
     <> foldMap (constToRust c') constDecls
-    <> foldMap (ruleDeclToRust c') ruleDecls -- If the return type is a row type, make a struct with the name of the rule with some prefix.
+    <> foldMap (ruleDeclToRust c') ruleDecls
     <> foldMap (ruleToRust c') ruleDefs
   where c' = c {
                 constants = Set.fromList (map  (\(n, _, _) -> n) constDecls),
@@ -498,7 +499,6 @@ toRustWithContext' c envs (Grammar decls) = Builder.toLazyByteString $
                 ruleRows =
                     Map.fromList
                         (map (\(nt, (_, ty)) -> getRows' nt ty) (Map.toList (TC.ruleTypes envs)))
-                -- funArgRefs =
              }
         (ruleDefs, constDecls, typeDecls, ruleDecls, _funDecls) = partitionDeclarations decls
         getRows' nt ty =

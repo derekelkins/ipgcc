@@ -27,6 +27,7 @@ function _ipg_startsWith(s, l, r, prefix) {
   }
   return true;
 }
+function _ipg_oob() { throw "Out of bounds"; }
 const _ipg_failTreeRoot = { children: [] };
 const _ipg_failTreeStack = [_ipg_failTreeRoot];
 function ELF(input, begin = 0, end = input.length) {
@@ -98,11 +99,11 @@ _ipg_failTreeStack.push(_ipg_currentFailTree);
     loopEnd = nt_H_0.e_shnum;
     seq_Sec_0 = new Array(Math.max(0, loopEnd - seq_Sec_0_start));
     for (let i_i = seq_Sec_0_start; i_i < loopEnd; i_i++) {
-      const left = seq_SH_0[i_i - seq_SH_0_start].sh_offset;
-      const right = seq_SH_0[i_i - seq_SH_0_start].sh_offset + seq_SH_0[i_i - seq_SH_0_start].sh_size;
+      const left = (seq_SH_0[i_i - seq_SH_0_start] ?? _ipg_oob()).sh_offset;
+      const right = (seq_SH_0[i_i - seq_SH_0_start] ?? _ipg_oob()).sh_offset + (seq_SH_0[i_i - seq_SH_0_start] ?? _ipg_oob()).sh_size;
     _ipg_failedTerm.left = left; _ipg_failedTerm.right = right;
       if (left < 0 || right < left || right > EOI) break _ipg_alt;
-      const tmp = Sec(input, begin + left, begin + right, seq_SH_0[i_i - seq_SH_0_start].sh_type);
+      const tmp = Sec(input, begin + left, begin + right, (seq_SH_0[i_i - seq_SH_0_start] ?? _ipg_oob()).sh_type);
       if (tmp === null) break _ipg_alt;
       if (tmp._ipg_end !== 0) {
         self._ipg_start = Math.min(self._ipg_start, left + tmp._ipg_start);

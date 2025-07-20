@@ -7,6 +7,7 @@ function _ipg_startsWith(s, l, r, prefix) {
   }
   return true;
 }
+function _ipg_oob() { throw "Out of bounds"; }
 const _ipg_failTreeRoot = { children: [] };
 const _ipg_failTreeStack = [_ipg_failTreeRoot];
 function QOI(input, begin = 0, end = input.length) {

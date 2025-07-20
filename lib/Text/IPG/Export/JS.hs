@@ -57,10 +57,12 @@ refToJS c _   (Attr nt "these")
     | otherwise = [i|seq_#{u nt}.map(({_ipg_start,_ipg_end,...o}) => o)|]
 refToJS _ _   (Attr nt f) = [i|nt_#{u nt}.#{f}|]
 refToJS c env (Index nt e "this")
-    | leaveExtraFields c = [i|seq_#{u nt}[#{exprToJS c env e} - seq_#{u nt}_start]|]
+    | leaveExtraFields c =
+        [i|(seq_#{u nt}[#{exprToJS c env e} - seq_#{u nt}_start] ?? _ipg_oob())|]
     | otherwise =
-        [i|(({_ipg_start,_ipg_end,...o}) => o)(seq_#{u nt}[#{exprToJS c env e} - seq_#{u nt}_start])|]
-refToJS c env (Index nt e f) = [i|seq_#{u nt}[#{exprToJS c env e} - seq_#{u nt}_start].#{f}|]
+        [i|(({_ipg_start,_ipg_end,...o}) => o)(seq_#{u nt}[#{exprToJS c env e} - seq_#{u nt}_start] ?? _ipg_oob())|]
+refToJS c env (Index nt e f) =
+    [i|(seq_#{u nt}[#{exprToJS c env e} - seq_#{u nt}_start] ?? _ipg_oob()).#{f}|]
 refToJS _ _   EOI = "EOI";
 refToJS _ _   (Start nt) = [i|nt_#{u nt}._ipg_start|]
 refToJS _ _   (End nt) = [i|nt_#{u nt}._ipg_end|]
@@ -373,6 +375,7 @@ ruleToJS c (Rule mt nt args alts) =
 toJSWithContext :: Context -> Grammar T T T T (Expr T) -> LBS.ByteString
 toJSWithContext c (Grammar decls) = Builder.toLazyByteString $
       startsWith
+   <> [i|function _ipg_oob() { throw "Out of bounds"; }\n|]
    <> whenDebug c [__i|
       const _ipg_failTreeRoot = { children: [] };
       const _ipg_failTreeStack = [_ipg_failTreeRoot];\n
