@@ -1083,8 +1083,9 @@ async function StrSec(input, begin = 0, end = input.length) {
       self.values.push(nt_Str_0.string);
 
       while (left >= 0 && left <= right && right <= EOI) {
-        nt_Str_0 = await Str(input, begin + left, begin + right);
-        if (nt_Str_0 === null) break;
+        const tmp = await Str(input, begin + left, begin + right);
+        if (tmp === null) break;
+        nt_Str_0 = tmp;
         if (nt_Str_0._ipg_end === 0) throw 'repeat of non-consuming rule: Str';
         self._ipg_start = Math.min(self._ipg_start, left + nt_Str_0._ipg_start);
         self._ipg_end = Math.max(self._ipg_end, left + nt_Str_0._ipg_end);
@@ -1329,8 +1330,9 @@ async function NoteSec(input, begin = 0, end = input.length) {
       self.values.push(nt_NoteSecEntry_0.entry);
 
       while (left >= 0 && left <= right && right <= EOI) {
-        nt_NoteSecEntry_0 = await NoteSecEntry(input, begin + left, begin + right);
-        if (nt_NoteSecEntry_0 === null) break;
+        const tmp = await NoteSecEntry(input, begin + left, begin + right);
+        if (tmp === null) break;
+        nt_NoteSecEntry_0 = tmp;
         if (nt_NoteSecEntry_0._ipg_end === 0) throw 'repeat of non-consuming rule: NoteSecEntry';
         self._ipg_start = Math.min(self._ipg_start, left + nt_NoteSecEntry_0._ipg_start);
         self._ipg_end = Math.max(self._ipg_end, left + nt_NoteSecEntry_0._ipg_end);

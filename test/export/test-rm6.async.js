@@ -242,8 +242,9 @@ async function Blocks(input, begin = 0, end = input.length) {
       self.values.push(nt_FullBlock_0.block);
 
       while (left >= 0 && left <= right && right <= EOI) {
-        nt_FullBlock_0 = await FullBlock(input, begin + left, begin + right);
-        if (nt_FullBlock_0 === null) break;
+        const tmp = await FullBlock(input, begin + left, begin + right);
+        if (tmp === null) break;
+        nt_FullBlock_0 = tmp;
         if (nt_FullBlock_0._ipg_end === 0) throw 'repeat of non-consuming rule: FullBlock';
         self._ipg_start = Math.min(self._ipg_start, left + nt_FullBlock_0._ipg_start);
         self._ipg_end = Math.max(self._ipg_end, left + nt_FullBlock_0._ipg_end);

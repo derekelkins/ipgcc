@@ -259,8 +259,9 @@ termToJS indent c env z@(Repeat nt args l r x l0 r0)
    <> indent <> [i|  self.values.push(#{xAttr});\n\n|]
 
    <> indent <>   "  while (left >= 0 && left <= right && right <= EOI) {\n"
-   <> indent <> [i|    nt_#{u nt} = #{await}#{fst nt}(input, begin + left, begin + right#{argList es});\n|]
-   <> indent <> [i|    if (nt_#{u nt} === null) break;\n|]
+   <> indent <> [i|    const tmp = #{await}#{fst nt}(input, begin + left, begin + right#{argList es});\n|]
+   <> indent <>   "    if (tmp === null) break;\n"
+   <> indent <> [i|    nt_#{u nt} = tmp;\n|]
    <> indent <> [i|    if (nt_#{u nt}._ipg_end === 0) throw 'repeat of non-consuming rule: #{fst nt}';\n|]
    <> indent <> [i|    self._ipg_start = Math.min(self._ipg_start, left + nt_#{u nt}._ipg_start);\n|]
    <> indent <> [i|    self._ipg_end = Math.max(self._ipg_end, left + nt_#{u nt}._ipg_end);\n|]
