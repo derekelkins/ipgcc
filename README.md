@@ -583,6 +583,11 @@ Here are the requirements on the input when it is not a string.
 
 TODO: Document this.
 
+Rust output requires some types to be specified. See the
+[Type Checking section of the tutorial](Tutorial.md). Also, currently the Rust export doesn't
+respect the subtyping relations, so you may need to add extraneous type annotations to expressions
+to force a coercion.
+
 Two type aliases and two functions are treated specially by this back-end.
 Namely:
 

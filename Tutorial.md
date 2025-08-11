@@ -168,7 +168,7 @@ dependencies. That means, something silly like:
 
 ```ipg
 Exp
-  -> Term { value = Term.value + Exp.value } "+" Exp 
+  -> Term { value = Term.value + Exp.value } "+" Exp
    / { value = Term.value } Term;
 ```
 
@@ -539,7 +539,7 @@ free in `l` or `r`):
 ```ipg
 R(i, end)
   -> ?[ i < end ] A[l, r] R(i + 1, end)[0, EOI] { these = cons(A.this, R.these) }
-   / { these = nil() };       
+   / { these = nil() };
 ```
 
 The reason this translation doesn't work in general is that `l` and `r` can refer to
@@ -626,3 +626,224 @@ of *not* having absolute offsets seem pretty nice. While I "work around" the lac
 of absolute offsets in the excerpt above, ISO9660 provides other mechanisms for
 listing the files that doesn't require this recursive traversal. This is also
 illustrated in the full ISO9660 grammar.
+
+## Type Checking (experimental)
+
+There is a basic Hindley-Milner-style type system. This is not used by default in the JavaScript
+export, but the Rust export requires (and automatically enables) it.
+
+### Primitive Types
+
+The primitive types are `Bool`, `U8`, `Int`, `Float`, and `String` with the subtyping relations
+`U8 <: Int` and `Int <: Float`. This means a `U8` can be used wherever an `Int` is expected, and an
+`Int` (and thus a `U8`) can be used wherever a `Float` is expected.
+
+There is *no* subtyping relationship in either direction between numbers and booleans. Conditional
+operations like the ternary operator expect `Bool` arguments. You have to write `x != 0`, not just
+`x`.
+
+`U8` represents a "byte" type, though currently `U8`, `Int`, and `Float` are all mapped to
+JavaScript's number type in the JavaScript export. (Also, currently, though I expect to change this
+in the future, the Rust export uses the corresponding rust types, i.e. `U8` maps to `u8`, but Rust
+doesn't have these subtyping relationships. I should and intend to add in the appropriate coercions,
+but, for now, you can work around this by adding in a redundant type annotation. See later.)
+
+`String` should be interpreted a bit more like a sequences of bytes than a textual (Unicode) string.
+
+`A.START`, `A.END`, and `EOI` have type `Int` and interval endpoints or lengths should be `Int`s.
+Similarly for the bounds of a `for` loop.
+Literal strings have type `String`, and `true` and `false` have type `Bool`.
+Integer literals have type `Int` while floating point literals (as indicated by having a '.')
+have type `Float`. You can add `u8` to the end of an integer literal to get a literal of type
+`U8`. So `1` has type `Int`, `1.0` has type `Float`, and `1u8` or even `0x01u8` have type `U8`.
+
+In the term `{ x = . }`, `x` will have type `U8`. Similarly, in `{ y = * }`, `y` has type `String`.
+
+### Compound Types
+
+An array type is indicated by enclosing square brackets, e.g. `[Int]` is an array of `Int`s.
+
+There are row types for tuples with named fields. All rules output row types. These are written as
+`{ f_1: T_1, ...,  f_n: T_n }` for identifiers `f_1` through `f_n` and types `T_1` through `T_n`.
+For example, a 2D point type might be `{ x: Float, y: Float }`. The order of the fields is
+immaterial, so `{ y: Float, x: Float }` is the same type. There are no limitations on the field
+types, i.e. you can nest these row type arbitrarily.
+
+As is typical, a row type is a subtype of another row type that has fewer fields whose types are
+subtypes of the common fields. For example, `{ x: Int, y: Int, z: Int } <: { x: Float, y: Float }`.
+
+### Type Definitions
+
+You can declare parameterized types. For the most part these behave similar to Haskell type aliases
+where you can just view them as abbreviations, but I do allow them to be recursive, though this
+recursion should be guarded by an array or row type, i.e. recursive occurrences should only occur
+as strict sub-type-expressions. The declarations take the form of:
+
+```
+typedef T('a_1, ..., '_n) = ... some type expression using 'a_1 through 'a_n;
+```
+
+The parentheses can be omitted if there are no parameters. For example,
+
+```
+typedef IntPoint = { x: Int, y: Int };
+typedef Point('a) = { x: 'a, y: 'a };
+```
+
+Also illustrated here is the notation for type variables. These are indicated in ML-style with a
+preceding `'`. We can apply such parameterized types in the expected way. For example, per my
+earlier statement, `Point(Int)` is the same type as `IntPoint`.
+
+### External Types
+
+You can use `%declare_type` similar to `%declare` to declare certain identifiers as types defined
+by external code.
+
+For example,
+
+```
+%declare_type Extension %end
+```
+
+Such types are treated as opaque and are only equal to themselves.
+
+### Type Annotations
+
+You can use a Haskell-style notation to assert the type of some expression. That is, `e :: T` will
+check that the expression `e` is a subtype of `T` and the whole `e :: T` expression will have type
+`T`. (Currently, this can be used as a work-around for the lack of implicit coercions in the Rust
+export.) One place where type annotations can be important is bit shifts. `x << 8` means something
+quite different if `x` is `U8` versus `Int`.
+
+### Rule Type Declarations
+
+The notation for adding uses a detached style similar to Haskell so that adding type information is
+purely additive. This allows you to place the rule type declarations anywhere, but conventionally
+you should put them immediately preceding the rule.
+
+The syntax looks like:
+
+```
+rule MyRule(param1: T_1, ..., param_n: T_n): ReturnType;
+```
+
+For example,
+
+```
+rule Point(foo: Int): { x: Int, y: Int };
+```
+
+The parenthesis can be omitted if there are no parameters.
+
+The return type can also be omitted, and it will be inferred. You can specify it for documentation
+purposes or if you want a more restrictive type than what would be inferred. The return type of a
+rule must always be a row type or some type application equivalent to a row type. For example, using
+the type declaration from before, we could rewrite the above rule declaration as:
+
+```
+rule Point(foo: Int): Point(Int);
+```
+
+or we could omit the return type and just write:
+
+```
+rule Point(foo: Int);
+```
+
+If a rule has parameters, it *must* have a type declaration if you run the type checker (as the
+Rust backend does automatically). Rules without parameters can omit the type declaration entirely.
+
+#### Alternatives
+
+For rules with multiple alternatives, the inferred rule type will be the "intersection" (meet in the
+subtyping lattice) of the inferred types for each alternative. In particular, the only fields that
+can appear in the rules return type are the fields that occur in the types of all the alternatives.
+This aligns with the fact that it is illegal to attempt to access an attribute of a rule that is
+only defined in some alternatives.
+
+#### Rust Export
+
+For the Rust export, fields that don't occur in the return type are not included in the returned
+value. This is good for performance and life-time reasons, but it does mean you need to explicitly
+create an `enum` type (or use some other common type) and bind an attribute to a value of that
+`enum` type, if you want to retain attributes that don't occur in all alternatives. This makes
+perfect sense, but is more tedious than the situation in the JavaScript export. (Arguably, I should
+strip extra fields from the JavaScript export code too...) That attributes not in the return type
+won't be included in the returned value is another reason you may want to provide a more restrictive
+type than would be inferred when exporting to Rust.
+
+Since Rust does not have row types, for each rule with an inferred or explicit row type return type
+a struct with the name of the rule is made and the function generated for the rule returns that
+struct. If the return type is a declared type then that type will be used. That type will have to
+ultimately be equivalent to a row type to type check. `typedef`s that bind a type name to a row
+type will also be translated to `struct` declarations.
+
+### Const Type Declarations
+
+Types can be added to `const` declarations, but they should always be inferable. Nevertheless, you
+may want to be explicit or may want a more restrictive type.
+
+The notation is:
+
+```
+const MyConst: T = ... expression ...;
+```
+
+For example:
+
+```
+const DEVICE_ID: Int = 0x0C;
+```
+
+### Function Type Declarations
+
+Type information must also be specified for any external functions used. The notation follows
+TypeScript and is:
+
+```
+function name(param_1: T_1, ..., param_n: T_n): Returntype;
+```
+
+For example,
+
+```
+function GBExt(extension: Extension, renderingBlock: Extension): Extension;
+```
+
+For better or worse, nothing enforces that these types correspond to the actual types of the
+external functions. (Of course, if the backend language is typed, like Rust, they will need to align
+to some degree.) To that end, a trick is to use the empty row type, `{}`, which is the supertype of
+all row types as a kind of equivalent to TypeScript's `object` type.
+
+### Parameterized Types
+
+Similar to Haskell and other Hindley-Milner-based systems, type declarations can contain type
+variables which will be implicitly universally quantified. For example:
+
+```
+rule Foo(x: 'a): { y: 'a };
+Foo(x) -> { y = x };
+```
+
+or
+
+```
+function identity(x: 'a): 'a;
+```
+
+Again, nothing enforces that the function type declarations correspond to the external types. If you
+are type checking code that will be exported to JavaScript, you can use a type variable argument to
+allow any value to be passed as an input. (Compared to `{}`, this additionally allows values of
+primitive or array types.)
+
+### Equality and Ordering
+
+Currently, only primitive types are allowed to be tested for equality (with `==` or `!=`) or
+ordering (with `<` etc.). If you want to test more involved types, you can create an external
+function to do it.
+
+### More Type Checking Examples
+
+See the tests for the [Rust export](https://github.com/derekelkins/ipgcc/tree/master/test/export-rs)
+and the [type checking tests](https://github.com/derekelkins/ipgcc/tree/master/test/typecheck) for
+more involved examples.
